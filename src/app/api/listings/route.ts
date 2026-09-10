@@ -61,7 +61,11 @@ export const GET = withApiHandler(async (request: NextRequest) => {
       municipality: listing.municipality.name,
       postedAt: listing.postedAt,
       seller: { trustclubId: listing.account.trustclubId, displayName: listing.account.displayName },
-      trustPoints,
+      // Self-trust is Infinity internally, which JSON.stringify writes as null —
+      // indistinguishable from a failed lookup. Send the relationship as a flag
+      // and keep trustPoints to real, finite values.
+      isOwn: listing.account.trustclubId === account?.trustclubId,
+      trustPoints: trustPoints !== null && Number.isFinite(trustPoints) ? trustPoints : null,
     })),
     total: result.total,
     page: result.page,

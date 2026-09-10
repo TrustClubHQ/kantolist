@@ -101,7 +101,8 @@ export default async function HomePage() {
                   image: listing.images[0]?.url ?? null,
                   municipality: listing.municipality.name,
                   postedAt: listing.postedAt,
-                  trustPoints,
+                  trustPoints: Number.isFinite(trustPoints ?? NaN) ? trustPoints : null,
+                  isOwn: listing.account.trustclubId === account?.trustclubId,
                 }}
               />
             ))}

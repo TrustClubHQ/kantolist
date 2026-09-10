@@ -15,6 +15,12 @@ const prisma = new PrismaClient()
 
 function assertSafeTarget(): void {
   const url = process.env.DATABASE_URL ?? ''
+  if (!url) {
+    // Distinguish "no configuration" from "pointed somewhere dangerous" — the
+    // fix for each is different, and conflating them sent people looking for
+    // the wrong problem.
+    throw new Error('DATABASE_URL is not set. Copy .env.example to .env first.')
+  }
   const isLocal = /@(localhost|127\.0\.0\.1)[:/]/.test(url)
   if (!isLocal && process.env.ALLOW_DESTRUCTIVE_SEED !== '1') {
     throw new Error(

@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "prisma": {
-    "seed": "tsx scripts/seed.ts"
+    "seed": "tsx --env-file-if-exists=.env scripts/seed.ts"
   },
   "scripts": {
     "dev": "prisma generate && next dev",
@@ -12,7 +12,7 @@
     "lint": "eslint src/ scripts/",
     "typecheck": "tsc --noEmit",
     "test": "jest",
-    "seed": "tsx scripts/seed.ts",
+    "seed": "tsx --env-file-if-exists=.env scripts/seed.ts",
     "postinstall": "prisma generate"
   },
   "dependencies": {

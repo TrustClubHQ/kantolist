@@ -18,15 +18,19 @@ import { formatTrustPoints, trustState, TRUST_STATE_TEXT } from '@/lib/trust-for
 export function TrustPoints({
   points,
   via,
+  isOwn = false,
   direction = 'incoming',
   size = 'sm',
 }: {
   points: number | null | undefined
   via?: string | null
+  /** Set when the viewer owns the listing. Preferred over an Infinity value,
+      which cannot survive JSON serialisation. */
+  isOwn?: boolean
   direction?: 'incoming' | 'outgoing'
   size?: 'sm' | 'md'
 }) {
-  const state = trustState(points)
+  const state = isOwn ? 'self' : trustState(points)
   const icon = direction === 'incoming' ? '/indirect_trust_incoming.png' : '/indirect_trust_outgoing.png'
   const px = size === 'md' ? 14 : 12
 
@@ -62,8 +66,16 @@ export function TrustPoints({
  * The expanded form on a listing page, where there is room to say what the
  * number means instead of leaving "TP" as jargon.
  */
-export function TrustPointsPanel({ points, via }: { points: number | null | undefined; via?: string | null }) {
-  const state = trustState(points)
+export function TrustPointsPanel({
+  points,
+  via,
+  isOwn = false,
+}: {
+  points: number | null | undefined
+  via?: string | null
+  isOwn?: boolean
+}) {
+  const state = isOwn ? 'self' : trustState(points)
 
   if (state === 'unknown') {
     return (

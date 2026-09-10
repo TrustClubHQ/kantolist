@@ -13,7 +13,8 @@ import { ContactSheet } from '@/components/ContactSheet'
 import { ReportLink } from '@/components/ReportLink'
 import { codeFromParam, formatPrice, LISTING_TYPE_LABEL } from '@/lib/listing'
 import { parseSchema } from '@/lib/attributes'
-import { timeAgo, maskPhone } from '@/lib/format'
+import { timeAgo } from '@/lib/format'
+import { getSellerContact } from '@/lib/seller'
 
 export const dynamic = 'force-dynamic'
 
@@ -25,10 +26,12 @@ async function load(codeParam: string) {
   return prisma.listing.findUnique({
     where: { code },
     include: {
+      // Contact details are deliberately absent: anything selected here is
+      // serialised into the page's flight payload and readable by anyone.
+      // src/lib/seller.ts hands back only the masked form.
       account: {
         select: {
-          id: true, trustclubId: true, displayName: true, phone: true, messengerHandle: true,
-          facebookUrl: true, viberNumber: true, createdAt: true,
+          id: true, trustclubId: true, displayName: true, createdAt: true,
           _count: { select: { listings: true } },
         },
       },
@@ -59,6 +62,7 @@ export default async function ListingPage({ params }: Params) {
   const isOwner = account?.id === listing.account.id
 
   const trustPoints = account ? await getTrustPoints(account.trustclubId, listing.account.trustclubId) : null
+  const seller = await getSellerContact(listing.account.id)
 
   // A view from the owner would inflate their own count, so it does not record.
   if (!isOwner) {
@@ -153,7 +157,7 @@ export default async function ListingPage({ params }: Params) {
             </div>
 
             {account ? (
-              <TrustPointsPanel points={isOwner ? Number.POSITIVE_INFINITY : trustPoints} />
+              <TrustPointsPanel points={trustPoints} isOwn={isOwner} />
             ) : (
               <div className="border-[3px] border-dim-edge bg-dim px-3 py-3">
                 <p className="label m-0 text-[19px] text-muted-2">Log in to see your connection</p>
@@ -230,7 +234,7 @@ export default async function ListingPage({ params }: Params) {
           sellerName={sellerName}
           sellerTrustclubId={listing.account.trustclubId}
           channels={channels}
-          maskedPhone={listing.account.phone ? maskPhone(listing.account.phone) : null}
+          maskedPhone={seller.maskedPhone}
           signedIn={!!account}
           isOwner={isOwner}
         />

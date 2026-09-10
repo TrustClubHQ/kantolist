@@ -19,6 +19,7 @@ export interface ListingCardData {
   postedAt: Date | string
   trustPoints: number | null
   via?: string | null
+  isOwn?: boolean
 }
 
 /**
@@ -39,7 +40,7 @@ export function ListingCard({ listing, layout = 'grid' }: { listing: ListingCard
           <Price size="sm">{formatPrice(listing.price, listing.priceUnit)}</Price>
           <span className="label text-[17px]">{listing.title}</span>
           <div className="flex flex-wrap items-center gap-2">
-            <TrustPoints points={listing.trustPoints} via={listing.via} />
+            <TrustPoints points={listing.trustPoints} via={listing.via} isOwn={listing.isOwn} />
             <span className="label text-[14px] font-semibold text-muted">
               {listing.municipality} · {timeAgo(listing.postedAt)}
             </span>
@@ -65,7 +66,7 @@ export function ListingCard({ listing, layout = 'grid' }: { listing: ListingCard
           ) : null}
         </Price>
         <span className="label line-clamp-2 min-h-[38px] text-[17px]">{listing.title}</span>
-        <TrustPoints points={listing.trustPoints} via={listing.via} />
+        <TrustPoints points={listing.trustPoints} via={listing.via} isOwn={listing.isOwn} />
         <span className="label text-[14px] font-semibold text-muted">
           {listing.municipality} · {timeAgo(listing.postedAt)}
         </span>
