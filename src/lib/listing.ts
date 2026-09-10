@@ -1,4 +1,3 @@
-import { randomInt } from 'node:crypto'
 import type { ListingType, PriceUnit } from '@prisma/client'
 
 /** Days an ACTIVE listing stays visible before it expires. */
@@ -15,15 +14,6 @@ export const BUMP_COOLDOWN_DAYS = 7
 export const MAX_ACTIVE_LISTINGS_UNTRUSTED = 3
 export const MAX_ACTIVE_LISTINGS = 40
 export const MAX_NEW_LISTINGS_PER_DAY = 10
-
-/** Base32 without the characters people misread aloud over the phone. */
-const CODE_ALPHABET = '23456789ABCDEFGHJKLMNPQRSTUVWXYZ'
-
-export function generateCode(length = 6): string {
-  let out = ''
-  for (let i = 0; i < length; i++) out += CODE_ALPHABET[randomInt(CODE_ALPHABET.length)]
-  return out
-}
 
 export function slugify(title: string): string {
   return title

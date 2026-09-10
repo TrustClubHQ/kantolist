@@ -7,7 +7,8 @@
  * wipes a shared database by muscle memory.
  */
 import { PrismaClient, type Prisma } from '@prisma/client'
-import { generateCode, slugify, expiryFor } from '../src/lib/listing'
+import { slugify, expiryFor } from '../src/lib/listing'
+import { generateCode } from '../src/lib/code'
 import type { AttributeDef } from '../src/lib/attributes'
 
 const prisma = new PrismaClient()

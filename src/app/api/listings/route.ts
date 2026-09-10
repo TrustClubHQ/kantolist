@@ -7,9 +7,10 @@ import { isAllowedMutatingRequest } from '@/lib/http'
 import { searchListings, type SortKey } from '@/lib/search'
 import { parseSchema, validateAttributes } from '@/lib/attributes'
 import {
-  generateCode, slugify, expiryFor, listingPath,
+  slugify, expiryFor, listingPath,
   PRICE_UNITS_FOR_TYPE, MAX_ACTIVE_LISTINGS, MAX_ACTIVE_LISTINGS_UNTRUSTED, MAX_NEW_LISTINGS_PER_DAY,
 } from '@/lib/listing'
+import { generateCode } from '@/lib/code'
 
 const SORTS: SortKey[] = ['trust', 'newest', 'price_asc', 'price_desc', 'nearest']
 const TYPES: ListingType[] = ['SELL', 'RENT', 'SERVICE']
