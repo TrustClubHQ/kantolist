@@ -1,0 +1,309 @@
+// KantoList — trust-ranked classifieds for Philippine province users.
+//
+// Migration-first: every schema edit ships with a migration in the same commit.
+// See CLAUDE.md.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+/// A member, keyed by their TrustClub id. Contact channels live here and are
+/// snapshotted onto each listing at publish time (see Listing.contactChannels).
+model Account {
+  id             String  @id @default(cuid())
+  trustclubId    String  @unique @map("trustclub_id")
+  displayName    String? @map("display_name")
+  phone          String? @map("phone")
+  phoneVerifiedAt DateTime? @map("phone_verified_at")
+  messengerHandle String? @map("messenger_handle")
+  facebookUrl    String? @map("facebook_url")
+  viberNumber    String? @map("viber_number")
+  municipalityId String? @map("municipality_id")
+  isStaff        Boolean @default(false) @map("is_staff")
+  isBlocked      Boolean @default(false) @map("is_blocked")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  lastLogin DateTime @default(now()) @map("last_login")
+
+  municipality  Municipality?  @relation(fields: [municipalityId], references: [id])
+  listings      Listing[]
+  savedListings SavedListing[]
+  reportsMade   Report[]       @relation("ReportAuthor")
+  contactEvents ContactEvent[]
+
+  @@index([municipalityId])
+  @@map("accounts")
+}
+
+model Municipality {
+  id       String @id @default(cuid())
+  name     String
+  province String
+
+  accounts     Account[]
+  listings     Listing[]
+  serviceAreas ListingServiceArea[]
+  adjacentTo   MunicipalityAdjacency[] @relation("AdjacencyFrom")
+  adjacentFrom MunicipalityAdjacency[] @relation("AdjacencyTo")
+
+  @@unique([name, province])
+  @@index([province])
+  @@map("municipalities")
+}
+
+/// Undirected in meaning, stored in both directions so "nearby" is one lookup.
+model MunicipalityAdjacency {
+  fromId String @map("from_id")
+  toId   String @map("to_id")
+
+  from Municipality @relation("AdjacencyFrom", fields: [fromId], references: [id], onDelete: Cascade)
+  to   Municipality @relation("AdjacencyTo", fields: [toId], references: [id], onDelete: Cascade)
+
+  @@id([fromId, toId])
+  @@map("municipality_adjacency")
+}
+
+/// Two-level category tree. A LEAF carries `attributeSchema` — the JSON that
+/// drives both the posting form and the filter panel, so adding a filter is
+/// seed data, not a deploy. See src/lib/attributes.ts for the shape.
+model Category {
+  id        String  @id @default(cuid())
+  slug      String  @unique
+  parentId  String? @map("parent_id")
+  name      String
+  market    Market  @default(LIST)
+  icon      String?
+  sortOrder Int     @default(0) @map("sort_order")
+  isActive  Boolean @default(true) @map("is_active")
+
+  attributeSchema Json @default("[]") @map("attribute_schema")
+
+  parent   Category?  @relation("CategoryTree", fields: [parentId], references: [id])
+  children Category[] @relation("CategoryTree")
+  listings Listing[]
+
+  @@index([parentId])
+  @@index([market, isActive])
+  @@map("categories")
+}
+
+model Listing {
+  id          String      @id @default(cuid())
+  code        String      @unique
+  accountId   String      @map("account_id")
+  categoryId  String      @map("category_id")
+  type        ListingType
+  title       String
+  slug        String
+  description String      @default("")
+
+  price      Decimal?   @db.Decimal(12, 2)
+  priceUnit  PriceUnit?  @map("price_unit")
+  negotiable Boolean     @default(false)
+
+  /// Values for the category's attributeSchema, validated on write.
+  attributes Json @default("{}")
+
+  municipalityId String  @map("municipality_id")
+  barangay       String? @map("barangay")
+  meetupNote     String? @map("meetup_note")
+
+  /// Snapshot of the channels the poster chose at publish time, so editing a
+  /// profile later never silently changes what an old listing advertises.
+  contactChannels Json @default("[]") @map("contact_channels")
+
+  status    ListingStatus @default(ACTIVE)
+  postedAt  DateTime      @default(now()) @map("posted_at")
+  expiresAt DateTime      @map("expires_at")
+  bumpedAt  DateTime?     @map("bumped_at")
+  closedAt  DateTime?     @map("closed_at")
+  viewCount Int           @default(0) @map("view_count")
+
+  removedReason String? @map("removed_reason")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  account      Account              @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  category     Category             @relation(fields: [categoryId], references: [id])
+  municipality Municipality         @relation(fields: [municipalityId], references: [id])
+  images       ListingImage[]
+  serviceAreas ListingServiceArea[]
+  savedBy      SavedListing[]
+  contacts     ContactEvent[]
+  reports      Report[]
+
+  @@index([status, categoryId])
+  @@index([status, municipalityId])
+  @@index([status, postedAt])
+  @@index([accountId, status])
+  @@map("listings")
+}
+
+model ListingImage {
+  id        String @id @default(cuid())
+  listingId String @map("listing_id")
+  url       String
+  width     Int?
+  height    Int?
+  bytes     Int?
+  sortOrder Int    @default(0) @map("sort_order")
+
+  listing Listing @relation(fields: [listingId], references: [id], onDelete: Cascade)
+
+  @@index([listingId, sortOrder])
+  @@map("listing_images")
+}
+
+/// Where a service or rental is willing to travel.
+model ListingServiceArea {
+  listingId      String @map("listing_id")
+  municipalityId String @map("municipality_id")
+
+  listing      Listing      @relation(fields: [listingId], references: [id], onDelete: Cascade)
+  municipality Municipality @relation(fields: [municipalityId], references: [id], onDelete: Cascade)
+
+  @@id([listingId, municipalityId])
+  @@map("listing_service_areas")
+}
+
+model SavedListing {
+  accountId String   @map("account_id")
+  listingId String   @map("listing_id")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  account Account @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  listing Listing @relation(fields: [listingId], references: [id], onDelete: Cascade)
+
+  @@id([accountId, listingId])
+  @@map("saved_listings")
+}
+
+/// One row per "the buyer tapped a contact channel". Message content is never
+/// stored — the conversation happens off-platform, by design.
+model ContactEvent {
+  id              String         @id @default(cuid())
+  listingId       String         @map("listing_id")
+  channel         ContactChannel
+  viewerAccountId String?        @map("viewer_account_id")
+  createdAt       DateTime       @default(now()) @map("created_at")
+
+  listing Listing  @relation(fields: [listingId], references: [id], onDelete: Cascade)
+  viewer  Account? @relation(fields: [viewerAccountId], references: [id], onDelete: SetNull)
+
+  @@index([listingId, createdAt])
+  @@map("contact_events")
+}
+
+model Report {
+  id                String       @id @default(cuid())
+  listingId         String       @map("listing_id")
+  reporterAccountId String?      @map("reporter_account_id")
+  reason            ReportReason
+  note              String?
+  status            ReportStatus @default(OPEN)
+  resolvedBy        String?      @map("resolved_by")
+  resolvedAt        DateTime?    @map("resolved_at")
+  createdAt         DateTime     @default(now()) @map("created_at")
+
+  listing  Listing  @relation(fields: [listingId], references: [id], onDelete: Cascade)
+  reporter Account? @relation("ReportAuthor", fields: [reporterAccountId], references: [id], onDelete: SetNull)
+
+  @@index([status, createdAt])
+  @@map("reports")
+}
+
+/// Cache of TrustClub's directed trust-chain lookups. Trust is RELATIONAL:
+/// (fromId -> toId) is the viewer's trust toward the poster, so ranking is
+/// per viewer and this table is keyed by the pair.
+model TrustChainCache {
+  fromId      String   @map("from_id")
+  toId        String   @map("to_id")
+  trustPoints Int      @map("trust_points")
+  fetchedAt   DateTime @default(now()) @map("fetched_at")
+
+  @@id([fromId, toId])
+  @@index([fetchedAt])
+  @@map("trust_chain_cache")
+}
+
+/// Short-lived state for the OIDC device authorization grant.
+model AuthSession {
+  id           String    @id @default(cuid())
+  deviceCode   String    @unique @map("device_code")
+  userCode     String    @map("user_code")
+  interval     Int
+  expiresAt    DateTime  @map("expires_at")
+  lastPollAt   DateTime? @map("last_poll_at")
+  lastError    String?   @map("last_error")
+  clientId     String    @map("client_id")
+  redirectPath String?   @map("redirect_path")
+  nonce        String?
+  createdAt    DateTime  @default(now()) @map("created_at")
+
+  @@index([expiresAt])
+  @@map("auth_sessions")
+}
+
+enum Market {
+  LIST
+  ROOMS
+  SERVICES
+  FARM
+  JOBS
+}
+
+enum ListingType {
+  SELL
+  RENT
+  SERVICE
+}
+
+enum PriceUnit {
+  TOTAL
+  PER_HOUR
+  PER_DAY
+  PER_WEEK
+  PER_MONTH
+  PER_JOB
+  QUOTE
+}
+
+enum ListingStatus {
+  DRAFT
+  ACTIVE
+  RESERVED
+  CLOSED
+  EXPIRED
+  REMOVED
+}
+
+enum ContactChannel {
+  PHONE
+  SMS
+  MESSENGER
+  FACEBOOK
+  VIBER
+  TRUSTCLUB
+}
+
+enum ReportReason {
+  SCAM
+  PROHIBITED
+  DUPLICATE
+  WRONG_CATEGORY
+  SOLD_ALREADY
+  OTHER
+}
+
+enum ReportStatus {
+  OPEN
+  ACTIONED
+  DISMISSED
+}
