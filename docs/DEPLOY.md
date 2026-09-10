@@ -74,7 +74,36 @@ truncates the listing tables and inserts demo accounts and listings. It refuses
 to run against a non-localhost host without `ALLOW_DESTRUCTIVE_SEED=1`, which
 exists precisely so nobody reaches for it out of habit.
 
-## 5. Check it came up
+## 5. Optional: demo content
+
+To show the thing working before real sellers arrive:
+
+```bash
+DATABASE_URL="<direct url>" npm run seed:demo
+```
+
+77 listings across 24 fictional accounts, spread over every category and all
+twelve Laguna towns, with a trust graph so ranking is visible. Idempotent — a
+listing is identified by owner plus title, so re-running tops up rather than
+duplicating.
+
+Log in as `juan.santos` to see the widest trust view. Everything is invented;
+the phone numbers use a non-live 0917-555 range.
+
+**Before a real launch, delete it** — a member should not find fictional
+listings next to real ones:
+
+```sql
+delete from listings where account_id in
+  (select id from accounts where trustclub_id in ('juan.santos','ruben.dlc','marites.g', ...));
+```
+
+The demo photos under `public/demo/` are freely licensed Wikimedia Commons
+images (see `public/demo/CREDITS.md`). Most are CC BY-SA, which **requires
+visible attribution** if the site is public. They are stand-ins for
+seller-supplied photos — replace them rather than shipping them.
+
+## 6. Check it came up
 
 ```bash
 curl -s https://<deployment>/api/categories | head -c 200   # tree present?

@@ -41,6 +41,7 @@ immediately.
 | `npm run lint` / `npm run typecheck` | ESLint / `tsc --noEmit` |
 | `npm run seed` | Re-seed for development (destructive — see below) |
 | `npm run seed:reference` | Categories and municipalities only; additive, safe against production |
+| `npm run seed:demo` | 77 realistic demo listings across 24 accounts; idempotent, adds only |
 
 ## How the pieces fit
 
