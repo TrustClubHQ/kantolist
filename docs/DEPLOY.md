@@ -1,0 +1,95 @@
+# Deploying KantoList
+
+Vercel + a Postgres database. `npm run build` runs `prisma migrate deploy`, so
+**the database must exist and be reachable before the first deploy** — a build
+against an empty or unreachable `DATABASE_URL` fails, by design.
+
+Region is pinned to `sin1` (Singapore) in `vercel.json` — the closest Vercel
+region to the Philippines.
+
+## 1. Create the database
+
+Any Postgres works. Vercel Postgres or Neon are the least friction, and both
+hand you two URLs:
+
+- a **pooled** URL (`...-pooler...`) for the app
+- a **direct** URL for migrations
+
+Use the pooled one as `DATABASE_URL`. `src/lib/prisma.ts` appends
+`pgbouncer=true` to a `-pooler` host automatically — without it, Prisma's
+prepared-statement cache breaks with `cached plan must not change result type`
+the first time a deploy changes a table's shape.
+
+## 2. Environment variables
+
+Set these in **Project → Settings → Environment Variables** for Production
+(and Preview, if you want previews to work):
+
+| Variable | Required | Notes |
+| --- | --- | --- |
+| `DATABASE_URL` | yes | Pooled Postgres connection string |
+| `AUTH_SECRET` | yes | `openssl rand -base64 32`. Signs the session cookie. |
+| `TRUSTCLUB_AUTH_ISSUER` | for login | **Must end in a trailing slash**, e.g. `https://trustclub.app/v1/connect/` |
+| `TRUSTCLUB_AUTH_CLIENT_ID` | for login | From the TrustClub OIDC client |
+| `TRUSTCLUB_AUTH_CLIENT_SECRET` | for login | Sent as HTTP Basic on every call — the issuer must be https |
+| `ALLOW_DEV_LOGIN` | never in production | Refused when `NODE_ENV=production` regardless |
+
+Two failure modes worth knowing, because neither breaks the build:
+
+- **No `AUTH_SECRET`** — the build succeeds and every authenticated request
+  then 500s. `src/lib/auth.ts` refuses to sign with a fallback secret on
+  purpose; a known signing key would be worse than an outage.
+- **No TrustClub credentials** — the site works and browsing is fine, but
+  `/signin` reports `not_configured` and nobody can log in or post.
+
+## 3. Deploy
+
+**Through the dashboard (recommended)** — Add New → Project → import
+`TrustClubHQ/kantolist`. Set the variables above before the first build. Pushes
+to `main` then deploy automatically.
+
+**From a terminal:**
+
+```bash
+npx vercel link          # once, to bind this directory to the project
+npx vercel --prod
+```
+
+## 4. Seed the categories
+
+The app is useless without its category tree — the posting form and the filter
+rail both read it. Against the **direct** (non-pooled) URL:
+
+```bash
+DATABASE_URL="<direct url>" ALLOW_DESTRUCTIVE_SEED=1 npm run seed
+```
+
+`ALLOW_DESTRUCTIVE_SEED=1` is required for any non-localhost host because the
+seed **truncates the listing tables first**. Never run it against a database
+that already holds real listings — it will delete them.
+
+For production you almost certainly want the categories and municipalities but
+not the ten demo listings and seven demo accounts. Trim `DEMO_ACCOUNTS` and
+`DEMO_LISTINGS` in `scripts/seed.ts` before running it, or run it once now
+while the database is empty and delete the demo rows afterwards.
+
+## 5. Check it came up
+
+```bash
+curl -s https://<deployment>/api/categories | head -c 200   # tree present?
+curl -s https://<deployment>/api/listings | head -c 200     # search answers?
+```
+
+Then open `/` and confirm the category grid is populated. An empty grid means
+step 4 was skipped.
+
+## Known gaps that affect a real launch
+
+- **No photo upload**, so listings are text-only. Blob storage is not wired.
+- **No phone verification**, so `phoneVerifiedAt` is never set — which means
+  the larger posting allowance is unreachable and everyone is capped at 3
+  active listings.
+- **No expiry job.** `expiresAt` is set and filtered on at read time, so
+  expired listings do disappear from search, but nothing flips their status to
+  `EXPIRED` and no renewal nudge is sent.
+- `/terms` and `/privacy` carry visible placeholders pending legal review.

@@ -118,6 +118,12 @@ offset); Anton for display and Barlow Condensed for labels. **Yellow carries
 black text only.** Tokens live in `src/app/globals.css`; compose
 `src/components/ui.tsx` rather than re-typing the rules.
 
+## Deploying
+
+See [`docs/DEPLOY.md`](docs/DEPLOY.md). In short: create the Postgres first
+(the build runs `prisma migrate deploy`), set `DATABASE_URL` and `AUTH_SECRET`,
+import the repo in Vercel, then seed the category tree.
+
 ## Known gaps
 
 - **Photo upload is not built.** The schema and rendering handle images; the
