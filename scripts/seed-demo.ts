@@ -17,6 +17,7 @@ import { existsSync } from 'node:fs'
 import { join } from 'node:path'
 import { PrismaClient, type Prisma } from '@prisma/client'
 import { DEMO_ACCOUNTS, DEMO_LISTINGS, DEMO_TRUST } from './demo-data'
+import { photoForCategory } from './category-photos'
 import { generateCode } from '../src/lib/code'
 import { slugify, expiryFor } from '../src/lib/listing'
 
@@ -41,6 +42,17 @@ function availablePhotos(files: string[] | undefined): string[] {
 }
 
 const missingPhotos: string[] = []
+
+/**
+ * A listing's own photos where it has them, otherwise its category's stock
+ * shot. Every demo listing ends up with something rather than a placeholder.
+ */
+function photosFor(l: { images?: string[]; category: string; title: string }): string[] {
+  const own = availablePhotos(l.images)
+  if (own.length) return own
+  const fallback = photoForCategory(l.category, l.title, (f) => existsSync(join(PHOTO_DIR, f)))
+  return fallback ? [fallback] : []
+}
 
 /**
  * Deterministic PRNG so view counts and contact taps are stable across runs —
@@ -143,9 +155,9 @@ async function main(): Promise<void> {
         expiresAt: expiryFor(l.type, postedAt),
         closedAt: l.status === 'CLOSED' ? new Date() : null,
         viewCount: views,
-        images: availablePhotos(l.images).length
+        images: photosFor(l).length
           ? {
-              create: availablePhotos(l.images).map((url, i) => ({
+              create: photosFor(l).map((url, i) => ({
                 url: `/demo/${url}`,
                 width: i === 0 ? 720 : 480,
                 height: i === 0 ? 480 : 320,
