@@ -1,4 +1,3 @@
-/* eslint-disable no-console */
 
 /**
  * Minimal, dependency-free structured logger — the one place `console` is

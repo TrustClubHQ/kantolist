@@ -8,7 +8,7 @@ export default [
   ...compat.extends('next/core-web-vitals', 'next/typescript'),
   {
     rules: {
-      'no-console': ['error', { allow: [] }],
+      'no-console': 'error',
       '@typescript-eslint/no-unused-vars': ['error', { argsIgnorePattern: '^_' }],
     },
   },
