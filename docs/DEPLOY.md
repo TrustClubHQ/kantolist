@@ -61,17 +61,18 @@ The app is useless without its category tree — the posting form and the filter
 rail both read it. Against the **direct** (non-pooled) URL:
 
 ```bash
-DATABASE_URL="<direct url>" ALLOW_DESTRUCTIVE_SEED=1 npm run seed
+DATABASE_URL="<direct url>" npm run seed:reference
 ```
 
-`ALLOW_DESTRUCTIVE_SEED=1` is required for any non-localhost host because the
-seed **truncates the listing tables first**. Never run it against a database
-that already holds real listings — it will delete them.
+That writes categories and municipalities only. It is additive and idempotent:
+no listings, accounts or contact records are touched, so it is safe to re-run
+against a live database — and re-running it is exactly how a new filter reaches
+production, since the attribute schema is deliberately overwritten each time.
 
-For production you almost certainly want the categories and municipalities but
-not the ten demo listings and seven demo accounts. Trim `DEMO_ACCOUNTS` and
-`DEMO_LISTINGS` in `scripts/seed.ts` before running it, or run it once now
-while the database is empty and delete the demo rows afterwards.
+Do **not** use plain `npm run seed` here. That is the development seed: it
+truncates the listing tables and inserts demo accounts and listings. It refuses
+to run against a non-localhost host without `ALLOW_DESTRUCTIVE_SEED=1`, which
+exists precisely so nobody reaches for it out of habit.
 
 ## 5. Check it came up
 

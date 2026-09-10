@@ -2,9 +2,17 @@
  * Seeds categories (with their attribute schemas), Laguna municipalities and
  * their adjacency, plus demo accounts and listings.
  *
- * Destructive: it truncates the listing-side tables. The ALLOW_DESTRUCTIVE_SEED
- * guard is required whenever DATABASE_URL is not a localhost host, so nobody
- * wipes a shared database by muscle memory.
+ * Two modes:
+ *   (default)          destructive — truncates the listing-side tables first,
+ *                      then writes reference data AND demo content. For local
+ *                      development only.
+ *   --reference-only   additive — upserts categories and municipalities and
+ *                      touches nothing else. Safe to run against production,
+ *                      including a database that already holds real listings.
+ *
+ * The destructive mode also requires ALLOW_DESTRUCTIVE_SEED=1 whenever
+ * DATABASE_URL is not a localhost host, so nobody wipes a shared database by
+ * muscle memory.
  */
 import { PrismaClient, type Prisma } from '@prisma/client'
 import { slugify, expiryFor } from '../src/lib/listing'
@@ -12,6 +20,8 @@ import { generateCode } from '../src/lib/code'
 import type { AttributeDef } from '../src/lib/attributes'
 
 const prisma = new PrismaClient()
+
+const REFERENCE_ONLY = process.argv.includes('--reference-only')
 
 function assertSafeTarget(): void {
   const url = process.env.DATABASE_URL ?? ''
@@ -21,6 +31,8 @@ function assertSafeTarget(): void {
     // the wrong problem.
     throw new Error('DATABASE_URL is not set. Copy .env.example to .env first.')
   }
+  // Reference-only writes are additive, so they need no destructive guard.
+  if (REFERENCE_ONLY) return
   const isLocal = /@(localhost|127\.0\.0\.1)[:/]/.test(url)
   if (!isLocal && process.env.ALLOW_DESTRUCTIVE_SEED !== '1') {
     throw new Error(
@@ -264,7 +276,11 @@ async function clear(): Promise<void> {
 async function seedMunicipalities(): Promise<Map<string, string>> {
   const byName = new Map<string, string>()
   for (const name of LAGUNA) {
-    const row = await prisma.municipality.create({ data: { name, province: 'Laguna' } })
+    const row = await prisma.municipality.upsert({
+      where: { name_province: { name, province: 'Laguna' } },
+      update: {},
+      create: { name, province: 'Laguna' },
+    })
     byName.set(name, row.id)
   }
   for (const [a, b] of ADJACENT) {
@@ -286,18 +302,31 @@ async function seedCategories(): Promise<Map<string, string>> {
   const bySlug = new Map<string, string>()
   let order = 0
   for (const parent of CATEGORIES) {
-    const parentRow = await prisma.category.create({
-      data: { slug: parent.slug, name: parent.name, icon: parent.icon, sortOrder: order++ },
+    const parentRow = await prisma.category.upsert({
+      where: { slug: parent.slug },
+      update: { name: parent.name, icon: parent.icon, sortOrder: order++, isActive: true },
+      create: { slug: parent.slug, name: parent.name, icon: parent.icon, sortOrder: order - 1 },
     })
     bySlug.set(parent.slug, parentRow.id)
     let childOrder = 0
     for (const child of parent.children) {
-      const row = await prisma.category.create({
-        data: {
-          slug: child.slug,
+      // The attribute schema is intentionally overwritten on every run: it is
+      // the mechanism for shipping a new filter, so re-seeding is how a schema
+      // change reaches an existing database.
+      const row = await prisma.category.upsert({
+        where: { slug: child.slug },
+        update: {
           name: child.name,
           parentId: parentRow.id,
           sortOrder: childOrder++,
+          isActive: true,
+          attributeSchema: child.attributes as unknown as Prisma.InputJsonValue,
+        },
+        create: {
+          slug: child.slug,
+          name: child.name,
+          parentId: parentRow.id,
+          sortOrder: childOrder - 1,
           attributeSchema: child.attributes as unknown as Prisma.InputJsonValue,
         },
       })
@@ -409,10 +438,18 @@ const DEMO_LISTINGS: DemoListing[] = [
 
 async function main(): Promise<void> {
   assertSafeTarget()
-  await clear()
+  if (!REFERENCE_ONLY) await clear()
 
   const municipalities = await seedMunicipalities()
   const categories = await seedCategories()
+
+  if (REFERENCE_ONLY) {
+    process.stdout.write(
+      `Reference data up to date: ${municipalities.size} municipalities, ${categories.size} categories. ` +
+        `No listings or accounts were touched.\n`,
+    )
+    return
+  }
 
   const accounts = new Map<string, string>()
   for (const a of DEMO_ACCOUNTS) {

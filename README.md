@@ -39,7 +39,8 @@ immediately.
 | `npm run build` | `prisma generate` → `migrate deploy` → `next build` |
 | `npm test` | Jest unit tests |
 | `npm run lint` / `npm run typecheck` | ESLint / `tsc --noEmit` |
-| `npm run seed` | Re-seed (destructive — see below) |
+| `npm run seed` | Re-seed for development (destructive — see below) |
+| `npm run seed:reference` | Categories and municipalities only; additive, safe against production |
 
 ## How the pieces fit
 
