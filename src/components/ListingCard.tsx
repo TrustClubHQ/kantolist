@@ -3,6 +3,7 @@ import Image from 'next/image'
 import type { ListingStatus, ListingType, PriceUnit } from '@prisma/client'
 import { Badge, Price } from '@/components/ui'
 import { TrustPoints } from '@/components/TrustPoints'
+import { CategoryMark } from '@/components/CategoryMark'
 import { formatPrice, LISTING_TYPE_LABEL } from '@/lib/listing'
 import { timeAgo } from '@/lib/format'
 
@@ -19,6 +20,8 @@ export interface ListingCardData {
   postedAt: Date | string
   trustPoints: number | null
   via?: string | null
+  categorySlug: string
+  parentSlug?: string | null
   isOwn?: boolean
   /** No viewer means no trust path to measure, so the badge is omitted. */
   signedIn?: boolean
@@ -36,7 +39,7 @@ export function ListingCard({ listing, layout = 'grid' }: { listing: ListingCard
     return (
       <Link href={listing.href} className="hard flex border-[3px] border-ink bg-panel text-ink hover:text-ink">
         <div className="relative w-[116px] shrink-0 overflow-hidden border-r-[3px] border-ink">
-          <Photo src={listing.image} alt="" />
+          <Photo src={listing.image} alt="" categorySlug={listing.categorySlug} parentSlug={listing.parentSlug} />
         </div>
         <div className="flex min-w-0 flex-1 flex-col gap-1.5 px-3 py-2.5">
           <Price size="sm">{formatPrice(listing.price, listing.priceUnit)}</Price>
@@ -57,7 +60,7 @@ export function ListingCard({ listing, layout = 'grid' }: { listing: ListingCard
   return (
     <Link href={listing.href} className="hard flex flex-col overflow-hidden border-[3px] border-ink bg-panel text-ink hover:text-ink">
       <div className="relative h-[150px] overflow-hidden border-b-[3px] border-ink">
-        <Photo src={listing.image} alt="" />
+        <Photo src={listing.image} alt="" categorySlug={listing.categorySlug} parentSlug={listing.parentSlug} />
         <Badge tone={reserved ? 'ink' : 'yellow'} className="absolute left-2 top-2">
           {badgeText}
         </Badge>
@@ -81,19 +84,22 @@ export function ListingCard({ listing, layout = 'grid' }: { listing: ListingCard
   )
 }
 
-/** A listing with no photo shows a drawn placeholder, never a broken image. */
-function Photo({ src, alt }: { src: string | null; alt: string }) {
-  if (!src) {
-    return (
-      <div className="flex h-full w-full items-center justify-center bg-dim">
-        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#B8AC92" strokeWidth="1.8" aria-hidden="true">
-          <rect x="3" y="5" width="18" height="14" rx="1" />
-          <circle cx="9" cy="10" r="1.6" />
-          <path d="M21 16l-5-5-8 8" />
-        </svg>
-      </div>
-    )
-  }
+/**
+ * A listing with no photo gets its category's mark, not a broken-image icon —
+ * most sellers post without a photo, so this is a normal state, not a failure.
+ */
+function Photo({
+  src,
+  alt,
+  categorySlug,
+  parentSlug,
+}: {
+  src: string | null
+  alt: string
+  categorySlug: string
+  parentSlug?: string | null
+}) {
+  if (!src) return <CategoryMark categorySlug={categorySlug} parentSlug={parentSlug} size={44} />
   return (
     <Image
       src={src}

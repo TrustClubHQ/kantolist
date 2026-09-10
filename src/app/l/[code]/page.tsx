@@ -11,6 +11,7 @@ import { Badge, Plate, PlateHeader, Price, SafetyNote } from '@/components/ui'
 import { TrustPointsPanel, TrustClubLink } from '@/components/TrustPoints'
 import { ContactSheet } from '@/components/ContactSheet'
 import { ReportLink } from '@/components/ReportLink'
+import { CategoryMark } from '@/components/CategoryMark'
 import { codeFromParam, formatPrice, LISTING_TYPE_LABEL } from '@/lib/listing'
 import { parseSchema } from '@/lib/attributes'
 import { timeAgo } from '@/lib/format'
@@ -94,13 +95,11 @@ export default async function ListingPage({ params }: Params) {
             priority
           />
         ) : (
-          <div className="flex h-full items-center justify-center">
-            <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#B8AC92" strokeWidth="1.6" aria-hidden="true">
-              <rect x="3" y="5" width="18" height="14" rx="1" />
-              <circle cx="9" cy="10" r="1.6" />
-              <path d="M21 16l-5-5-8 8" />
-            </svg>
-          </div>
+          <CategoryMark
+            categorySlug={listing.category.slug}
+            parentSlug={listing.category.parent?.slug ?? null}
+            size={72}
+          />
         )}
         {listing.images.length > 1 ? (
           <span className="label absolute bottom-3 right-3 bg-ink px-2.5 py-0.5 text-[14px] text-ground">

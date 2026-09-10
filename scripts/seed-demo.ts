@@ -13,12 +13,34 @@
  * the first time this was written, and is easy not to notice until the counts
  * look wrong.
  */
+import { existsSync } from 'node:fs'
+import { join } from 'node:path'
 import { PrismaClient, type Prisma } from '@prisma/client'
 import { DEMO_ACCOUNTS, DEMO_LISTINGS, DEMO_TRUST } from './demo-data'
 import { generateCode } from '../src/lib/code'
 import { slugify, expiryFor } from '../src/lib/listing'
 
 const prisma = new PrismaClient()
+
+const PHOTO_DIR = join(process.cwd(), 'public', 'demo')
+
+/**
+ * Only attach a photo whose file is actually present.
+ *
+ * A listing_images row pointing at a missing file renders as a broken image,
+ * which looks worse than no photo at all — and the CategoryMark placeholder
+ * already handles the empty case deliberately. Keeping the reference in
+ * demo-data.ts means dropping the file in later is enough to light it up.
+ */
+function availablePhotos(files: string[] | undefined): string[] {
+  if (!files?.length) return []
+  const present = files.filter((f) => existsSync(join(PHOTO_DIR, f)))
+  const missing = files.filter((f) => !present.includes(f))
+  if (missing.length) missingPhotos.push(...missing)
+  return present
+}
+
+const missingPhotos: string[] = []
 
 /**
  * Deterministic PRNG so view counts and contact taps are stable across runs —
@@ -121,9 +143,9 @@ async function main(): Promise<void> {
         expiresAt: expiryFor(l.type, postedAt),
         closedAt: l.status === 'CLOSED' ? new Date() : null,
         viewCount: views,
-        images: l.images?.length
+        images: availablePhotos(l.images).length
           ? {
-              create: l.images.map((url, i) => ({
+              create: availablePhotos(l.images).map((url, i) => ({
                 url: `/demo/${url}`,
                 width: i === 0 ? 720 : 480,
                 height: i === 0 ? 480 : 320,
@@ -189,6 +211,13 @@ async function main(): Promise<void> {
             : 'Photos look like they were taken from another listing.',
       },
     })
+  }
+
+  if (missingPhotos.length) {
+    const unique = [...new Set(missingPhotos)].sort()
+    process.stdout.write(
+      `Skipped ${unique.length} photo file(s) not present in public/demo: ${unique.join(', ')}\n`,
+    )
   }
 
   process.stdout.write(

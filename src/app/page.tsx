@@ -100,6 +100,7 @@ export default async function HomePage() {
                   negotiable: listing.negotiable,
                   image: listing.images[0]?.url ?? null,
                   municipality: listing.municipality.name,
+                  categorySlug: listing.category.slug,
                   postedAt: listing.postedAt,
                   trustPoints: Number.isFinite(trustPoints ?? NaN) ? trustPoints : null,
                   isOwn: listing.account.trustclubId === account?.trustclubId,
