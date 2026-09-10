@@ -36,7 +36,7 @@ export function TrustPoints({
 
   if (state === 'none' || state === 'unknown') {
     return (
-      <span className="label inline-flex items-center gap-1.5 border-2 border-dim-edge bg-dim px-2 py-0.5 text-[13px] text-muted">
+      <span className="label inline-flex w-fit self-start items-center gap-1.5 border-2 border-dim-edge bg-dim px-2 py-0.5 text-[13px] text-muted">
         {TRUST_STATE_TEXT[state]}
       </span>
     )
@@ -44,14 +44,14 @@ export function TrustPoints({
 
   if (state === 'self') {
     return (
-      <span className="label inline-flex items-center gap-1.5 border-2 border-ink bg-yellow px-2 py-0.5 text-[13px] text-ink">
+      <span className="label inline-flex w-fit self-start items-center gap-1.5 border-2 border-ink bg-yellow px-2 py-0.5 text-[13px] text-ink">
         {TRUST_STATE_TEXT.self}
       </span>
     )
   }
 
   return (
-    <span className="label inline-flex items-center gap-1.5 border-2 border-ink bg-green px-2 py-0.5 text-[13px] text-ground">
+    <span className="label inline-flex w-fit self-start items-center gap-1.5 border-2 border-ink bg-green px-2 py-0.5 text-[13px] text-ground">
       <Image src={icon} alt="" width={px} height={px} className="shrink-0 opacity-80 invert" aria-hidden />
       <span className="flex items-baseline gap-0.5">
         <span className="text-[15px]">{formatTrustPoints(points)}</span>

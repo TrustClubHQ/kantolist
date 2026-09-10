@@ -34,21 +34,29 @@
   --font-sans: Barlow, "Helvetica Neue", Arial, sans-serif;
 }
 
-:root { color-scheme: light; }
+/**
+ * Base element styles MUST sit in @layer base. Unlayered CSS beats every
+ * layered rule in the cascade, so a bare `a { color: … }` here would override
+ * `text-ink` on any link — which is how the wordmark and card titles ended up
+ * red-on-red the first time this shipped.
+ */
+@layer base {
+  :root { color-scheme: light; }
 
-html { -webkit-text-size-adjust: 100%; }
+  html { -webkit-text-size-adjust: 100%; }
 
-body {
-  margin: 0;
-  background: var(--color-ground);
-  color: var(--color-ink);
-  font-family: var(--font-sans);
-  -webkit-font-smoothing: antialiased;
-  min-height: 100vh;
+  body {
+    margin: 0;
+    background: var(--color-ground);
+    color: var(--color-ink);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+    min-height: 100vh;
+  }
+
+  a { color: var(--color-red); }
+  a:hover { color: var(--color-red-dark); }
 }
-
-a { color: var(--color-red); }
-a:hover { color: var(--color-red-dark); }
 
 /* The one depth device. */
 .hard { box-shadow: 4px 4px 0 var(--color-ink); }
@@ -72,17 +80,19 @@ a:hover { color: var(--color-red-dark); }
 }
 
 /* Inputs inherit the flat treatment rather than the browser default. */
-input, select, textarea, button { font-family: inherit; font-size: inherit; color: inherit; }
-input, select, textarea {
-  background: var(--color-ground);
-  border: 2.5px solid var(--color-ink);
-  border-radius: 0;
-  padding: 0 12px;
-  min-height: 46px;
-  width: 100%;
+@layer base {
+  input, select, textarea, button { font-family: inherit; font-size: inherit; color: inherit; }
+  input, select, textarea {
+    background: var(--color-ground);
+    border: 2.5px solid var(--color-ink);
+    border-radius: 0;
+    padding: 0 12px;
+    min-height: 46px;
+    width: 100%;
+  }
+  textarea { padding: 10px 12px; min-height: 92px; }
+  input::placeholder, textarea::placeholder { color: #8A8172; }
 }
-textarea { padding: 10px 12px; min-height: 92px; }
-input::placeholder, textarea::placeholder { color: #8A8172; }
 
 /* Print-friendly: the flat fills already are, but drop the shadows. */
 @media print {

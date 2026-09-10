@@ -170,6 +170,7 @@ export default async function BrowsePage({ searchParams }: { searchParams: Promi
                     postedAt: listing.postedAt,
                     trustPoints: Number.isFinite(trustPoints ?? NaN) ? trustPoints : null,
                     isOwn: listing.account.trustclubId === account?.trustclubId,
+                    signedIn: !!account,
                   }}
                 />
               ))}

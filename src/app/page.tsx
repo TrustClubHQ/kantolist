@@ -103,6 +103,7 @@ export default async function HomePage() {
                   postedAt: listing.postedAt,
                   trustPoints: Number.isFinite(trustPoints ?? NaN) ? trustPoints : null,
                   isOwn: listing.account.trustclubId === account?.trustclubId,
+                  signedIn: !!account,
                 }}
               />
             ))}
