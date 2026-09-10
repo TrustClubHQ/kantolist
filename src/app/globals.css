@@ -1,0 +1,90 @@
+@import "tailwindcss";
+
+/**
+ * KantoList — "signwriter".
+ *
+ * Filipino vernacular signage: hand-painted jeepney lettering and sari-sari
+ * store price boards. Flat enamel fills, hard black outlines and one offset
+ * shadow — chosen because they survive a cheap LCD in daylight, which is where
+ * province users actually shop, better than gradients and soft shadows do.
+ *
+ * Rules that hold everywhere:
+ *   - square corners; no border-radius except full pills on toggles
+ *   - one depth device: 4px 4px 0 ink. No blur.
+ *   - yellow carries BLACK text only, never white (contrast)
+ */
+
+@theme {
+  --color-ground: #FFF4D6;
+  --color-panel: #FFFFFF;
+  --color-ink: #17130E;
+  --color-red: #C6362B;
+  --color-red-dark: #97281F;
+  --color-yellow: #F2B01E;
+  --color-green: #1F6B4A;
+  --color-green-soft: #DDEBDF;
+  --color-body: #2E2721;
+  --color-muted: #7A6F5F;
+  --color-muted-2: #4A3F32;
+  --color-dim: #E7DFC9;
+  --color-dim-edge: #B8AC92;
+
+  --font-display: Anton, "Arial Black", Impact, sans-serif;
+  --font-cond: "Barlow Condensed", "Arial Narrow", Arial, sans-serif;
+  --font-sans: Barlow, "Helvetica Neue", Arial, sans-serif;
+}
+
+:root { color-scheme: light; }
+
+html { -webkit-text-size-adjust: 100%; }
+
+body {
+  margin: 0;
+  background: var(--color-ground);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  min-height: 100vh;
+}
+
+a { color: var(--color-red); }
+a:hover { color: var(--color-red-dark); }
+
+/* The one depth device. */
+.hard { box-shadow: 4px 4px 0 var(--color-ink); }
+.hard-sm { box-shadow: 3px 3px 0 var(--color-ink); }
+
+.font-display { font-family: var(--font-display); font-weight: 400; letter-spacing: 0.01em; }
+.font-cond { font-family: var(--font-cond); }
+
+/* Condensed uppercase is the workhorse label style. */
+.label {
+  font-family: var(--font-cond);
+  text-transform: uppercase;
+  font-weight: 700;
+  line-height: 1.1;
+}
+
+/* Focus has to be visible against flat fills, so it is an offset ring. */
+:where(a, button, input, select, textarea, [tabindex]):focus-visible {
+  outline: 3px solid var(--color-red);
+  outline-offset: 2px;
+}
+
+/* Inputs inherit the flat treatment rather than the browser default. */
+input, select, textarea, button { font-family: inherit; font-size: inherit; color: inherit; }
+input, select, textarea {
+  background: var(--color-ground);
+  border: 2.5px solid var(--color-ink);
+  border-radius: 0;
+  padding: 0 12px;
+  min-height: 46px;
+  width: 100%;
+}
+textarea { padding: 10px 12px; min-height: 92px; }
+input::placeholder, textarea::placeholder { color: #8A8172; }
+
+/* Print-friendly: the flat fills already are, but drop the shadows. */
+@media print {
+  .hard, .hard-sm { box-shadow: none; }
+}
