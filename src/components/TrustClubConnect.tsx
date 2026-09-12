@@ -1,19 +1,26 @@
 'use client'
 
 import { useCallback, useEffect, useRef, useState } from 'react'
+import Image from 'next/image'
+import { QRCodeSVG, QRCodeCanvas } from 'qrcode.react'
+import { useIsMobile } from '@/hooks/useIsMobile'
 import { Plate } from '@/components/ui'
+import { isSafeRedirect } from '@/lib/http'
 
 /**
- * The TrustClub device-authorization flow, ported from TruRate's connect modal
- * and reshaped for a full page.
+ * The TrustClub device-authorization flow, matching TruRate's presentation.
  *
- * The shape that matters: /start returns a short user code and a verification
- * link, then the browser polls /poll at the interval the server dictates. The
- * server owns the interval (and raises it on slow_down), so this component
- * never decides how fast to ask.
+ * The user code is deliberately NOT shown. In the device grant the code only
+ * matters when the two devices cannot be linked automatically; here
+ * `verification_uri_complete` already carries it, so the member either scans a
+ * QR (desktop) or taps straight through (mobile) and never types anything.
+ * Showing the code just adds a step nobody needs to take.
+ *
+ * The server owns the poll interval and raises it on slow_down, so this
+ * component never decides how fast to ask.
  */
 
-type Phase = 'idle' | 'starting' | 'waiting' | 'error'
+type Phase = 'starting' | 'waiting' | 'success' | 'error'
 
 interface StartResponse {
   user_code: string
@@ -23,13 +30,17 @@ interface StartResponse {
   error?: string
 }
 
-const MESSAGES: Record<string, string> = {
-  not_configured: 'TrustClub login is not configured on this deployment yet.',
+const ERRORS: Record<string, string> = {
   access_denied: 'That request was declined in TrustClub.',
-  expired_token: 'The code expired. Start again.',
+  expired_token: 'The sign-in expired. Try again.',
+  invalid_grant: 'That sign-in did not go through. Try again.',
+  invalid_client: 'TrustClub sign-in is misconfigured on this deployment.',
+  unsupported_grant_type: 'TrustClub sign-in is misconfigured on this deployment.',
+  not_configured: 'TrustClub sign-in is not set up on this deployment yet.',
+  verify_failed: 'We could not verify that sign-in. Try again.',
+  no_session: 'The sign-in expired. Try again.',
   network_error: 'Could not reach TrustClub. Check your connection.',
   timeout: 'TrustClub took too long to answer. Try again.',
-  verify_failed: 'We could not verify that login. Start again.',
 }
 
 export function TrustClubConnect({
@@ -39,109 +50,235 @@ export function TrustClubConnect({
   redirectTo?: string
   devLoginEnabled: boolean
 }) {
-  const [phase, setPhase] = useState<Phase>('idle')
-  const [session, setSession] = useState<StartResponse | null>(null)
-  const [error, setError] = useState<string | null>(null)
-  const timer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const [phase, setPhase] = useState<Phase>('starting')
+  const [verificationUri, setVerificationUri] = useState('')
+  const [error, setError] = useState('')
+  const [downloadError, setDownloadError] = useState('')
+  // Bumping this restarts the flow without unmounting, which is what "Try
+  // again" needs — a reload would lose the redirect we were sent with.
+  const [restartKey, setRestartKey] = useState(0)
+  const qrCanvasRef = useRef<HTMLCanvasElement>(null)
+  const isMobile = useIsMobile()
 
-  const stop = useCallback(() => {
-    if (timer.current) clearTimeout(timer.current)
-    timer.current = null
-  }, [])
+  // Captured once so a parent re-render with a new redirect cannot tear the
+  // flow down mid-authorisation.
+  const initialRedirect = useRef(redirectTo)
 
-  useEffect(() => stop, [stop])
+  useEffect(() => {
+    let aborted = false
+    let timer: ReturnType<typeof setTimeout> | null = null
 
-  const poll = useCallback(
-    async (intervalMs: number) => {
-      try {
-        const res = await fetch('/api/auth/device/poll')
-        const data: { ok: boolean; terminal: boolean; error?: string; redirect?: string } = await res.json()
+    setPhase('starting')
+    setError('')
+    setVerificationUri('')
 
-        if (data.ok) {
-          stop()
-          window.location.href = data.redirect ?? redirectTo ?? '/'
-          return
+    function poll(intervalMs: number) {
+      timer = setTimeout(async () => {
+        if (aborted) return
+        try {
+          const res = await fetch('/api/auth/device/poll')
+          const data: { ok: boolean; terminal?: boolean; error?: string; redirect?: string } =
+            await res.json()
+          if (aborted) return
+          if (data.ok) {
+            setPhase('success')
+            const target = isSafeRedirect(data.redirect) ? data.redirect : '/'
+            window.location.href = target
+            return
+          }
+          if (data.terminal) {
+            setError(ERRORS[data.error ?? ''] ?? 'That sign-in did not complete. Try again.')
+            setPhase('error')
+            return
+          }
+        } catch {
+          // A dropped poll is usually transient — keep waiting rather than
+          // throwing the member back to the start.
         }
-        if (data.terminal) {
-          stop()
-          setError(MESSAGES[data.error ?? ''] ?? 'That login did not complete. Try again.')
+        poll(intervalMs)
+      }, intervalMs)
+    }
+
+    async function start() {
+      try {
+        const res = await fetch('/api/auth/device/start', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ redirect: initialRedirect.current }),
+        })
+        const data: StartResponse = await res.json()
+        if (aborted) return
+        if (!res.ok) {
+          setError(ERRORS[data.error ?? ''] ?? 'Could not start the TrustClub sign-in.')
           setPhase('error')
           return
         }
-        timer.current = setTimeout(() => poll(intervalMs), intervalMs)
+        setVerificationUri(data.verification_uri_complete)
+        setPhase('waiting')
+        // Poll only after start resolves: the first poll needs the device
+        // cookie that the start response sets, or it comes back `no_session`.
+        poll(Math.max(2, data.interval) * 1000)
       } catch {
-        // A dropped request mid-flow is usually transient; keep waiting rather
-        // than throwing the user back to the start.
-        timer.current = setTimeout(() => poll(intervalMs), intervalMs)
+        if (!aborted) {
+          setError('Could not reach the server. Check your connection.')
+          setPhase('error')
+        }
       }
-    },
-    [redirectTo, stop],
-  )
+    }
 
-  async function start() {
-    setPhase('starting')
-    setError(null)
-    try {
-      const res = await fetch('/api/auth/device/start', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ redirect: redirectTo }),
-      })
-      const data: StartResponse = await res.json()
-      if (!res.ok) {
-        setError(MESSAGES[data.error ?? ''] ?? 'Could not start the TrustClub login.')
-        setPhase('error')
+    start()
+    return () => {
+      aborted = true
+      if (timer) clearTimeout(timer)
+    }
+  }, [restartKey])
+
+  const downloadQr = useCallback(() => {
+    setDownloadError('')
+    const canvas = qrCanvasRef.current
+    if (!canvas) {
+      setDownloadError('Could not save the QR code.')
+      return
+    }
+    canvas.toBlob((blob) => {
+      if (!blob) {
+        setDownloadError('Could not save the QR code.')
         return
       }
-      setSession(data)
-      setPhase('waiting')
-      poll(Math.max(2, data.interval) * 1000)
-    } catch {
-      setError('Could not reach the server. Check your connection.')
-      setPhase('error')
-    }
-  }
+      const url = URL.createObjectURL(blob)
+      try {
+        const a = document.createElement('a')
+        a.href = url
+        a.download = 'kantolist-login-qr.png'
+        document.body.appendChild(a)
+        a.click()
+        document.body.removeChild(a)
+      } catch {
+        setDownloadError('Could not save the QR code.')
+      } finally {
+        URL.revokeObjectURL(url)
+      }
+    }, 'image/png')
+  }, [])
 
-  if (phase === 'waiting' && session) {
+  if (phase === 'starting') {
     return (
-      <Plate className="flex flex-col gap-4 p-5">
-        <p className="label m-0 text-[18px] text-muted">Waiting for TrustClub…</p>
-        <div className="border-[3px] border-ink bg-ground px-4 py-4 text-center">
-          <p className="label m-0 text-[15px] text-muted">Your code</p>
-          <p className="font-display m-0 mt-1 text-[42px] leading-none tracking-widest text-red">
-            {session.user_code}
-          </p>
-        </div>
-        <a
-          href={session.verification_uri_complete}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="font-display hard flex min-h-[54px] items-center justify-center border-[3px] border-ink bg-red text-[20px] uppercase text-ground hover:text-ground"
-        >
-          Open TrustClub
-        </a>
-        <p className="m-0 text-[13px] font-semibold leading-snug text-muted-2">
-          Approve the request in TrustClub and this page continues on its own. Keep it open.
-        </p>
+      <Plate className="p-6 text-center">
+        <p className="label m-0 text-[18px] text-muted">Preparing sign-in…</p>
       </Plate>
     )
   }
 
+  if (phase === 'success') {
+    return (
+      <Plate className="p-6 text-center">
+        <p className="font-display m-0 text-[22px] uppercase text-green">Signed in — taking you back…</p>
+      </Plate>
+    )
+  }
+
+  if (phase === 'error') {
+    return (
+      <div className="flex flex-col gap-3">
+        <p className="label m-0 border-[3px] border-ink bg-yellow px-3.5 py-2.5 text-[17px] text-ink">
+          {error}
+        </p>
+        <button
+          type="button"
+          onClick={() => setRestartKey((k) => k + 1)}
+          className="font-display hard min-h-[54px] border-[3px] border-ink bg-red text-[20px] uppercase text-ground"
+        >
+          Try again
+        </button>
+        {devLoginEnabled ? <DevLogin /> : null}
+      </div>
+    )
+  }
+
+  // Desktop: the member has their phone in hand, so a big QR is the whole UI.
+  if (!isMobile) {
+    return (
+      <div className="flex flex-col gap-3">
+        <Plate className="flex flex-col items-center gap-4 p-6">
+          {verificationUri ? (
+            <div className="border-[3px] border-ink bg-panel p-3">
+              <QRCodeSVG value={verificationUri} size={232} bgColor="#FFFFFF" fgColor="#17130E" />
+            </div>
+          ) : null}
+          <p className="label m-0 max-w-[19rem] text-center text-[18px] leading-snug">
+            Scan this with the TrustClub app on your phone
+          </p>
+          <p className="m-0 text-center text-[13px] font-semibold text-muted">
+            Keep this page open — it continues on its own once you approve.
+          </p>
+        </Plate>
+        {devLoginEnabled ? <DevLogin /> : null}
+      </div>
+    )
+  }
+
+  // Mobile: TrustClub is on this same device, so tapping through is the path.
+  // The QR stays as a fallback for showing someone else's phone.
   return (
     <div className="flex flex-col gap-3">
-      {error ? (
-        <p className="label m-0 border-[3px] border-ink bg-yellow px-3.5 py-2.5 text-[17px] text-ink">{error}</p>
-      ) : null}
+      <Plate className="flex flex-col items-center p-5">
+        {verificationUri ? (
+          <a
+            href={verificationUri}
+            className="font-display hard flex min-h-[56px] w-full items-center justify-center gap-3 border-[3px] border-ink bg-red text-[20px] uppercase text-ground hover:text-ground"
+          >
+            <Image
+              src="/TCLogo-IconOnly-StealthBlack-minpadding.png"
+              alt=""
+              width={22}
+              height={22}
+              className="shrink-0 invert"
+              aria-hidden
+            />
+            Connect with TrustClub
+          </a>
+        ) : null}
 
-      <button
-        type="button"
-        onClick={start}
-        disabled={phase === 'starting'}
-        className="font-display hard flex min-h-[56px] items-center justify-center border-[3px] border-ink bg-red text-[21px] uppercase text-ground disabled:opacity-60"
-      >
-        {phase === 'starting' ? 'Starting…' : 'Connect with TrustClub'}
-      </button>
+        <div className="my-5 flex w-full items-center gap-3">
+          <span className="h-[2px] flex-1 bg-dim-edge" />
+          <span className="label text-[14px] tracking-widest text-muted">or</span>
+          <span className="h-[2px] flex-1 bg-dim-edge" />
+        </div>
 
+        {verificationUri ? (
+          <div className="border-[3px] border-ink bg-panel p-2.5">
+            <QRCodeCanvas
+              ref={qrCanvasRef}
+              value={verificationUri}
+              size={150}
+              bgColor="#FFFFFF"
+              fgColor="#17130E"
+              className="block"
+            />
+          </div>
+        ) : null}
+
+        <p className="m-0 mt-3 max-w-[15rem] text-center text-[13px] font-semibold leading-snug text-muted">
+          Scan this from another phone, or save it to open later.
+        </p>
+
+        <button
+          type="button"
+          onClick={downloadQr}
+          className="label mt-3 inline-flex items-center gap-2 border-[2.5px] border-ink bg-ground px-3.5 py-2 text-[16px]"
+        >
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+            <polyline points="7 10 12 15 17 10" />
+            <line x1="12" y1="15" x2="12" y2="3" />
+          </svg>
+          Save QR code
+        </button>
+
+        {downloadError ? (
+          <p className="label m-0 mt-3 text-[15px] text-red">{downloadError}</p>
+        ) : null}
+      </Plate>
       {devLoginEnabled ? <DevLogin /> : null}
     </div>
   )
