@@ -6,7 +6,7 @@ import { SiteHeader } from '@/components/SiteHeader'
 import { SiteFooter } from '@/components/SiteFooter'
 import { ListingCard } from '@/components/ListingCard'
 import { SearchBar } from '@/components/SearchBar'
-import { FilterPanel } from '@/components/FilterPanel'
+import { FilterControls } from '@/components/FilterPanel'
 import { EmptyState, Plate } from '@/components/ui'
 import { searchListings, PAGE_SIZE, type SortKey } from '@/lib/search'
 import { listingPath } from '@/lib/listing'
@@ -95,7 +95,7 @@ export default async function BrowsePage({ searchParams }: { searchParams: Promi
 
       <div className="mx-auto flex w-full max-w-6xl flex-col gap-6 px-4 py-5 lg:flex-row lg:items-start">
         <aside className="lg:w-[288px] lg:shrink-0">
-          <FilterPanel
+          <FilterControls
             categories={categories}
             municipalities={municipalities}
             attributes={category ? parseSchema(category.attributeSchema) : []}
