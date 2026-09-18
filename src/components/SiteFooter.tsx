@@ -15,10 +15,11 @@ export function SiteFooter() {
             ))}
           </div>
         </div>
-        <div className="flex flex-wrap gap-4 text-sm font-semibold text-muted-2">
-          <Link href="/safety">Safety tips</Link>
-          <Link href="/terms">Terms</Link>
-          <Link href="/privacy">Privacy</Link>
+        {/* Thumb-sized: these were 20px tall, which is a miss on a phone. */}
+        <div className="-my-2 flex flex-wrap gap-x-5 text-sm font-semibold text-muted-2">
+          <Link href="/safety" className="flex min-h-[44px] items-center">Safety tips</Link>
+          <Link href="/terms" className="flex min-h-[44px] items-center">Terms</Link>
+          <Link href="/privacy" className="flex min-h-[44px] items-center">Privacy</Link>
         </div>
         <p className="m-0 text-xs text-muted">KantoList — built on TrustClub.</p>
       </div>

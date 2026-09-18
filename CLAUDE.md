@@ -71,6 +71,26 @@ Edit the category's `attributeSchema` in `scripts/seed.ts` (or the row). Do not
 add a column or a bespoke filter component — the form, the filter rail and the
 detail table all read the schema.
 
+### Mobile first, always
+
+Almost every user is on a mid-range Android phone on mobile data, held in one
+hand. That is the design target, not a breakpoint to degrade to. Every change
+is checked at **390px wide** before it is called done — a layout that only
+works once `lg:` kicks in is unfinished.
+
+What this means in practice:
+
+- Build the phone layout first and add `lg:` for the desktop widening, not the
+  reverse. `FilterPanel.tsx` is the worked example: a bottom sheet on a phone,
+  a rail on a desktop, from one component.
+- Anything tapped is at least 44px on its shortest side.
+- Never make a phone scroll past chrome to reach the content. Controls that are
+  not being used collapse to a row that says what they are set to.
+- Horizontal scroll at 390px is a bug. So is a price or a heading that clips
+  mid-word.
+- Screenshot it. `tsc` and `next build` cannot see a layout, and a rendered
+  page has caught things neither did.
+
 ## Design system
 
 "Signwriter" — tokens in `src/app/globals.css`, primitives in

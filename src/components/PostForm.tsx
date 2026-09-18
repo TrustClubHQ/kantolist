@@ -248,7 +248,7 @@ export function PostForm({
                 ))}
               </select>
             </div>
-            <label className="flex items-center gap-2.5">
+            <label className="flex min-h-[44px] items-center gap-2.5">
               <input
                 type="checkbox"
                 checked={negotiable}
@@ -367,7 +367,7 @@ function ChannelRow({
   onToggle: () => void
 }) {
   return (
-    <label className={`flex items-center gap-2.5 ${disabled && !alwaysOn ? 'opacity-60' : ''}`}>
+    <label className={`flex min-h-[44px] items-center gap-2.5 ${disabled && !alwaysOn ? 'opacity-60' : ''}`}>
       <input
         type="checkbox"
         checked={checked}
@@ -410,7 +410,7 @@ function AttributeInput({
 
   if (def.type === 'bool') {
     return (
-      <label className="flex items-center justify-between gap-3 sm:col-span-2">
+      <label className="flex min-h-[44px] items-center justify-between gap-3 sm:col-span-2">
         <span className="label text-[17px]">{def.label}</span>
         <input
           type="checkbox"

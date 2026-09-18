@@ -109,7 +109,7 @@ export function ReportQueue({ reports, status }: { reports: ReportRow[]; status:
                     type="button"
                     disabled={busy === r.id}
                     onClick={() => resolve(r.id, 'remove')}
-                    className="label border-[2.5px] border-ink bg-red px-3 py-1.5 text-[16px] text-ground disabled:opacity-60"
+                    className="label min-h-[44px] border-[2.5px] border-ink bg-red px-3 text-[16px] text-ground disabled:opacity-60"
                   >
                     Remove listing
                   </button>
@@ -117,7 +117,7 @@ export function ReportQueue({ reports, status }: { reports: ReportRow[]; status:
                     type="button"
                     disabled={busy === r.id}
                     onClick={() => resolve(r.id, 'dismiss')}
-                    className="label border-[2.5px] border-ink bg-ground px-3 py-1.5 text-[16px] disabled:opacity-60"
+                    className="label min-h-[44px] border-[2.5px] border-ink bg-ground px-3 text-[16px] disabled:opacity-60"
                   >
                     Dismiss
                   </button>

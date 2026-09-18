@@ -43,8 +43,16 @@ describe('expiryFor', () => {
 
 describe('formatPrice', () => {
   it('formats pesos with the unit', () => {
-    expect(formatPrice(450, 'PER_DAY')).toBe('₱450 / day')
+    expect(formatPrice(450, 'PER_DAY')).toBe('₱450\u00A0/\u00A0day')
     expect(formatPrice(52000, 'TOTAL')).toBe('₱52,000')
+  })
+
+  it('keeps the amount and its unit on one line', () => {
+    // A phone card is ~170px wide. Breaking after the slash would leave
+    // "₱450 /" on its own line, which reads as a flat price of ₱450.
+    const out = formatPrice(450, 'PER_DAY')
+    expect(out).toBe('₱450\u00A0/\u00A0day')
+    expect(out).not.toMatch(/ /) // no ordinary spaces to break at
   })
 
   it('never shows ₱0 for an absent price, which would read as free', () => {

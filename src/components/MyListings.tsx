@@ -83,7 +83,7 @@ export function MyListings({ listings }: { listings: Row[] }) {
             key={t.key}
             type="button"
             onClick={() => setTab(t.key)}
-            className={`label flex-1 border-[2.5px] border-ink py-2 text-[16px] ${
+            className={`label min-h-[44px] flex-1 border-[2.5px] border-ink text-[16px] ${
               tab === t.key ? 'bg-ink text-ground' : 'bg-panel text-ink'
             }`}
           >
@@ -207,7 +207,7 @@ function Action({
       type="button"
       disabled={busy}
       onClick={onClick}
-      className="label border-[2.5px] border-ink bg-ground px-3 py-1.5 text-[16px] disabled:opacity-60"
+      className="label flex min-h-[44px] items-center justify-center border-[2.5px] border-ink bg-ground px-3 text-[16px] disabled:opacity-60"
     >
       {children}
     </button>

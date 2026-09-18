@@ -93,7 +93,7 @@ export default async function BrowsePage({ searchParams }: { searchParams: Promi
         </div>
       </div>
 
-      <div className="mx-auto flex w-full max-w-6xl flex-col gap-6 px-4 py-5 lg:flex-row lg:items-start">
+      <div className="mx-auto flex w-full max-w-6xl flex-col gap-4 px-3 py-4 sm:px-4 lg:flex-row lg:items-start lg:gap-6 lg:py-5">
         <aside className="lg:w-[288px] lg:shrink-0">
           <FilterControls
             categories={categories}
@@ -112,7 +112,7 @@ export default async function BrowsePage({ searchParams }: { searchParams: Promi
                 {result.trustRanked ? ' · ranked by your TrustClub network' : ''}
               </p>
             </div>
-            <div className="flex flex-wrap gap-2">
+            <div className="-mx-3 flex gap-2 overflow-x-auto px-3 pb-1 sm:mx-0 sm:flex-wrap sm:overflow-visible sm:px-0">
               {SORTS.map((s) => {
                 const active = (sort ?? (account ? 'trust' : 'newest')) === s.key
                 const disabled = s.key === 'trust' && !account
@@ -120,7 +120,7 @@ export default async function BrowsePage({ searchParams }: { searchParams: Promi
                   <span
                     key={s.key}
                     title="Log in to rank by your own trust network"
-                    className="label border-[2.5px] border-dim-edge bg-dim px-3 py-1.5 text-[16px] text-muted"
+                    className="label flex min-h-[40px] shrink-0 items-center whitespace-nowrap border-[2.5px] border-dim-edge bg-dim px-3 text-[16px] text-muted"
                   >
                     {s.label}
                   </span>
@@ -128,7 +128,7 @@ export default async function BrowsePage({ searchParams }: { searchParams: Promi
                   <Link
                     key={s.key}
                     href={withParam('sort', s.key)}
-                    className={`label border-[2.5px] border-ink px-3 py-1.5 text-[16px] ${
+                    className={`label flex min-h-[40px] shrink-0 items-center whitespace-nowrap border-[2.5px] border-ink px-3 text-[16px] ${
                       active ? 'bg-yellow text-ink' : 'bg-panel text-ink'
                     }`}
                   >
@@ -153,7 +153,7 @@ export default async function BrowsePage({ searchParams }: { searchParams: Promi
               Try widening the price range, or turning on nearby towns.
             </EmptyState>
           ) : (
-            <div className="grid grid-cols-2 gap-4 md:grid-cols-3">
+            <div className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-3">
               {result.items.map(({ listing, trustPoints }) => (
                 <ListingCard
                   key={listing.id}
@@ -181,7 +181,7 @@ export default async function BrowsePage({ searchParams }: { searchParams: Promi
           {totalPages > 1 ? (
             <nav className="mt-6 flex items-center justify-between gap-3">
               {page > 1 ? (
-                <Link href={withParam('page', String(page - 1))} className="label border-[3px] border-ink bg-panel px-4 py-2.5 text-[17px]">
+                <Link href={withParam('page', String(page - 1))} className="label flex min-h-[48px] items-center border-[3px] border-ink bg-panel px-4 text-[17px]">
                   Previous
                 </Link>
               ) : (
@@ -191,7 +191,7 @@ export default async function BrowsePage({ searchParams }: { searchParams: Promi
                 Page {page} of {totalPages}
               </span>
               {page < totalPages ? (
-                <Link href={withParam('page', String(page + 1))} className="label border-[3px] border-ink bg-panel px-4 py-2.5 text-[17px]">
+                <Link href={withParam('page', String(page + 1))} className="label flex min-h-[48px] items-center border-[3px] border-ink bg-panel px-4 text-[17px]">
                   Next
                 </Link>
               ) : (

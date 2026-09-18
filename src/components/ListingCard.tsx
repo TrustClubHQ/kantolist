@@ -65,14 +65,26 @@ export function ListingCard({ listing, layout = 'grid' }: { listing: ListingCard
           {badgeText}
         </Badge>
       </div>
-      <div className="flex flex-col gap-1.5 px-3 pb-3 pt-2.5">
-        <Price size="sm">
-          {formatPrice(listing.price, listing.priceUnit)}
+      <div className="flex flex-col gap-1.5 px-2.5 pb-2.5 pt-2 sm:px-3 sm:pb-3 sm:pt-2.5">
+        {/* Two items, not one string: the amount and its unit are bound by
+            non-breaking spaces, so "negotiable" needs its own wrap opportunity
+            or the whole line is one unbreakable token and clips on a phone. */}
+        <div className="flex flex-wrap items-baseline gap-x-1.5">
+          <Price size="sm">{formatPrice(listing.price, listing.priceUnit)}</Price>
           {listing.negotiable ? (
-            <span className="font-cond ml-1 text-[14px] font-semibold text-muted-2">negotiable</span>
+            // "neg." on a phone — the long form pushed itself onto its own
+            // line on most cards, and it is how a PH classified writes it.
+            <span className="font-cond text-[13px] font-semibold text-muted-2 sm:text-[14px]">
+              <span className="sm:hidden">neg.</span>
+              <span className="hidden sm:inline">negotiable</span>
+            </span>
           ) : null}
-        </Price>
-        <span className="label line-clamp-2 min-h-[38px] text-[17px]">{listing.title}</span>
+        </div>
+        {/* 16px on a phone: the grid column is ~170px, and 17px clipped most
+            titles mid-word inside two lines. */}
+        <span className="label line-clamp-2 min-h-[36px] text-[16px] sm:min-h-[38px] sm:text-[17px]">
+          {listing.title}
+        </span>
         {listing.signedIn ? (
           <TrustPoints points={listing.trustPoints} via={listing.via} isOwn={listing.isOwn} />
         ) : null}

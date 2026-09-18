@@ -293,7 +293,7 @@ function FilterPanel({
                 </option>
               ))}
             </select>
-            <label className="flex items-center gap-2">
+            <label className="flex min-h-[44px] items-center gap-2">
               <input
                 type="checkbox"
                 checked={draft.nearby === 'true'}
@@ -431,7 +431,7 @@ function AttributeFilter({
   // more chrome than control, so it stays inline.
   if (attr.type === 'bool') {
     return (
-      <label className="flex items-center justify-between gap-3">
+      <label className="flex min-h-[44px] items-center justify-between gap-3">
         <span className="label text-[16px]">{attr.label}</span>
         <input
           type="checkbox"

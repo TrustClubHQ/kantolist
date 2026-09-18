@@ -84,7 +84,13 @@ export default async function ListingPage({ params }: Params) {
     <div className="flex min-h-screen flex-col">
       <SiteHeader />
 
-      <div className="relative h-[262px] border-b-4 border-ink bg-dim">
+      {/* A real photo earns the height; a category glyph on grey does not, and
+          at 262px it pushed the price and location below the fold on a phone. */}
+      <div
+        className={`relative border-b-4 border-ink bg-dim ${
+          listing.images[0] ? 'h-[262px]' : 'h-[124px]'
+        }`}
+      >
         {listing.images[0] ? (
           <Image
             src={listing.images[0].url}
@@ -108,7 +114,7 @@ export default async function ListingPage({ params }: Params) {
         ) : null}
       </div>
 
-      <main className="mx-auto w-full max-w-3xl px-4 pb-28 pt-4">
+      <main className="mx-auto w-full max-w-3xl px-3 pb-28 pt-4 sm:px-4">
         <div className="flex flex-col gap-2.5">
           <div className="flex flex-wrap items-center gap-2">
             <Badge tone={listing.status === 'RESERVED' ? 'ink' : 'yellow'}>
@@ -116,13 +122,16 @@ export default async function ListingPage({ params }: Params) {
             </Badge>
             {closed ? <Badge tone="dim">No longer available</Badge> : null}
             {listing.category.parent ? (
-              <Link href={`/browse?category=${listing.category.slug}`} className="label text-[15px] text-muted">
+              <Link
+                href={`/browse?category=${listing.category.slug}`}
+                className="label flex min-h-[44px] items-center text-[15px] text-muted"
+              >
                 {listing.category.parent.name} › {listing.category.name}
               </Link>
             ) : null}
           </div>
 
-          <h1 className="font-display m-0 text-[31px] uppercase leading-none">{listing.title}</h1>
+          <h1 className="font-display m-0 text-[27px] uppercase leading-none sm:text-[31px]">{listing.title}</h1>
 
           <div className="flex flex-wrap items-baseline gap-2.5">
             <Price size="lg">{formatPrice(listing.price === null ? null : Number(listing.price), listing.priceUnit)}</Price>
@@ -158,12 +167,12 @@ export default async function ListingPage({ params }: Params) {
             {account ? (
               <TrustPointsPanel points={trustPoints} isOwn={isOwner} />
             ) : (
-              <div className="border-[3px] border-dim-edge bg-dim px-3 py-3">
-                <p className="label m-0 text-[19px] text-muted-2">Log in to see your connection</p>
-                <p className="m-0 mt-1 text-[13px] font-semibold leading-snug text-muted-2">
-                  KantoList can show how strongly your own TrustClub network vouches for this member.
-                </p>
-              </div>
+              <Link
+                href="/signin"
+                className="label hard-sm flex min-h-[48px] items-center justify-center border-[3px] border-ink bg-yellow px-3 text-center text-[16px] leading-tight text-ink"
+              >
+                Connect with TrustClub to see the Trust Points of this member
+              </Link>
             )}
           </Plate>
         </section>

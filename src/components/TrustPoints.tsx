@@ -143,7 +143,7 @@ export function TrustClubLink({ trustclubId, className = '' }: { trustclubId: st
       href={`https://trustclub.app/profile/${encodeURIComponent(trustclubId)}`}
       target="_blank"
       rel="noopener noreferrer"
-      className={`inline-flex items-center gap-1.5 text-muted hover:text-red ${className}`}
+      className={`inline-flex min-h-[40px] items-center gap-1.5 text-muted hover:text-red ${className}`}
     >
       <Image src="/TCLogo-IconOnly-StealthBlack-minpadding.png" alt="TrustClub" width={13} height={13} />
       <span className="label text-[15px]">@{trustclubId}</span>

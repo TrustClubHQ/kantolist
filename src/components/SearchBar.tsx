@@ -31,7 +31,7 @@ export function SearchBar({ defaultValue = '' }: { defaultValue?: string }) {
           onChange={(e) => setQ(e.target.value)}
           placeholder="Motorcycle, videoke, mechanic…"
           aria-label="Search listings"
-          className="label !min-h-0 !border-0 !bg-transparent !px-0 text-[18px] placeholder:text-muted"
+          className="label !min-h-[46px] !border-0 !bg-transparent !px-0 text-[18px] placeholder:text-muted"
         />
       </div>
       <button

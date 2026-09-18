@@ -19,7 +19,10 @@ export function ReportLink({ listingId, signedIn }: { listingId: string; signedI
 
   if (!signedIn) {
     return (
-      <Link href="/signin" className="label text-[16px] text-muted hover:text-red">
+      <Link
+        href="/signin"
+        className="label flex min-h-[44px] items-center justify-center text-[16px] text-muted hover:text-red"
+      >
         Log in to report this listing
       </Link>
     )
@@ -46,7 +49,11 @@ export function ReportLink({ listingId, signedIn }: { listingId: string; signedI
 
   return (
     <div className="flex flex-col items-center gap-2">
-      <button type="button" onClick={() => setOpen((o) => !o)} className="label text-[16px] text-muted hover:text-red">
+      <button
+        type="button"
+        onClick={() => setOpen((o) => !o)}
+        className="label flex min-h-[44px] items-center text-[16px] text-muted hover:text-red"
+      >
         Report this listing
       </button>
       {open ? (
@@ -57,7 +64,7 @@ export function ReportLink({ listingId, signedIn }: { listingId: string; signedI
               type="button"
               disabled={busy}
               onClick={() => send(r.key)}
-              className="label border-[2.5px] border-ink bg-ground px-2.5 py-1 text-[15px] disabled:opacity-60"
+              className="label min-h-[44px] border-[2.5px] border-ink bg-ground px-2.5 text-[15px] disabled:opacity-60"
             >
               {r.label}
             </button>

@@ -9,13 +9,15 @@ import { SIBLING_MARKETS } from '@/lib/markets'
 export function MarketSwitcher() {
   return (
     <details className="relative">
-      <summary className="label hard-sm inline-flex cursor-pointer list-none items-center gap-1.5 border-2 border-ink bg-yellow px-2.5 py-1 text-[15px] text-ink">
+      <summary className="label hard-sm inline-flex min-h-[38px] cursor-pointer list-none items-center gap-1.5 border-2 border-ink bg-yellow px-2.5 text-[15px] text-ink">
         Goods
         <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#17130E" strokeWidth="3.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
           <path d="M6 9l6 6 6-6" />
         </svg>
       </summary>
-      <div className="hard absolute left-0 top-full z-20 mt-2 w-60 border-[3px] border-ink bg-panel p-1.5">
+      {/* Anchored right on a phone: left-0 put its 240px off the screen edge,
+          because the summary sits well into the bar once the wordmark is there. */}
+      <div className="hard absolute right-0 top-full z-20 mt-2 w-60 border-[3px] border-ink bg-panel p-1.5 sm:left-0 sm:right-auto">
         <p className="label px-2 py-1 text-[14px] text-muted">Kanto markets</p>
         <span className="label block bg-yellow px-2 py-1.5 text-[16px] text-ink">
           KantoList — goods

@@ -11,28 +11,40 @@ export async function SiteHeader({ location }: { location?: string }) {
 
   return (
     <header className="border-b-4 border-ink bg-red">
-      <div className="mx-auto flex max-w-6xl flex-wrap items-center gap-3 px-4 py-3">
-        <Link href="/" className="flex items-center gap-2.5 text-ground hover:text-ground">
+      {/* One row at 390px. It used to wrap, which spent a whole band of the
+          signboard on a "Log in" button sitting alone. */}
+      <div className="mx-auto flex max-w-6xl items-center gap-2 px-3 py-2.5 sm:gap-3 sm:px-4 sm:py-3">
+        <Link href="/" className="flex min-h-[44px] shrink-0 items-center gap-1.5 text-ground hover:text-ground sm:gap-2.5">
           <KaritonMark />
-          <span className="font-display text-[24px] uppercase leading-none">
+          <span className="font-display text-[20px] uppercase leading-none sm:text-[24px]">
             Kanto<span className="text-yellow">List</span>
           </span>
         </Link>
 
-        <MarketSwitcher />
+        <div className="hidden sm:block">
+          <MarketSwitcher />
+        </div>
 
         {location ? (
           <span className="label hidden text-[15px] text-[#FFD9A0] sm:inline">{location}</span>
         ) : null}
 
-        <div className="ml-auto flex items-center gap-3">
+        <div className="ml-auto flex shrink-0 items-center gap-1.5 sm:gap-3">
           {account ? (
             <>
-              <Link href="/me/listings" className="label text-[16px] text-ground hover:text-yellow">
-                My listings
+              {/* "My listings" is two words too many for a 390px bar. */}
+              <Link
+                href="/me/listings"
+                className="label flex min-h-[44px] items-center px-1 text-[16px] text-ground hover:text-yellow"
+              >
+                <span className="sm:hidden">Mine</span>
+                <span className="hidden sm:inline">My listings</span>
               </Link>
               {account.isStaff ? (
-                <Link href="/admin/reports" className="label text-[16px] text-ground hover:text-yellow">
+                <Link
+                  href="/admin/reports"
+                  className="label hidden min-h-[44px] items-center text-[16px] text-ground hover:text-yellow sm:flex"
+                >
                   Reports
                 </Link>
               ) : null}
@@ -40,17 +52,20 @@ export async function SiteHeader({ location }: { location?: string }) {
           ) : (
             <Link
               href="/signin"
-              className="label border-2 border-ground px-2.5 py-1 text-[15px] text-ground hover:bg-ground hover:text-red"
+              className="label flex min-h-[44px] items-center border-2 border-ground px-2.5 text-[15px] text-ground hover:bg-ground hover:text-red"
             >
               Log in
             </Link>
           )}
+          {/* Posting is the point of the site, so the button is on every screen
+              size — it used to be sm: and up, which hid it from most users. */}
           <Link
             href="/post"
-            className="label hard-sm hidden items-center gap-1.5 border-[3px] border-ink bg-yellow px-3 py-1.5 text-[16px] text-ink sm:inline-flex"
+            aria-label="Post a listing"
+            className="label hard-sm flex min-h-[44px] min-w-[44px] items-center justify-center gap-1.5 border-[3px] border-ink bg-yellow px-2.5 text-[16px] text-ink sm:px-3"
           >
             <PlusIcon />
-            Post
+            <span className="hidden sm:inline">Post</span>
           </Link>
         </div>
       </div>
@@ -60,7 +75,7 @@ export async function SiteHeader({ location }: { location?: string }) {
 
 function KaritonMark() {
   return (
-    <svg width="30" height="30" viewBox="0 0 32 32" fill="none" aria-hidden="true">
+    <svg width="26" height="26" viewBox="0 0 32 32" fill="none" aria-hidden="true" className="sm:h-[30px] sm:w-[30px]">
       <rect x="3" y="9" width="20" height="12" fill="#F2B01E" stroke="#17130E" strokeWidth="2.5" />
       <circle cx="9" cy="24" r="3.5" fill="#FFF4D6" stroke="#17130E" strokeWidth="2.5" />
       <circle cx="19" cy="24" r="3.5" fill="#FFF4D6" stroke="#17130E" strokeWidth="2.5" />

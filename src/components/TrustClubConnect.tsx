@@ -317,7 +317,7 @@ function DevLogin() {
             key={a.trustclubId}
             type="button"
             onClick={() => signIn(a.trustclubId)}
-            className="label border-2 border-ink bg-ground px-2.5 py-1 text-[15px]"
+            className="label min-h-[44px] border-2 border-ink bg-ground px-2.5 text-[15px]"
           >
             {a.displayName ?? a.trustclubId}
           </button>

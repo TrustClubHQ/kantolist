@@ -73,7 +73,13 @@ export function Price({
   size?: 'sm' | 'md' | 'lg'
   className?: string
 }) {
-  const sizes = { sm: 'text-[22px]', md: 'text-[27px]', lg: 'text-[38px]' }
+  // Card prices step down on a phone: a ~170px column cannot hold
+  // "₱1,550 / month" at 22px alongside anything else.
+  const sizes = {
+    sm: 'text-[20px] sm:text-[22px]',
+    md: 'text-[24px] sm:text-[27px]',
+    lg: 'text-[32px] sm:text-[38px]',
+  }
   return (
     <span className={`font-display leading-none text-red ${sizes[size]} ${className}`}>{children}</span>
   )
@@ -91,7 +97,7 @@ export function Chip({
 } & React.HTMLAttributes<HTMLElement>) {
   return (
     <As
-      className={`label cursor-pointer border-[2.5px] border-ink px-3 py-1.5 text-[16px] ${
+      className={`label inline-flex min-h-[44px] cursor-pointer items-center justify-center border-[2.5px] border-ink px-3 text-[16px] ${
         selected ? 'bg-yellow text-ink' : 'bg-panel text-ink'
       }`}
       {...rest}

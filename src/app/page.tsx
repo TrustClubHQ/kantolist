@@ -33,9 +33,9 @@ export default async function HomePage() {
     <div className="flex min-h-screen flex-col">
       <SiteHeader location={home ? `${home.name}, ${home.province}` : undefined} />
 
-      <section className="border-b-4 border-ink bg-ground px-4 py-6">
+      <section className="border-b-4 border-ink bg-ground px-3 py-5 sm:px-4 sm:py-6">
         <div className="mx-auto max-w-6xl">
-          <h1 className="font-display m-0 text-[40px] uppercase leading-[0.94] sm:text-[52px]">
+          <h1 className="font-display m-0 text-[34px] uppercase leading-[0.94] sm:text-[52px]">
             Buy, rent,
             <br />
             get it fixed —
@@ -53,7 +53,7 @@ export default async function HomePage() {
         </div>
       </section>
 
-      <section className="mx-auto w-full max-w-6xl px-4 py-6">
+      <section className="mx-auto w-full max-w-6xl px-3 py-5 sm:px-4 sm:py-6">
         <h2 className="label m-0 mb-3 text-[20px]">Browse by category</h2>
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
           {categories.map((c) => (
@@ -68,12 +68,12 @@ export default async function HomePage() {
         </div>
       </section>
 
-      <section className="mx-auto w-full max-w-6xl px-4 pb-6">
+      <section className="mx-auto w-full max-w-6xl px-3 pb-5 sm:px-4 sm:pb-6">
         <div className="mb-3 flex items-baseline justify-between gap-3">
           <h2 className="label m-0 text-[20px]">
             {result.trustRanked ? 'Trusted by your network' : 'Newest in your area'}
           </h2>
-          <Link href="/browse" className="label text-[16px] text-red">
+          <Link href="/browse" className="label -my-2 flex min-h-[44px] items-center text-[16px] text-red">
             See all
           </Link>
         </div>
@@ -86,7 +86,7 @@ export default async function HomePage() {
             </p>
           </Plate>
         ) : (
-          <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4">
+          <div className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-3 lg:grid-cols-4">
             {featured.map(({ listing, trustPoints }) => (
               <ListingCard
                 key={listing.id}
@@ -113,7 +113,7 @@ export default async function HomePage() {
       </section>
 
       {!account ? (
-        <section className="mx-auto w-full max-w-6xl px-4 pb-6">
+        <section className="mx-auto w-full max-w-6xl px-3 pb-5 sm:px-4 sm:pb-6">
           <Plate className="flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <p className="label m-0 text-[20px]">See who you can trust</p>
@@ -131,7 +131,7 @@ export default async function HomePage() {
         </section>
       ) : null}
 
-      <section className="mx-auto w-full max-w-6xl px-4 pb-8">
+      <section className="mx-auto w-full max-w-6xl px-3 pb-8 sm:px-4">
         <SafetyNote>
           Meet in a public place and inspect before you pay. KantoList handles no payment and no
           delivery — never send a deposit to someone you have no trust path to.

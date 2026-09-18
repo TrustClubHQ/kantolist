@@ -40,11 +40,13 @@ export const PRICE_UNITS_FOR_TYPE: Record<ListingType, PriceUnit[]> = {
 
 export const PRICE_UNIT_LABEL: Record<PriceUnit, string> = {
   TOTAL: '',
-  PER_HOUR: '/ hour',
-  PER_DAY: '/ day',
-  PER_WEEK: '/ week',
-  PER_MONTH: '/ month',
-  PER_JOB: '/ job',
+  // Non-breaking after the slash: a narrow card must not break "₱450 / day"
+  // into "₱450 /" and "day", which reads as a flat ₱450.
+  PER_HOUR: '/\u00A0hour',
+  PER_DAY: '/\u00A0day',
+  PER_WEEK: '/\u00A0week',
+  PER_MONTH: '/\u00A0month',
+  PER_JOB: '/\u00A0job',
   QUOTE: 'ask for a quote',
 }
 
@@ -62,7 +64,7 @@ export function formatPrice(price: number | null | undefined, unit: PriceUnit | 
   if (price === null || price === undefined) return 'Ask'
   const amount = '₱' + Number(price).toLocaleString('en-PH', { maximumFractionDigits: 0 })
   const suffix = unit ? PRICE_UNIT_LABEL[unit] : ''
-  return suffix ? `${amount} ${suffix}` : amount
+  return suffix ? `${amount}\u00A0${suffix}` : amount
 }
 
 export function listingPath(code: string, slug: string): string {
