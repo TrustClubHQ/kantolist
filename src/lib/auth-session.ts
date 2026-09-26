@@ -6,6 +6,7 @@ const MAX_SESSION_TTL_SECONDS = 600
 export interface CreateInput {
   deviceCode: string
   userCode: string
+  verificationUri: string | null
   interval: number
   expiresInSeconds: number
   clientId: string
@@ -19,6 +20,7 @@ export async function createAuthSession(input: CreateInput): Promise<AuthSession
     data: {
       deviceCode: input.deviceCode,
       userCode: input.userCode,
+      verificationUri: input.verificationUri,
       interval: input.interval,
       expiresAt: new Date(Date.now() + ttl * 1000),
       clientId: input.clientId,

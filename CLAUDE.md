@@ -112,6 +112,20 @@ ALLOW_DESTRUCTIVE_SEED=1 npm run seed
 sign-in page. `juan.santos` has a pre-warmed trust cache, so trust ranking is
 visible without reaching the TrustClub API.
 
+### Testing the TrustClub sign-in locally
+
+There are no TrustClub credentials in dev, so the device grant cannot be
+exercised against the real issuer. `npm run mock-trustclub` serves one on
+:9099 with test controls for approving, expiring, and inspecting codes — see
+the header of `scripts/mock-trustclub.mjs`. Point the three `TRUSTCLUB_AUTH_*`
+vars in `.env` at it.
+
+Use it for any change to the sign-in flow. The bug it was written to catch —
+a returning tab minting a second device code and orphaning the approval the
+member had just given — is invisible to types, tests and a single page load.
+The cases worth re-running: approve with the page open; approve then reload
+the tab; let the code expire; clear the cookie mid-poll.
+
 ## Memories
 
 - When you learn something about this repo's dev process, add it here.

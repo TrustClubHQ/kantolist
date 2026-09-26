@@ -30,15 +30,23 @@ interface StartResponse {
   error?: string
 }
 
+/**
+ * Terminal codes that just mean "this code is no longer usable" — the member
+ * did nothing wrong and there is nothing for them to decide. We fetch a fresh
+ * one instead of showing them an error, once per mount so a genuinely broken
+ * upstream still surfaces rather than looping.
+ */
+const RECOVERABLE = new Set(['expired_token', 'no_session'])
+
 const ERRORS: Record<string, string> = {
   access_denied: 'That request was declined in TrustClub.',
-  expired_token: 'The sign-in expired. Try again.',
+  expired_token: 'That sign-in window closed before it was approved.',
   invalid_grant: 'That sign-in did not go through. Try again.',
   invalid_client: 'TrustClub sign-in is misconfigured on this deployment.',
   unsupported_grant_type: 'TrustClub sign-in is misconfigured on this deployment.',
   not_configured: 'TrustClub sign-in is not set up on this deployment yet.',
   verify_failed: 'We could not verify that sign-in. Try again.',
-  no_session: 'The sign-in expired. Try again.',
+  no_session: 'That sign-in window closed before it was approved.',
   network_error: 'Could not reach TrustClub. Check your connection.',
   timeout: 'TrustClub took too long to answer. Try again.',
 }
@@ -58,6 +66,9 @@ export function TrustClubConnect({
   // again" needs — a reload would lose the redirect we were sent with.
   const [restartKey, setRestartKey] = useState(0)
   const qrCanvasRef = useRef<HTMLCanvasElement>(null)
+  // Survives the effect re-run that a restart causes, so one dead code is
+  // replaced silently and a second one is reported.
+  const autoRenewedRef = useRef(false)
   const isMobile = useIsMobile()
 
   // Captured once so a parent re-render with a new redirect cannot tear the
@@ -87,6 +98,11 @@ export function TrustClubConnect({
             return
           }
           if (data.terminal) {
+            if (RECOVERABLE.has(data.error ?? '') && !autoRenewedRef.current) {
+              autoRenewedRef.current = true
+              setRestartKey((k) => k + 1)
+              return
+            }
             setError(ERRORS[data.error ?? ''] ?? 'That sign-in did not complete. Try again.')
             setPhase('error')
             return
@@ -185,7 +201,10 @@ export function TrustClubConnect({
         </p>
         <button
           type="button"
-          onClick={() => setRestartKey((k) => k + 1)}
+          onClick={() => {
+            autoRenewedRef.current = false
+            setRestartKey((k) => k + 1)
+          }}
           className="font-display hard min-h-[54px] border-[3px] border-ink bg-red text-[20px] uppercase text-ground"
         >
           Try again

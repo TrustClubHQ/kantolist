@@ -23,10 +23,9 @@ export default async function SignInPage({
           Log in with <span className="text-red">TrustClub</span>
         </h1>
         <p className="mt-2 text-[15px] font-semibold leading-snug text-muted-2">
-          KantoList has no password of its own. Your TrustClub account is what puts the people your
-          network vouches for at the top of every list.
+          No password. Your network decides what you see first.
         </p>
-        <div className="mt-5">
+        <div className="mt-4">
           <TrustClubConnect redirectTo={target} devLoginEnabled={isDevLoginEnabled()} />
         </div>
       </main>

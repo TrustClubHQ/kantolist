@@ -16,7 +16,8 @@
     "postinstall": "prisma generate",
     "seed:reference": "tsx --env-file-if-exists=.env scripts/seed.ts --reference-only",
     "seed:demo": "tsx --env-file-if-exists=.env scripts/seed-demo.ts",
-    "photo-credits": "tsx scripts/photo-credits.ts"
+    "photo-credits": "tsx scripts/photo-credits.ts",
+    "mock-trustclub": "node scripts/mock-trustclub.mjs"
   },
   "dependencies": {
     "@prisma/client": "^6.13.0",

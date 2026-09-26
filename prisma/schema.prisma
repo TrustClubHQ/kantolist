@@ -238,6 +238,9 @@ model AuthSession {
   id           String    @id @default(cuid())
   deviceCode   String    @unique @map("device_code")
   userCode     String    @map("user_code")
+  // Kept so a returning tab can resume this authorization instead of minting
+  // a new device code and orphaning one the member already approved.
+  verificationUri String? @map("verification_uri")
   interval     Int
   expiresAt    DateTime  @map("expires_at")
   lastPollAt   DateTime? @map("last_poll_at")
