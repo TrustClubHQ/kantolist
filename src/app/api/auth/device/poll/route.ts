@@ -17,11 +17,13 @@ export const GET = withApiHandler(async (request: NextRequest) => {
 
   const session = await findActiveSession(sessionId)
   if (!session) {
-    // Logged because the browser cannot tell these apart, and the difference
-    // — a row that timed out versus one that was never written — is the whole
-    // diagnosis when sign-in keeps failing on a deployment.
+    // Its own code, not `expired_token`. Three different failures used to
+    // reach the member as one sentence — no cookie, no row on our side, and
+    // TrustClub itself rejecting the device code — which made a report of
+    // "it says the sign-in expired" impossible to act on. They are now
+    // distinguishable from the outside, without exposing anything internal.
     logger.error('[auth/device/poll] cookie points at no active session')
-    return clearDeviceCookie(NextResponse.json({ ok: false, terminal: true, error: 'expired_token' }))
+    return clearDeviceCookie(NextResponse.json({ ok: false, terminal: true, error: 'session_gone' }))
   }
 
   const creds = getClientCreds()
@@ -65,12 +67,19 @@ export const GET = withApiHandler(async (request: NextRequest) => {
 
   const account = await upsertAccount(claims.sub, claims.name)
 
+  // Mint the token BEFORE invalidating the grant. Deleting first meant any
+  // failure here — a missing AUTH_SECRET, say — threw after the session row
+  // was already gone, so the 500 was followed by a poll that found nothing and
+  // told the member their sign-in had expired. Build the whole response first;
+  // only then throw the grant away.
+  const token = createToken(account.id, account.trustclubId)
+
   // Invalidate the device grant before responding, so a partial response can
   // never leave a usable device code behind.
   await deleteSession(session.id)
 
   const redirect = isSafeRedirect(session.redirectPath) ? session.redirectPath : '/'
   const res = NextResponse.json({ ok: true, redirect })
-  setAuthCookie(res, createToken(account.id, account.trustclubId))
+  setAuthCookie(res, token)
   return clearDeviceCookie(res)
 })

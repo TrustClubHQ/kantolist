@@ -22,8 +22,16 @@ export function withApiHandler<A extends unknown[]>(
       } catch {
         /* keep the raw url */
       }
-      logger.error(`[api] ${req?.method ?? ''} ${path} failed`, error)
-      return NextResponse.json({ error: errorMessage }, { status: 500 })
+      // The same id goes to the log and to the caller, so a 500 seen in a
+      // browser can be found in the platform logs by searching for one string.
+      // "There are no logs for this request" is otherwise impossible to tell
+      // apart from "the logs are not being read in the right place".
+      const errorId = Math.random().toString(36).slice(2, 10)
+      logger.error(
+        `[api] ${req?.method ?? ''} ${path} failed (id ${errorId})`,
+        error instanceof Error ? { name: error.name, message: error.message, stack: error.stack } : error,
+      )
+      return NextResponse.json({ error: errorMessage, errorId }, { status: 500 })
     }
   }
 }

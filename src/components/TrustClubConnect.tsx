@@ -30,15 +30,22 @@ interface StartResponse {
   error?: string
 }
 
+/**
+ * One sentence per cause. Three of these used to read "that sign-in window
+ * closed" — TrustClub rejecting the code, this server having no record of it,
+ * and the browser not sending the cookie back — which made every report of the
+ * failure identical and none of them actionable.
+ */
 const ERRORS: Record<string, string> = {
   access_denied: 'That request was declined in TrustClub.',
-  expired_token: 'That sign-in window closed before it was approved.',
+  expired_token: 'TrustClub says that code has expired. Get a new one.',
+  session_gone: 'This site lost track of that sign-in before it finished.',
+  no_session: 'Your browser did not send the sign-in back to us.',
   invalid_grant: 'That sign-in did not go through. Try again.',
   invalid_client: 'TrustClub sign-in is misconfigured on this deployment.',
   unsupported_grant_type: 'TrustClub sign-in is misconfigured on this deployment.',
-  not_configured: 'TrustClub sign-in is not set up on this deployment yet.',
+  not_configured: 'Sign-in is not fully set up on this deployment yet.',
   verify_failed: 'We could not verify that sign-in. Try again.',
-  no_session: 'That sign-in window closed before it was approved.',
   network_error: 'Could not reach TrustClub. Check your connection.',
   timeout: 'TrustClub took too long to answer. Try again.',
 }

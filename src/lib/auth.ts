@@ -20,6 +20,19 @@ function secret(): string {
   return s
 }
 
+/**
+ * Whether this deployment can issue a session at all.
+ *
+ * Asked before a sign-in starts rather than discovered when it finishes: an
+ * environment missing AUTH_SECRET used to show a QR, take the member through
+ * TrustClub, and only then throw while minting the token — a 500 on the poll,
+ * followed by a "that sign-in window closed" message that blamed the timing
+ * for a configuration problem.
+ */
+export function canIssueSessions(): boolean {
+  return Boolean(process.env.AUTH_SECRET)
+}
+
 export function createToken(accountId: string, trustclubId: string): string {
   return jwt.sign({ accountId, trustclubId }, secret(), { expiresIn: TOKEN_TTL })
 }

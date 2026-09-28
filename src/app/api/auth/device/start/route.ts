@@ -2,6 +2,7 @@ import { randomBytes } from 'node:crypto'
 import { NextRequest, NextResponse } from 'next/server'
 import { requestDeviceAuthorization, OidcError, getClientCreds } from '@/lib/trustclub-oidc'
 import { createAuthSession, findActiveSession } from '@/lib/auth-session'
+import { canIssueSessions } from '@/lib/auth'
 import { resumePayload } from '@/lib/device-resume'
 import { isSameOriginPost, isSafeRedirect } from '@/lib/http'
 import { withApiHandler } from '@/lib/api'
@@ -14,6 +15,13 @@ export const POST = withApiHandler(async (request: NextRequest) => {
   const body: { redirect?: string } = await request.json().catch(() => ({}))
   const creds = getClientCreds()
   if (!creds) return NextResponse.json({ error: 'not_configured' }, { status: 500 })
+  // Checked up front, not on the last step: without a signing secret this
+  // deployment cannot issue a session, so showing a QR would walk the member
+  // all the way through TrustClub only to fail after the grant was spent.
+  if (!canIssueSessions()) {
+    logger.error('[auth/device/start] AUTH_SECRET is not set — refusing to start a sign-in')
+    return NextResponse.json({ error: 'not_configured' }, { status: 500 })
+  }
 
   // Resume before starting a new one. A phone that leaves for TrustClub and
   // comes back to an evicted-and-reloaded tab used to mint a second device
