@@ -16,13 +16,12 @@
 import { existsSync } from 'node:fs'
 import { join } from 'node:path'
 import { PrismaClient, type Prisma } from '@prisma/client'
-import { resolveDatabaseUrl, withPoolerFlag } from '../src/lib/database-url'
 import { DEMO_ACCOUNTS, DEMO_LISTINGS, DEMO_TRUST } from './demo-data'
 import { photoForCategory } from './category-photos'
 import { generateCode } from '../src/lib/code'
 import { slugify, expiryFor } from '../src/lib/listing'
 
-const prisma = new PrismaClient({ datasourceUrl: withPoolerFlag(resolveDatabaseUrl() ?? '') })
+const prisma = new PrismaClient()
 
 const PHOTO_DIR = join(process.cwd(), 'public', 'demo')
 

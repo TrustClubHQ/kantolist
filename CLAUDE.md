@@ -100,6 +100,11 @@ rather than re-typing borders and shadows at call sites.
 
 ## Branches
 
+**After pushing to `develop`, wait about a minute and check the deploy
+yourself** at https://develop.kantolist.ph — do not hand back a push as if it
+were a result. Fetch the page and read it; an empty or broken deploy is
+findable from the rendered HTML.
+
 `develop` is the working branch — **push there, not to `main`.** `main` is the
 production branch Vercel auto-deploys, so work lands on `develop`, gets looked
 at on its preview URL, and reaches `main` only when the user says so.
@@ -111,20 +116,16 @@ inherits Production's, a `develop` push alters the production schema — which
 defeats the point of having the branch. Preview needs its own database URL
 (a separate Neon branch or database), set on the Preview environment only.
 
-The app reads its connection string through `src/lib/database-url.ts`, which
-accepts `DATABASE_URL`, `POSTGRES_URL`, and each of those with the extra
-`DATABASE_` prefix a Vercel store adds when it is connected with one. Preview
-held `DATABASE_POSTGRES_URL` while the app read `DATABASE_URL`, so it
-connected to nothing. Everything resolves through that module — including
-`scripts/build.ts`, which exports the resolved value before
-`prisma migrate deploy`, since the Prisma CLI only ever reads
-`env("DATABASE_URL")` from the schema.
+The connection string is **always** `DATABASE_URL`, same as TruRate — one
+name, everywhere, no fallbacks. A Vercel store connected with a prefix injects
+`DATABASE_POSTGRES_URL` instead, which cost an afternoon of an empty preview;
+rename it in Vercel rather than teaching the app more names.
 
-**A database problem must be loud.** No URL under any accepted name fails the
-build. A reachable database with zero categories renders "This deployment has
-no data" rather than "nothing matches those filters" — categories are
-reference data, so none of them means the wrong database, never an empty
-marketplace. Both cases previously produced a site that looked like it worked.
+**A database problem must be loud.** A reachable database with zero categories
+renders "This deployment has no data" rather than "nothing matches those
+filters" — categories are reference data, so none of them means the wrong
+database, never an empty marketplace. That sentence is what let a preview
+wired to a blank database look like a working site.
 
 Migrations create tables and no rows, so a fresh preview database renders a
 site with zero of everything — no listings, not even a category list. The

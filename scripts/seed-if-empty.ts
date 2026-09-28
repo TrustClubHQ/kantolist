@@ -18,10 +18,8 @@
  */
 import { spawnSync } from 'node:child_process'
 import { PrismaClient } from '@prisma/client'
-import { resolveDatabaseUrl, withPoolerFlag, DATABASE_URL_VARS } from '../src/lib/database-url'
 
-const databaseUrl = resolveDatabaseUrl()
-const prisma = new PrismaClient({ datasourceUrl: withPoolerFlag(databaseUrl ?? '') })
+const prisma = new PrismaClient()
 
 function log(message: string): void {
   process.stdout.write(`[seed-if-empty] ${message}\n`)
@@ -32,7 +30,7 @@ function run(script: string): boolean {
     stdio: 'inherit',
     // Safe by construction: we only get here when the database is empty, so
     // the destructive mode has nothing to destroy.
-    env: { ...process.env, ALLOW_DESTRUCTIVE_SEED: '1', DATABASE_URL: databaseUrl },
+    env: { ...process.env, ALLOW_DESTRUCTIVE_SEED: '1' },
   })
   return result.status === 0
 }
@@ -42,8 +40,8 @@ async function main(): Promise<void> {
     log('production deployment — never seeds')
     return
   }
-  if (!databaseUrl) {
-    log(`no database URL (looked for ${DATABASE_URL_VARS.join(', ')}) — nothing to seed`)
+  if (!process.env.DATABASE_URL) {
+    log('no DATABASE_URL — nothing to seed')
     return
   }
 

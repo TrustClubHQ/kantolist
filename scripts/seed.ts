@@ -18,26 +18,25 @@ import { PrismaClient, type Prisma } from '@prisma/client'
 import { slugify, expiryFor } from '../src/lib/listing'
 import { generateCode } from '../src/lib/code'
 import { LAGUNA, ADJACENT, CATEGORIES } from './reference-data'
-import { resolveDatabaseUrl, withPoolerFlag, DATABASE_URL_VARS } from '../src/lib/database-url'
 
-const prisma = new PrismaClient({ datasourceUrl: withPoolerFlag(resolveDatabaseUrl() ?? '') })
+const prisma = new PrismaClient()
 
 const REFERENCE_ONLY = process.argv.includes('--reference-only')
 
 function assertSafeTarget(): void {
-  const url = resolveDatabaseUrl() ?? ''
+  const url = process.env.DATABASE_URL ?? ''
   if (!url) {
     // Distinguish "no configuration" from "pointed somewhere dangerous" — the
     // fix for each is different, and conflating them sent people looking for
     // the wrong problem.
-    throw new Error(`No database URL. Set one of: ${DATABASE_URL_VARS.join(', ')}.`)
+    throw new Error('DATABASE_URL is not set. Copy .env.example to .env first.')
   }
   // Reference-only writes are additive, so they need no destructive guard.
   if (REFERENCE_ONLY) return
   const isLocal = /@(localhost|127\.0\.0\.1)[:/]/.test(url)
   if (!isLocal && process.env.ALLOW_DESTRUCTIVE_SEED !== '1') {
     throw new Error(
-      'The database URL is not local. Re-run with ALLOW_DESTRUCTIVE_SEED=1 if you really mean to wipe it.',
+      'DATABASE_URL is not local. Re-run with ALLOW_DESTRUCTIVE_SEED=1 if you really mean to wipe it.',
     )
   }
 }

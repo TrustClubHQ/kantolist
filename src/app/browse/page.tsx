@@ -11,7 +11,6 @@ import { EmptyState, Plate } from '@/components/ui'
 import { searchListings, PAGE_SIZE, type SortKey } from '@/lib/search'
 import { listingPath } from '@/lib/listing'
 import { parseSchema } from '@/lib/attributes'
-import { isUnconfiguredDatabase } from '@/lib/database-url'
 
 export const dynamic = 'force-dynamic'
 
@@ -149,10 +148,11 @@ export default async function BrowsePage({ searchParams }: { searchParams: Promi
             </Plate>
           ) : null}
 
-          {isUnconfiguredDatabase(categories.length) ? (
-            // Not an empty result — an empty database. Saying "nothing matches
-            // those filters" here hid a preview wired to a blank database
-            // behind a page that looked like it was working.
+          {categories.length === 0 ? (
+            // No categories means no reference data, so this is a blank or
+            // wrong database rather than an empty result. Saying "nothing
+            // matches those filters" here hid exactly that behind a page that
+            // looked like it was working.
             <EmptyState title="This deployment has no data">
               The database has no categories, so it was never seeded or the
               deployment is pointed at the wrong one. Listings cannot load until
