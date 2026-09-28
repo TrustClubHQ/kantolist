@@ -98,6 +98,19 @@ What this means in practice:
 no blur. Yellow (`#F2B01E`) carries black text only. Compose the primitives
 rather than re-typing borders and shadows at call sites.
 
+## Branches
+
+`develop` is the working branch — **push there, not to `main`.** `main` is the
+production branch Vercel auto-deploys, so work lands on `develop`, gets looked
+at on its preview URL, and reaches `main` only when the user says so.
+
+One thing to get right before trusting a preview: the build runs
+`prisma migrate deploy`, so **a preview deploy applies migrations to whatever
+`DATABASE_URL` its environment holds.** If Vercel's Preview environment
+inherits Production's, a `develop` push alters the production schema — which
+defeats the point of having the branch. Preview needs its own database URL
+(a separate Neon branch or database), set on the Preview environment only.
+
 ## Development
 
 ```bash
