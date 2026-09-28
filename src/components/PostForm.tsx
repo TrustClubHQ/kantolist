@@ -67,7 +67,16 @@ export function PostForm({
   const [price, setPrice] = useState('')
   const [priceUnit, setPriceUnit] = useState<string>('TOTAL')
   const [negotiable, setNegotiable] = useState(false)
-  const [municipalityId, setMunicipalityId] = useState(defaultMunicipalityId ?? '')
+  // A single launch town is preselected: the form states it instead of asking,
+  // so nothing else would set it and the post would fail validation. A profile
+  // town that is no longer in the list — left over from an earlier launch area
+  // — is ignored rather than carried into a listing that cannot reference it.
+  const [municipalityId, setMunicipalityId] = useState(() => {
+    if (defaultMunicipalityId && municipalities.some((m) => m.id === defaultMunicipalityId)) {
+      return defaultMunicipalityId
+    }
+    return municipalities.length === 1 ? municipalities[0].id : ''
+  })
   const [barangay, setBarangay] = useState('')
   const [attributes, setAttributes] = useState<Record<string, string>>({})
   const [channels, setChannels] = useState<string[]>(() => {
@@ -263,19 +272,28 @@ export function PostForm({
         <Plate>
           <PlateHeader>4 · Location</PlateHeader>
           <div className="flex flex-col gap-3 p-3.5">
-            <select
-              value={municipalityId}
-              onChange={(e) => setMunicipalityId(e.target.value)}
-              required
-              aria-label="Municipality"
-            >
-              <option value="">Choose your town…</option>
-              {municipalities.map((m) => (
-                <option key={m.id} value={m.id}>
-                  {m.name}, {m.province}
-                </option>
-              ))}
-            </select>
+            {/* With one launch town there is no choice to make, so it is
+                stated rather than asked. The barangay below is the part a
+                buyer actually needs. */}
+            {municipalities.length === 1 ? (
+              <p className="label m-0 text-[17px]">
+                {municipalities[0].name}, {municipalities[0].province}
+              </p>
+            ) : (
+              <select
+                value={municipalityId}
+                onChange={(e) => setMunicipalityId(e.target.value)}
+                required
+                aria-label="Municipality"
+              >
+                <option value="">Choose your town…</option>
+                {municipalities.map((m) => (
+                  <option key={m.id} value={m.id}>
+                    {m.name}, {m.province}
+                  </option>
+                ))}
+              </select>
+            )}
             <input
               value={barangay}
               onChange={(e) => setBarangay(e.target.value)}

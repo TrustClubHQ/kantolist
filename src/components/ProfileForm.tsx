@@ -86,17 +86,22 @@ export function ProfileForm({
                 placeholder="Your name or your shop's name"
               />
             </label>
-            <label className="flex flex-col gap-1.5">
-              <span className="label text-[15px] text-muted">Your town</span>
-              <select value={form.municipalityId} onChange={(e) => set('municipalityId', e.target.value)}>
-                <option value="">Not set</option>
-                {municipalities.map((m) => (
-                  <option key={m.id} value={m.id}>
-                    {m.name}, {m.province}
-                  </option>
-                ))}
-              </select>
-            </label>
+            {/* Hidden entirely while we are in one town — asking a member to
+                pick their town from a list of one is a question with no
+                content. Their listings carry the town regardless. */}
+            {municipalities.length > 1 ? (
+              <label className="flex flex-col gap-1.5">
+                <span className="label text-[15px] text-muted">Your town</span>
+                <select value={form.municipalityId} onChange={(e) => set('municipalityId', e.target.value)}>
+                  <option value="">Not set</option>
+                  {municipalities.map((m) => (
+                    <option key={m.id} value={m.id}>
+                      {m.name}, {m.province}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            ) : null}
           </div>
         </Plate>
 

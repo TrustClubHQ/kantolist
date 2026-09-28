@@ -5,18 +5,26 @@
  */
 import type { AttributeDef } from '../src/lib/attributes'
 
-export const LAGUNA = [
-  'Calamba', 'Los Baños', 'Bay', 'Cabuyao', 'Santa Rosa', 'Biñan',
-  'San Pablo', 'Calauan', 'Victoria', 'Pila', 'Santa Cruz', 'Alaminos',
+/**
+ * The launch area. One town: San Ildefonso, Bulacan.
+ *
+ * Deliberately a list rather than a constant — adding the neighbouring towns
+ * later is a seed edit, and the UI adapts on its own: with a single
+ * municipality it drops the location filter and the town picker rather than
+ * offering a choice of one.
+ */
+export const MUNICIPALITIES: { name: string; province: string }[] = [
+  { name: 'San Ildefonso', province: 'Bulacan' },
 ]
 
-/** Adjacency drives the "include nearby towns" filter. Undirected; stored both ways. */
-export const ADJACENT: [string, string][] = [
-  ['Calamba', 'Los Baños'], ['Calamba', 'Cabuyao'], ['Calamba', 'Bay'],
-  ['Los Baños', 'Bay'], ['Bay', 'Calauan'], ['Calauan', 'Victoria'],
-  ['Victoria', 'Pila'], ['Pila', 'Santa Cruz'], ['Cabuyao', 'Santa Rosa'],
-  ['Santa Rosa', 'Biñan'], ['Calamba', 'Alaminos'], ['Alaminos', 'San Pablo'],
-  ['San Pablo', 'Calauan'],
+/** Adjacency drives the "include nearby towns" filter. Undirected; stored both
+ *  ways. Empty while we are in one town — there is no "nearby" to include. */
+export const ADJACENT: [string, string][] = []
+
+/** Real barangays of San Ildefonso, so seeded listings sit somewhere that exists. */
+export const BARANGAYS = [
+  'Poblacion', 'Pinaod', 'Bubulong Malaki', 'Calawitan', 'Sapang Dayap',
+  'Upig', 'Garlang', 'Matimbubong', 'San Juan', 'Palapala', 'Akle', 'Gabihan',
 ]
 
 const CONDITION: AttributeDef = {

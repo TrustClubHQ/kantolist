@@ -271,39 +271,44 @@ function FilterPanel({
           </div>
         </Section>
 
-        <Section
-          label="Location"
-          summary={
-            municipalities.find((m) => m.id === draft.municipality)?.name ??
-            (draft.nearby === 'true' ? 'Nearby towns' : 'Anywhere')
-          }
-          defaultOpen={false}
-        >
-          <div className="flex flex-col gap-2">
-            <select
-              aria-label="Municipality"
-              value={draft.municipality ?? ''}
-              onChange={(e) => set('municipality', e.target.value || undefined)}
-              className="!min-h-[44px] text-[15px]"
-            >
-              <option value="">Anywhere</option>
-              {municipalities.map((m) => (
-                <option key={m.id} value={m.id}>
-                  {m.name}, {m.province}
-                </option>
-              ))}
-            </select>
-            <label className="flex min-h-[44px] items-center gap-2">
-              <input
-                type="checkbox"
-                checked={draft.nearby === 'true'}
-                onChange={(e) => set('nearby', e.target.checked ? 'true' : undefined)}
-                className="!min-h-0 !w-auto h-5 w-5 accent-green"
-              />
-              <span className="label text-[16px]">Include nearby towns</span>
-            </label>
-          </div>
-        </Section>
+        {/* One launch town means there is nothing to filter by and no "nearby"
+            to include, so the section goes rather than offering a choice of
+            one. It returns by itself once a second town is seeded. */}
+        {municipalities.length > 1 ? (
+          <Section
+            label="Location"
+            summary={
+              municipalities.find((m) => m.id === draft.municipality)?.name ??
+              (draft.nearby === 'true' ? 'Nearby towns' : 'Anywhere')
+            }
+            defaultOpen={false}
+          >
+            <div className="flex flex-col gap-2">
+              <select
+                aria-label="Municipality"
+                value={draft.municipality ?? ''}
+                onChange={(e) => set('municipality', e.target.value || undefined)}
+                className="!min-h-[44px] text-[15px]"
+              >
+                <option value="">Anywhere</option>
+                {municipalities.map((m) => (
+                  <option key={m.id} value={m.id}>
+                    {m.name}, {m.province}
+                  </option>
+                ))}
+              </select>
+              <label className="flex min-h-[44px] items-center gap-2">
+                <input
+                  type="checkbox"
+                  checked={draft.nearby === 'true'}
+                  onChange={(e) => set('nearby', e.target.checked ? 'true' : undefined)}
+                  className="!min-h-0 !w-auto h-5 w-5 accent-green"
+                />
+                <span className="label text-[16px]">Include nearby towns</span>
+              </label>
+            </div>
+          </Section>
+        ) : null}
 
         {attributes.length > 0 ? (
           <div className="flex flex-col gap-4 border-t-[3px] border-ink pt-4">

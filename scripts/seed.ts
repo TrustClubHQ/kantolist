@@ -1,5 +1,5 @@
 /**
- * Seeds categories (with their attribute schemas), Laguna municipalities and
+ * Seeds categories (with their attribute schemas), Bulacan municipalities and
  * their adjacency, plus demo accounts and listings.
  *
  * Two modes:
@@ -17,7 +17,7 @@
 import { PrismaClient, type Prisma } from '@prisma/client'
 import { slugify, expiryFor } from '../src/lib/listing'
 import { generateCode } from '../src/lib/code'
-import { LAGUNA, ADJACENT, CATEGORIES } from './reference-data'
+import { MUNICIPALITIES, ADJACENT, CATEGORIES } from './reference-data'
 
 const prisma = new PrismaClient()
 
@@ -60,11 +60,11 @@ async function clear(): Promise<void> {
 
 async function seedMunicipalities(): Promise<Map<string, string>> {
   const byName = new Map<string, string>()
-  for (const name of LAGUNA) {
+  for (const { name, province } of MUNICIPALITIES) {
     const row = await prisma.municipality.upsert({
-      where: { name_province: { name, province: 'Laguna' } },
+      where: { name_province: { name, province } },
       update: {},
-      create: { name, province: 'Laguna' },
+      create: { name, province },
     })
     byName.set(name, row.id)
   }
@@ -138,85 +138,85 @@ interface DemoListing {
 }
 
 const DEMO_ACCOUNTS = [
-  { trustclubId: 'ruben.dlc', displayName: "Mang Ruben's Rentals", phone: '+639175551234', messengerHandle: 'ruben.dlc', municipality: 'Calamba' },
-  { trustclubId: 'juan.santos', displayName: 'Juan Santos', phone: '+639175552345', messengerHandle: 'juan.santos', municipality: 'Calamba' },
-  { trustclubId: 'lito.reyes', displayName: 'Lito Reyes', phone: '+639175553456', municipality: 'Bay' },
-  { trustclubId: 'marites.g', displayName: 'Marites Garcia', phone: '+639175554567', messengerHandle: 'marites.g', municipality: 'Los Baños' },
-  { trustclubId: 'boyet.motors', displayName: 'Boyet Motorworks', phone: '+639175555678', municipality: 'Los Baños' },
-  { trustclubId: 'ana.cruz', displayName: 'Ana Cruz', phone: '+639175556789', municipality: 'Cabuyao' },
-  { trustclubId: 'kl-staff', displayName: 'KantoList Staff', phone: null, municipality: 'Calamba', isStaff: true },
+  { trustclubId: 'ruben.dlc', displayName: "Mang Ruben's Rentals", phone: '+639175551234', messengerHandle: 'ruben.dlc', municipality: 'San Ildefonso' },
+  { trustclubId: 'juan.santos', displayName: 'Juan Santos', phone: '+639175552345', messengerHandle: 'juan.santos', municipality: 'San Ildefonso' },
+  { trustclubId: 'lito.reyes', displayName: 'Lito Reyes', phone: '+639175553456', municipality: 'San Ildefonso' },
+  { trustclubId: 'marites.g', displayName: 'Marites Garcia', phone: '+639175554567', messengerHandle: 'marites.g', municipality: 'San Ildefonso' },
+  { trustclubId: 'boyet.motors', displayName: 'Boyet Motorworks', phone: '+639175555678', municipality: 'San Ildefonso' },
+  { trustclubId: 'ana.cruz', displayName: 'Ana Cruz', phone: '+639175556789', municipality: 'San Ildefonso' },
+  { trustclubId: 'kl-staff', displayName: 'KantoList Staff', phone: null, municipality: 'San Ildefonso', isStaff: true },
 ]
 
 const DEMO_LISTINGS: DemoListing[] = [
   {
     owner: 'ruben.dlc', category: 'motorcycle', type: 'RENT',
     title: 'Honda Click 125i — daily rental', price: 450, unit: 'PER_DAY', negotiable: true,
-    municipality: 'Calamba', barangay: 'Parian', daysAgo: 5,
+    municipality: 'San Ildefonso', barangay: 'Matimbubong', daysAgo: 5,
     description:
-      'Well-maintained Click 125i, change oil every month, good tires. Helmet included, second one available on request. Pick-up at Parian or delivery within Calamba for ₱150. Weekly and monthly rates negotiable for long-term renters.',
+      'Well-maintained Click 125i, change oil every month, good tires. Helmet included, second one available on request. Pick-up at Parian or delivery within San Ildefonso for ₱150. Weekly and monthly rates negotiable for long-term renters.',
     attributes: { brand: 'Honda', model: 'Click 125i', year: 2021, displacement_cc: 125, condition: 'Used', with_or_cr: true },
   },
   {
     owner: 'juan.santos', category: 'motorcycle', type: 'SELL',
     title: 'Honda Click 125i 2021, complete papers', price: 52000, unit: 'TOTAL', negotiable: true,
-    municipality: 'Calamba', daysAgo: 2,
+    municipality: 'San Ildefonso', daysAgo: 2,
     description: 'Second owner, all papers complete and updated. No hidden damage, always parked in a garage.',
     attributes: { brand: 'Honda', model: 'Click 125i', year: 2021, displacement_cc: 125, condition: 'Used', mileage_km: 12400, with_or_cr: true },
   },
   {
     owner: 'marites.g', category: 'motorcycle', type: 'RENT',
     title: 'Yamaha Mio Soul 115, weekly rate available', price: 2600, unit: 'PER_WEEK',
-    municipality: 'Calamba', daysAgo: 5,
+    municipality: 'San Ildefonso', daysAgo: 5,
     description: 'Good for delivery riders. Weekly and monthly terms, deposit and valid ID required.',
     attributes: { brand: 'Yamaha', model: 'Mio Soul 115', year: 2019, displacement_cc: 115, condition: 'Used', with_or_cr: true },
   },
   {
     owner: 'ana.cruz', category: 'motorcycle', type: 'SELL',
     title: 'Honda Click 160 ABS 2022, under warranty', price: 68000, unit: 'TOTAL',
-    municipality: 'Cabuyao', daysAgo: 7,
+    municipality: 'San Ildefonso', daysAgo: 7,
     description: 'Still under casa warranty until next year. Complete service records.',
     attributes: { brand: 'Honda', model: 'Click 160 ABS', year: 2022, displacement_cc: 160, condition: 'Used', mileage_km: 6100, with_or_cr: true },
   },
   {
     owner: 'lito.reyes', category: 'motorcycle', type: 'SELL',
     title: 'Yamaha NMAX 155 2022, all stock', price: 61500, unit: 'TOTAL',
-    municipality: 'Los Baños', daysAgo: 3, status: 'RESERVED',
+    municipality: 'San Ildefonso', daysAgo: 3, status: 'RESERVED',
     description: 'All stock, nothing replaced. Reserved pending pick-up this week.',
     attributes: { brand: 'Yamaha', model: 'NMAX 155', year: 2022, displacement_cc: 155, condition: 'Used', with_or_cr: true },
   },
   {
     owner: 'lito.reyes', category: 'tricycle', type: 'SELL',
     title: 'Tricycle with franchise, Bajaj 150', price: 95000, unit: 'TOTAL', negotiable: true,
-    municipality: 'Bay', daysAgo: 4,
+    municipality: 'San Ildefonso', daysAgo: 4,
     description: 'Franchise included and transferable. Sidecar recently repainted, body in good shape.',
     attributes: { trike_type: 'Motorcycle + sidecar', year: 2018, with_franchise: true, condition: 'Used' },
   },
   {
     owner: 'boyet.motors', category: 'repair', type: 'SERVICE',
     title: 'Motorcycle repair and tune-up, home service', price: 300, unit: 'PER_JOB',
-    municipality: 'Los Baños', daysAgo: 6,
-    description: 'Change oil, tune-up, electrical and brake work. Home service within Los Baños and Bay, or drop off at the shop.',
+    municipality: 'San Ildefonso', daysAgo: 6,
+    description: 'Change oil, tune-up, electrical and brake work. Home service within San Ildefonso, or drop off at the shop.',
     attributes: { specialty: 'Motorcycle', home_service: true },
   },
   {
     owner: 'ana.cruz', category: 'bicycle', type: 'SELL',
     title: 'Mountain bike 26", 21-speed', price: 4500, unit: 'TOTAL', negotiable: true,
-    municipality: 'Cabuyao', daysAgo: 9,
+    municipality: 'San Ildefonso', daysAgo: 9,
     description: 'Working condition, brakes recently serviced. Small scratches on the frame.',
     attributes: { bike_type: 'Mountain', frame_size: 'M', wheel_size_in: 26, condition: 'Used' },
   },
   {
     owner: 'marites.g', category: 'sound-lights', type: 'RENT',
     title: 'Videoke and sound system for fiestas', price: 1500, unit: 'PER_DAY', negotiable: true,
-    municipality: 'Los Baños', daysAgo: 12,
-    description: 'Two speakers, amplifier, two mics and basic lights. Delivery and set-up included within Los Baños.',
+    municipality: 'San Ildefonso', daysAgo: 12,
+    description: 'Two speakers, amplifier, two mics and basic lights. Delivery and set-up included within San Ildefonso.',
     attributes: { gear_type: 'Full set', wattage: 1200, condition: 'Used' },
   },
   {
     owner: 'juan.santos', category: 'transport-hauling', type: 'SERVICE',
     title: 'Hauling and lipat-bahay, closed van', price: null, unit: 'QUOTE',
-    municipality: 'Calamba', daysAgo: 14,
-    description: 'Closed van for moving house or delivering goods anywhere in Laguna. Message for a quote — price depends on distance and volume.',
+    municipality: 'San Ildefonso', daysAgo: 14,
+    description: 'Closed van for moving house or delivering goods anywhere in Bulacan. Message for a quote — price depends on distance and volume.',
     attributes: { vehicle: 'Van', capacity_kg: 1500 },
   },
 ]
