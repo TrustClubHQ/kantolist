@@ -30,13 +30,35 @@ function directUrl(): string | undefined {
   return url.replace('-pooler.', '.').replace(/([?&])pgbouncer=true&?/, '$1').replace(/[?&]$/, '')
 }
 
-const url = directUrl()
-if (url && url !== process.env.DATABASE_URL) {
-  process.stdout.write('[migrate] using the direct (unpooled) endpoint for migrations\n')
+function migrate(url: string | undefined): number {
+  const result = spawnSync('npx', ['prisma', 'migrate', 'deploy'], {
+    stdio: 'inherit',
+    env: url ? { ...process.env, DATABASE_URL: url } : process.env,
+  })
+  return result.status ?? 1
 }
 
-const result = spawnSync('npx', ['prisma', 'migrate', 'deploy'], {
-  stdio: 'inherit',
-  env: url ? { ...process.env, DATABASE_URL: url } : process.env,
-})
-process.exit(result.status ?? 1)
+const pooled = process.env.DATABASE_URL
+const direct = directUrl()
+const rewritten = Boolean(direct && direct !== pooled)
+
+if (rewritten) process.stdout.write('[migrate] trying the direct (unpooled) endpoint\n')
+
+let status = migrate(direct)
+
+// Fall back rather than fail the build. Deriving the direct host by dropping
+// "-pooler" is a convention, not a guarantee: a project that does not expose
+// that endpoint would otherwise turn an intermittent advisory-lock failure
+// into a deploy that never succeeds at all — trading a bad day for a worse
+// one. If the direct attempt fails, take the pooled connection and its known
+// flakiness, and say which one ran.
+if (status !== 0 && rewritten) {
+  process.stdout.write(
+    '[migrate] the direct endpoint did not work; retrying on the pooled one. ' +
+      'If this line keeps appearing, migrations are running through the pooler ' +
+      'and P1002 advisory-lock timeouts can come back.\n',
+  )
+  status = migrate(pooled)
+}
+
+process.exit(status)
