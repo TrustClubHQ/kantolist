@@ -170,13 +170,34 @@ export function PhotoPicker({
   )
 }
 
-/** Posting mode: attach the held files once the listing exists. */
-export async function uploadPendingPhotos(listingId: string, files: File[]): Promise<void> {
+/**
+ * Posting mode: attach the held files once the listing exists.
+ *
+ * Never throws — the listing is already published and must not be lost to a
+ * photo — but it does report. Swallowing the failure entirely is what made a
+ * misconfigured Blob store look like the photo simply "not showing", with
+ * nothing on screen to explain it and nothing to act on.
+ */
+export async function uploadPendingPhotos(
+  listingId: string,
+  files: File[],
+): Promise<{ failed: number; error?: string }> {
+  let failed = 0
+  let error: string | undefined
   for (const file of files) {
-    const body = new FormData()
-    body.append('photo', file)
-    // A failed photo must not lose the listing that was just published, so
-    // this never throws — the seller can add it again from the edit screen.
-    await fetch(`/api/listings/${listingId}/photos`, { method: 'POST', body }).catch(() => {})
+    try {
+      const body = new FormData()
+      body.append('photo', file)
+      const res = await fetch(`/api/listings/${listingId}/photos`, { method: 'POST', body })
+      if (!res.ok) {
+        failed += 1
+        const data: { error?: string } = await res.json().catch(() => ({}))
+        error ??= data.error
+      }
+    } catch {
+      failed += 1
+      error ??= 'Could not reach the server'
+    }
   }
+  return { failed, error }
 }

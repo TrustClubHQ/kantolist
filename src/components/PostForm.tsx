@@ -131,6 +131,10 @@ export function PostForm({
   const [error, setError] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
   const [pendingPhotos, setPendingPhotos] = useState<File[]>([])
+  const [publishedWithoutPhotos, setPublishedWithoutPhotos] = useState<{
+    href: string
+    message: string
+  } | null>(null)
 
   const currentType = TYPES.find((t) => t.key === type)!
   const leaf = useMemo(
@@ -193,9 +197,19 @@ export function PostForm({
         setError(data.error ?? (existing ? 'Could not save those changes' : 'Could not publish that listing'))
         return
       }
-      // Photos could not be attached before the listing had an id.
+      // Photos could not be attached before the listing had an id. If they
+      // fail, the listing still stands — but say so, and stay put with a link
+      // to the edit screen rather than navigating away from the only place
+      // the problem was visible.
       if (!existing && data.id && pendingPhotos.length > 0) {
-        await uploadPendingPhotos(data.id, pendingPhotos)
+        const outcome = await uploadPendingPhotos(data.id, pendingPhotos)
+        if (outcome.failed > 0) {
+          setPublishedWithoutPhotos({
+            href: data.href ?? '/',
+            message: outcome.error ?? 'The photos could not be added.',
+          })
+          return
+        }
       }
 
       // PATCH answers with the code and slug, since a retitle moves the URL.
@@ -422,6 +436,19 @@ export function PostForm({
           </p>
         </div>
 
+        {publishedWithoutPhotos ? (
+          <div className="flex flex-col gap-2 border-[3px] border-ink bg-yellow px-3.5 py-2.5">
+            <p className="label m-0 text-[17px] text-ink">
+              Your listing is published, but the photos were not added.
+            </p>
+            <p className="m-0 text-[13px] font-semibold leading-snug text-ink">
+              {publishedWithoutPhotos.message}
+            </p>
+            <Link href={publishedWithoutPhotos.href} className="label text-[16px] text-ink underline">
+              Open the listing →
+            </Link>
+          </div>
+        ) : null}
         {error ? (
           <p className="label m-0 border-[3px] border-ink bg-yellow px-3.5 py-2.5 text-[17px] text-ink">{error}</p>
         ) : null}

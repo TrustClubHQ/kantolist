@@ -56,8 +56,21 @@ export async function storePhoto(file: File, listingCode: string): Promise<Uploa
       })
       return { ok: true, url: blob.url, bytes: file.size }
     } catch (e) {
-      logger.error('[photos] blob upload failed', e instanceof Error ? e.message : String(e))
-      return { ok: false, error: 'Could not store that photo' }
+      const message = e instanceof Error ? e.message : String(e)
+      logger.error('[photos] blob upload failed', message)
+      // Say what is actually wrong. "Could not store that photo" sent someone
+      // looking at their file and their connection for a problem that was
+      // neither — the store had been created with private access, which is
+      // the one setting that cannot work here: a listing photo has to be
+      // readable by anyone browsing, including people who never sign in.
+      if (/private access|private store/i.test(message)) {
+        return {
+          ok: false,
+          error:
+            'The Blob store is set to private access. Listing photos have to be public — recreate the store with public access.',
+        }
+      }
+      return { ok: false, error: `Could not store that photo (${message.slice(0, 120)})` }
     }
   }
 
