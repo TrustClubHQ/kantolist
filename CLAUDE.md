@@ -111,6 +111,32 @@ inherits Production's, a `develop` push alters the production schema — which
 defeats the point of having the branch. Preview needs its own database URL
 (a separate Neon branch or database), set on the Preview environment only.
 
+### Reaching Neon from a cloud session
+
+Outbound TCP 5432 is blocked in the Claude Code container, so `psql`,
+`prisma migrate deploy` and the seed scripts cannot reach Neon from there —
+they hang and time out. Neon's HTTPS SQL endpoint works:
+
+```bash
+curl -X POST "https://<host>/sql" \
+  -H "Neon-Connection-String: <url>" -H "Content-Type: application/json" \
+  -d '{"query":"select 1","params":[]}'
+```
+
+It refuses multiple commands in one call, but a batch of single statements
+goes in one request via `{"queries":[{query,params},…]}` plus a
+`Neon-Batch-Isolation-Level: ReadCommitted` header.
+
+To seed a fresh Neon database, migrate and seed **locally** first, then
+replay: `pg_dump --no-owner --no-privileges --inserts --rows-per-insert=200
+--exclude-table-data=auth_sessions`, split on semicolons outside string
+literals, and post in batches. The dump carries `_prisma_migrations`, so a
+later `prisma migrate deploy` on Vercel sees the migrations as applied
+instead of trying to recreate the tables.
+
+From a machine with normal network access none of this applies — just point
+`DATABASE_URL` at it and run the scripts.
+
 ## Development
 
 ```bash
