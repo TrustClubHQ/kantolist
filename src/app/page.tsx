@@ -78,7 +78,15 @@ export default async function HomePage() {
           </Link>
         </div>
 
-        {featured.length === 0 ? (
+        {categories.length === 0 ? (
+          <Plate className="p-6">
+            <p className="label m-0 text-[20px]">This deployment has no data</p>
+            <p className="mt-2 text-sm text-muted-2">
+              The database has no categories — it was never seeded, or this
+              deployment is pointed at the wrong one.
+            </p>
+          </Plate>
+        ) : featured.length === 0 ? (
           <Plate className="p-6">
             <p className="label m-0 text-[20px]">Nothing listed yet</p>
             <p className="mt-2 text-sm text-muted-2">

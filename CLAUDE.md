@@ -111,6 +111,21 @@ inherits Production's, a `develop` push alters the production schema — which
 defeats the point of having the branch. Preview needs its own database URL
 (a separate Neon branch or database), set on the Preview environment only.
 
+The app reads its connection string through `src/lib/database-url.ts`, which
+accepts `DATABASE_URL`, `POSTGRES_URL`, and each of those with the extra
+`DATABASE_` prefix a Vercel store adds when it is connected with one. Preview
+held `DATABASE_POSTGRES_URL` while the app read `DATABASE_URL`, so it
+connected to nothing. Everything resolves through that module — including
+`scripts/build.ts`, which exports the resolved value before
+`prisma migrate deploy`, since the Prisma CLI only ever reads
+`env("DATABASE_URL")` from the schema.
+
+**A database problem must be loud.** No URL under any accepted name fails the
+build. A reachable database with zero categories renders "This deployment has
+no data" rather than "nothing matches those filters" — categories are
+reference data, so none of them means the wrong database, never an empty
+marketplace. Both cases previously produced a site that looked like it worked.
+
 Migrations create tables and no rows, so a fresh preview database renders a
 site with zero of everything — no listings, not even a category list. The
 build runs `scripts/seed-if-empty.ts` to close that gap. It seeds only when
