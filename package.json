@@ -7,7 +7,7 @@
   },
   "scripts": {
     "dev": "prisma generate && next dev",
-    "build": "prisma generate && prisma migrate deploy && next build",
+    "build": "prisma generate && prisma migrate deploy && tsx scripts/seed-if-empty.ts && next build",
     "start": "next start",
     "lint": "eslint src/ scripts/",
     "typecheck": "tsc --noEmit",
@@ -17,7 +17,8 @@
     "seed:reference": "tsx --env-file-if-exists=.env scripts/seed.ts --reference-only",
     "seed:demo": "tsx --env-file-if-exists=.env scripts/seed-demo.ts",
     "photo-credits": "tsx scripts/photo-credits.ts",
-    "mock-trustclub": "node scripts/mock-trustclub.mjs"
+    "mock-trustclub": "node scripts/mock-trustclub.mjs",
+    "seed-if-empty": "tsx --env-file-if-exists=.env scripts/seed-if-empty.ts"
   },
   "dependencies": {
     "@prisma/client": "^6.13.0",

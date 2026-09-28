@@ -111,6 +111,14 @@ inherits Production's, a `develop` push alters the production schema — which
 defeats the point of having the branch. Preview needs its own database URL
 (a separate Neon branch or database), set on the Preview environment only.
 
+Migrations create tables and no rows, so a fresh preview database renders a
+site with zero of everything — no listings, not even a category list. The
+build runs `scripts/seed-if-empty.ts` to close that gap. It seeds only when
+`VERCEL_ENV` is not `production` **and** the database has no categories, so it
+can add the first rows and nothing else; it never fails the build. `NODE_ENV`
+is no use as the guard here — Vercel sets it to `production` for preview
+builds too.
+
 ### Reaching Neon from a cloud session
 
 Outbound TCP 5432 is blocked in the Claude Code container, so `psql`,
