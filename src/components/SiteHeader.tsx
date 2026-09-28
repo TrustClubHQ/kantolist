@@ -20,14 +20,16 @@ export async function SiteHeader({ location }: { location?: string }) {
             </span>
             {/* The same lockup TruRate carries: the trust comes from
                 somewhere, and saying so is the whole proposition. */}
-            <span className="mt-0.5 flex items-center gap-1 text-[9px] font-semibold uppercase tracking-wide text-[#FFD9A0] sm:text-[10px]">
+            {/* "Powered by" stays small; the TrustClub mark carries the
+                weight, since that is the part doing the vouching. */}
+            <span className="mt-[3px] flex items-center gap-1.5 text-[8px] font-semibold uppercase tracking-wide text-[#FFD9A0] sm:text-[9px]">
               Powered by
               <Image
                 src="/TCLogo-Horizontal-Positive-minpadding.png"
                 alt="TrustClub"
                 width={560}
                 height={149}
-                className="h-[9px] w-auto object-contain brightness-0 invert sm:h-[11px]"
+                className="h-[14px] w-auto object-contain brightness-0 invert sm:h-[17px]"
               />
             </span>
           </span>
