@@ -165,10 +165,6 @@ export function ContactSheet({
                 </p>
               ) : null}
 
-              <p className="m-0 mt-1 text-center text-[13px] font-semibold leading-snug text-muted-2">
-                KantoList handles no payment and no delivery. Agree on the details directly, meet in
-                a public place, and inspect before you pay.
-              </p>
             </div>
 
             <div className="mx-auto max-w-3xl px-5 pb-6 pt-2">

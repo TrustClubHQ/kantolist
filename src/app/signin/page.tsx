@@ -22,10 +22,7 @@ export default async function SignInPage({
         <h1 className="font-display m-0 text-[34px] uppercase leading-none">
           Log in with <span className="text-red">TrustClub</span>
         </h1>
-        <p className="mt-2 text-[15px] font-semibold leading-snug text-muted-2">
-          No password. Your network decides what you see first.
-        </p>
-        <div className="mt-4">
+        <div className="mt-5">
           <TrustClubConnect redirectTo={target} devLoginEnabled={isDevLoginEnabled()} />
         </div>
       </main>

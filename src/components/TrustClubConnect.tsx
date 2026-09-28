@@ -30,14 +30,6 @@ interface StartResponse {
   error?: string
 }
 
-/**
- * Terminal codes that just mean "this code is no longer usable" — the member
- * did nothing wrong and there is nothing for them to decide. We fetch a fresh
- * one instead of showing them an error, once per mount so a genuinely broken
- * upstream still surfaces rather than looping.
- */
-const RECOVERABLE = new Set(['expired_token', 'no_session'])
-
 const ERRORS: Record<string, string> = {
   access_denied: 'That request was declined in TrustClub.',
   expired_token: 'That sign-in window closed before it was approved.',
@@ -66,9 +58,6 @@ export function TrustClubConnect({
   // again" needs — a reload would lose the redirect we were sent with.
   const [restartKey, setRestartKey] = useState(0)
   const qrCanvasRef = useRef<HTMLCanvasElement>(null)
-  // Survives the effect re-run that a restart causes, so one dead code is
-  // replaced silently and a second one is reported.
-  const autoRenewedRef = useRef(false)
   const isMobile = useIsMobile()
 
   // Captured once so a parent re-render with a new redirect cannot tear the
@@ -94,16 +83,21 @@ export function TrustClubConnect({
           if (data.ok) {
             setPhase('success')
             const target = isSafeRedirect(data.redirect) ? data.redirect : '/'
-            window.location.href = target
+            // Assigning the URL we are already on is a no-op in browsers, which
+            // would leave this mounted and let the next poll race the success
+            // with invalid_grant. Reload instead so the new cookie is picked up.
+            const here = window.location.pathname + window.location.search
+            if (target === here) window.location.reload()
+            else window.location.href = target
             return
           }
           if (data.terminal) {
-            if (RECOVERABLE.has(data.error ?? '') && !autoRenewedRef.current) {
-              autoRenewedRef.current = true
-              setRestartKey((k) => k + 1)
-              return
-            }
-            setError(ERRORS[data.error ?? ''] ?? 'That sign-in did not complete. Try again.')
+            // Say what happened, and say it once. A previous version quietly
+            // restarted the flow on an expired code, which showed "Preparing
+            // sign-in…" and then a fresh QR — indistinguishable from the page
+            // ignoring an approval the member had just given, and it hid the
+            // reason from them and from the logs.
+            setError(ERRORS[data.error ?? ''] ?? `That sign-in did not complete (${data.error ?? 'unknown'}).`)
             setPhase('error')
             return
           }
@@ -133,7 +127,13 @@ export function TrustClubConnect({
         setPhase('waiting')
         // Poll only after start resolves: the first poll needs the device
         // cookie that the start response sets, or it comes back `no_session`.
-        poll(Math.max(2, data.interval) * 1000)
+        //
+        // Fixed 2s, like TruRate, rather than the server's interval. The
+        // server owns the real rate — `reservePoll` refuses anything inside
+        // the interval and serves the cached state — so polling faster just
+        // keeps the page responsive the moment an approval lands, and the
+        // client never has to track a `slow_down` bump it cannot see.
+        poll(2000)
       } catch {
         if (!aborted) {
           setError('Could not reach the server. Check your connection.')
@@ -201,10 +201,7 @@ export function TrustClubConnect({
         </p>
         <button
           type="button"
-          onClick={() => {
-            autoRenewedRef.current = false
-            setRestartKey((k) => k + 1)
-          }}
+          onClick={() => setRestartKey((k) => k + 1)}
           className="font-display hard min-h-[54px] border-[3px] border-ink bg-red text-[20px] uppercase text-ground"
         >
           Try again

@@ -17,6 +17,10 @@ export const GET = withApiHandler(async (request: NextRequest) => {
 
   const session = await findActiveSession(sessionId)
   if (!session) {
+    // Logged because the browser cannot tell these apart, and the difference
+    // — a row that timed out versus one that was never written — is the whole
+    // diagnosis when sign-in keeps failing on a deployment.
+    logger.error('[auth/device/poll] cookie points at no active session')
     return clearDeviceCookie(NextResponse.json({ ok: false, terminal: true, error: 'expired_token' }))
   }
 
@@ -45,6 +49,7 @@ export const GET = withApiHandler(async (request: NextRequest) => {
   }
 
   if (result.kind === 'terminal') {
+    logger.error('[auth/device/poll] terminal from TrustClub', { code: result.code })
     await deleteSession(session.id)
     return clearDeviceCookie(NextResponse.json({ ok: false, terminal: true, error: result.code }))
   }

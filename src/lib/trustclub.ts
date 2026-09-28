@@ -72,7 +72,17 @@ async function fetchUpstream(fromId: string, toId: string): Promise<number | nul
     return null
   }
 
-  const trustPoints = Math.round(data.total_tp ?? 0)
+  // A 200 whose body has no usable total_tp is a response we did not
+  // understand, not a measurement of zero. Caching 0 would record "nobody
+  // vouches for this person" as a fact and rank them on it — the one thing
+  // this file must never do. A 404 is different: that is the graph itself
+  // saying there is no path.
+  if (typeof data.total_tp !== 'number' || !Number.isFinite(data.total_tp)) {
+    logger.error(`[trustclub] response without a usable total_tp ${fromId}->${toId}`)
+    return null
+  }
+
+  const trustPoints = Math.round(data.total_tp)
   await writeCache(fromId, toId, trustPoints)
   return trustPoints
 }

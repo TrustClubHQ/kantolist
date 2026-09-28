@@ -5,7 +5,7 @@ import { SiteHeader } from '@/components/SiteHeader'
 import { SiteFooter } from '@/components/SiteFooter'
 import { ListingCard } from '@/components/ListingCard'
 import { SearchBar } from '@/components/SearchBar'
-import { SafetyNote, Plate } from '@/components/ui'
+import { Plate } from '@/components/ui'
 import { searchListings } from '@/lib/search'
 import { listingPath } from '@/lib/listing'
 
@@ -138,13 +138,6 @@ export default async function HomePage() {
           </Plate>
         </section>
       ) : null}
-
-      <section className="mx-auto w-full max-w-6xl px-3 pb-8 sm:px-4">
-        <SafetyNote>
-          Meet in a public place and inspect before you pay. KantoList handles no payment and no
-          delivery — never send a deposit to someone you have no trust path to.
-        </SafetyNote>
-      </section>
 
       <SiteFooter />
     </div>

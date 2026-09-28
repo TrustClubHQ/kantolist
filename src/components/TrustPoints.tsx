@@ -63,6 +63,80 @@ export function TrustPoints({
 }
 
 /**
+ * Both directions, the way TruRate shows a lender: what this member is worth
+ * to you, and what you are worth to them. Trust is directed, so these are two
+ * different numbers about two different questions — "can I rely on them" and
+ * "will they take me seriously" — and showing only the first hides half of
+ * why a deal does or does not happen.
+ */
+export function TrustPointsPair({
+  theirPoints,
+  myPoints,
+  via,
+  isOwn = false,
+  sellerName,
+}: {
+  /** Their standing with your network. */
+  theirPoints: number | null | undefined
+  /** Your standing with theirs — what they see when they look you up. */
+  myPoints: number | null | undefined
+  via?: string | null
+  isOwn?: boolean
+  sellerName: string
+}) {
+  if (isOwn) return <TrustPointsPanel points={null} isOwn />
+
+  return (
+    <div className="flex flex-col gap-2">
+      <TrustPointsPanel points={theirPoints} via={via} />
+      <TrustRow
+        direction="outgoing"
+        points={myPoints}
+        label="You, to them"
+        detail={`What ${sellerName} sees when they look you up on TrustClub.`}
+      />
+    </div>
+  )
+}
+
+/** One compact directed row: an icon, a number, and what it answers. */
+function TrustRow({
+  direction,
+  points,
+  label,
+  detail,
+}: {
+  direction: 'incoming' | 'outgoing'
+  points: number | null | undefined
+  label: string
+  detail: string
+}) {
+  const state = trustState(points)
+  const icon = direction === 'incoming' ? '/indirect_trust_incoming.png' : '/indirect_trust_outgoing.png'
+
+  return (
+    <div className="flex items-center gap-2.5 border-[3px] border-dim-edge bg-panel px-3 py-2.5">
+      <Image src={icon} alt="" width={16} height={16} className="shrink-0 opacity-70" aria-hidden />
+      <div className="flex min-w-0 flex-1 flex-col">
+        <span className="label text-[15px] text-muted">{label}</span>
+        <span className="text-[12px] font-semibold leading-snug text-muted-2">{detail}</span>
+      </div>
+      <span className="label shrink-0 text-[18px] text-ink">
+        {state === 'some' ? (
+          <>
+            {formatTrustPoints(points)}
+            <span className="ml-1 text-[12px] text-muted">TP</span>
+          </>
+        ) : (
+          // Never 0 for a lookup that failed — "n/a" says we do not know.
+          <span className="text-[15px] text-muted">{state === 'unknown' ? 'n/a' : '0 TP'}</span>
+        )}
+      </span>
+    </div>
+  )
+}
+
+/**
  * The expanded form on a listing page, where there is room to say what the
  * number means instead of leaving "TP" as jargon.
  */

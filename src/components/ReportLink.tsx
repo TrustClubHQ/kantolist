@@ -1,76 +1,33 @@
-'use client'
+import Image from 'next/image'
 
-import { useState } from 'react'
-import Link from 'next/link'
-
-const REASONS: { key: string; label: string }[] = [
-  { key: 'SCAM', label: 'Looks like a scam' },
-  { key: 'PROHIBITED', label: 'Prohibited item' },
-  { key: 'SOLD_ALREADY', label: 'Already sold' },
-  { key: 'WRONG_CATEGORY', label: 'Wrong category' },
-  { key: 'DUPLICATE', label: 'Duplicate listing' },
-  { key: 'OTHER', label: 'Something else' },
-]
-
-export function ReportLink({ listingId, signedIn }: { listingId: string; signedIn: boolean }) {
-  const [open, setOpen] = useState(false)
-  const [done, setDone] = useState(false)
-  const [busy, setBusy] = useState(false)
-
-  if (!signedIn) {
-    return (
-      <Link
-        href="/signin"
-        className="label flex min-h-[44px] items-center justify-center text-[16px] text-muted hover:text-red"
-      >
-        Log in to report this listing
-      </Link>
-    )
-  }
-
-  if (done) {
-    return <span className="label text-[16px] text-green">Reported — staff will take a look</span>
-  }
-
-  async function send(reason: string) {
-    setBusy(true)
-    try {
-      await fetch(`/api/listings/${listingId}/report`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ reason }),
-      })
-      setDone(true)
-    } finally {
-      setBusy(false)
-      setOpen(false)
-    }
-  }
-
+/**
+ * What to do about a bad listing.
+ *
+ * Reporting used to open a reason picker and file a row for staff. The signal
+ * that actually decides what people see here is trust, and trust lives in
+ * TrustClub — so deducting trust points from the poster is both the real
+ * remedy and the one that propagates: a poster nobody vouches for sinks in
+ * everyone's ranking, not just in a queue someone has to work through.
+ *
+ * No sign-in needed on our side; the action happens in TrustClub, which does
+ * its own.
+ */
+export function ReportLink({ trustclubId }: { trustclubId: string }) {
   return (
-    <div className="flex flex-col items-center gap-2">
-      <button
-        type="button"
-        onClick={() => setOpen((o) => !o)}
-        className="label flex min-h-[44px] items-center text-[16px] text-muted hover:text-red"
+    <div className="flex flex-col items-center gap-2 text-center">
+      <p className="m-0 max-w-sm text-[13px] font-semibold leading-snug text-muted-2">
+        Something wrong with this listing? Deduct trust points from the poster on TrustClub — that
+        is what lowers them for everyone who trusts you.
+      </p>
+      <a
+        href={`https://trustclub.app/profile/${encodeURIComponent(trustclubId)}`}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="label flex min-h-[44px] items-center gap-1.5 border-2 border-dim-edge px-3 text-[16px] text-muted hover:border-ink hover:text-red"
       >
-        Report this listing
-      </button>
-      {open ? (
-        <div className="hard flex flex-wrap justify-center gap-1.5 border-[3px] border-ink bg-panel p-3">
-          {REASONS.map((r) => (
-            <button
-              key={r.key}
-              type="button"
-              disabled={busy}
-              onClick={() => send(r.key)}
-              className="label min-h-[44px] border-[2.5px] border-ink bg-ground px-2.5 text-[15px] disabled:opacity-60"
-            >
-              {r.label}
-            </button>
-          ))}
-        </div>
-      ) : null}
+        <Image src="/TCLogo-IconOnly-StealthBlack-minpadding.png" alt="" width={14} height={14} aria-hidden />
+        Review @{trustclubId} on TrustClub
+      </a>
     </div>
   )
 }

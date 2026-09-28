@@ -1,11 +1,7 @@
 import Link from 'next/link'
 import { getCurrentAccount } from '@/lib/auth'
-import { MarketSwitcher } from '@/components/MarketSwitcher'
 
-/**
- * The signboard header. KantoList is one market in the Kanto family, so the
- * wordmark sits next to a switcher rather than standing alone.
- */
+/** The signboard header. */
 export async function SiteHeader({ location }: { location?: string }) {
   const account = await getCurrentAccount()
 
@@ -20,10 +16,6 @@ export async function SiteHeader({ location }: { location?: string }) {
             Kanto<span className="text-yellow">List</span>
           </span>
         </Link>
-
-        <div className="hidden sm:block">
-          <MarketSwitcher />
-        </div>
 
         {location ? (
           <span className="label hidden text-[15px] text-[#FFD9A0] sm:inline">{location}</span>

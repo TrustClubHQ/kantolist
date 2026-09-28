@@ -7,8 +7,8 @@ import { getCurrentAccount } from '@/lib/auth'
 import { getTrustPoints } from '@/lib/trustclub'
 import { SiteHeader } from '@/components/SiteHeader'
 import { SiteFooter } from '@/components/SiteFooter'
-import { Badge, Plate, PlateHeader, Price, SafetyNote } from '@/components/ui'
-import { TrustPointsPanel, TrustClubLink } from '@/components/TrustPoints'
+import { Badge, Plate, PlateHeader, Price } from '@/components/ui'
+import { TrustPointsPair, TrustClubLink } from '@/components/TrustPoints'
 import { ContactSheet } from '@/components/ContactSheet'
 import { ReportLink } from '@/components/ReportLink'
 import { CategoryMark } from '@/components/CategoryMark'
@@ -62,7 +62,14 @@ export default async function ListingPage({ params }: Params) {
   const account = await getCurrentAccount()
   const isOwner = account?.id === listing.account.id
 
-  const trustPoints = account ? await getTrustPoints(account.trustclubId, listing.account.trustclubId) : null
+  // Two directed lookups, not one: trust from you toward them is a different
+  // fact from trust from them toward you, and a deal depends on both.
+  const [trustPoints, myTrustPoints] = account
+    ? await Promise.all([
+        getTrustPoints(account.trustclubId, listing.account.trustclubId),
+        getTrustPoints(listing.account.trustclubId, account.trustclubId),
+      ])
+    : [null, null]
   const seller = await getSellerContact(listing.account.id)
 
   // A view from the owner would inflate their own count, so it does not record.
@@ -165,7 +172,12 @@ export default async function ListingPage({ params }: Params) {
             </div>
 
             {account ? (
-              <TrustPointsPanel points={trustPoints} isOwn={isOwner} />
+              <TrustPointsPair
+                theirPoints={trustPoints}
+                myPoints={myTrustPoints}
+                isOwn={isOwner}
+                sellerName={sellerName}
+              />
             ) : (
               <Link
                 href="/signin"
@@ -223,15 +235,8 @@ export default async function ListingPage({ params }: Params) {
           </section>
         ) : null}
 
-        <section className="mt-4">
-          <SafetyNote>
-            Meet in a public place and inspect before paying any deposit. KantoList handles no
-            payment and no delivery.
-          </SafetyNote>
-        </section>
-
         <div className="mt-4 flex justify-center">
-          <ReportLink listingId={listing.id} signedIn={!!account} />
+          <ReportLink trustclubId={listing.account.trustclubId} />
         </div>
       </main>
 
