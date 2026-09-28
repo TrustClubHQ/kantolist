@@ -5,6 +5,8 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import type { AttributeDef } from '@/lib/attributes'
 import { Plate, PlateHeader } from '@/components/ui'
+import { listingPath } from '@/lib/listing'
+import { PhotoPicker, uploadPendingPhotos, type ListingPhoto } from '@/components/PhotoPicker'
 
 /**
  * One scrolling form, numbered sections. The category's attribute schema drives
@@ -42,11 +44,29 @@ const TYPES = [
 
 type TypeKey = (typeof TYPES)[number]['key']
 
+/** The listing being edited, when this form is editing rather than posting. */
+export interface EditableListing {
+  id: string
+  type: string
+  categoryId: string
+  title: string
+  description: string
+  price: string
+  priceUnit: string
+  negotiable: boolean
+  barangay: string
+  attributes: Record<string, string>
+}
+
 export function PostForm({
   categories,
   municipalities,
   defaultMunicipalityId,
   contact,
+  existing,
+  cancelHref,
+  photosEnabled = false,
+  photos = [],
 }: {
   categories: CategoryNode[]
   municipalities: { id: string; name: string; province: string }[]
@@ -58,15 +78,25 @@ export function PostForm({
     facebook: string | null
     viber: string | null
   }
+  /** Present when editing: the same form, pre-filled, PATCHing instead of
+      POSTing. Keeping one form means a field added to posting is editable
+      the same day rather than drifting between two screens. */
+  existing?: EditableListing
+  /** Where Cancel goes. Back to the listing when editing, home when posting. */
+  cancelHref?: string
+  /** False when this deployment has no photo storage configured. */
+  photosEnabled?: boolean
+  /** Photos already on the listing, when editing. */
+  photos?: ListingPhoto[]
 }) {
   const router = useRouter()
-  const [type, setType] = useState<TypeKey>('SELL')
-  const [categoryId, setCategoryId] = useState('')
-  const [title, setTitle] = useState('')
-  const [description, setDescription] = useState('')
-  const [price, setPrice] = useState('')
-  const [priceUnit, setPriceUnit] = useState<string>('TOTAL')
-  const [negotiable, setNegotiable] = useState(false)
+  const [type, setType] = useState<TypeKey>((existing?.type as TypeKey) ?? 'SELL')
+  const [categoryId, setCategoryId] = useState(existing?.categoryId ?? '')
+  const [title, setTitle] = useState(existing?.title ?? '')
+  const [description, setDescription] = useState(existing?.description ?? '')
+  const [price, setPrice] = useState(existing?.price ?? '')
+  const [priceUnit, setPriceUnit] = useState<string>(existing?.priceUnit ?? 'TOTAL')
+  const [negotiable, setNegotiable] = useState(existing?.negotiable ?? false)
   // A single launch town is preselected: the form states it instead of asking,
   // so nothing else would set it and the post would fail validation. A profile
   // town that is no longer in the list — left over from an earlier launch area
@@ -77,16 +107,30 @@ export function PostForm({
     }
     return municipalities.length === 1 ? municipalities[0].id : ''
   })
-  const [barangay, setBarangay] = useState('')
-  const [attributes, setAttributes] = useState<Record<string, string>>({})
-  const [channels, setChannels] = useState<string[]>(() => {
-    const initial = ['TRUSTCLUB']
-    if (contact.phone) initial.push('PHONE', 'SMS')
-    if (contact.messenger) initial.push('MESSENGER')
-    return initial
-  })
+  const [barangay, setBarangay] = useState(existing?.barangay ?? '')
+  const [attributes, setAttributes] = useState<Record<string, string>>(existing?.attributes ?? {})
+  // Every channel the seller actually has. There is no longer a per-listing
+  // toggle: which apps someone is reachable on is a fact about them, not about
+  // a bench they are selling, and the listing page drops anything that has
+  // since been cleared from the profile anyway.
+  const channels = useMemo(() => {
+    const on = ['TRUSTCLUB']
+    if (contact.phone) on.push('PHONE', 'SMS')
+    if (contact.messenger) on.push('MESSENGER')
+    if (contact.viber) on.push('VIBER')
+    return on
+  }, [contact.phone, contact.messenger, contact.viber])
+
+  const reachableSummary = useMemo(() => {
+    const parts: string[] = []
+    if (contact.phone) parts.push(`Call & SMS ${contact.phone}`)
+    if (contact.messenger) parts.push(`Messenger m.me/${contact.messenger}`)
+    if (contact.viber) parts.push(`Viber ${contact.viber}`)
+    return parts
+  }, [contact.phone, contact.messenger, contact.viber])
   const [error, setError] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
+  const [pendingPhotos, setPendingPhotos] = useState<File[]>([])
 
   const currentType = TYPES.find((t) => t.key === type)!
   const leaf = useMemo(
@@ -105,11 +149,6 @@ export function PostForm({
     setAttributes((a) => ({ ...a, [key]: value }))
   }
 
-  function toggleChannel(channel: string) {
-    if (channel === 'TRUSTCLUB') return // always on: it is how a buyer checks you
-    setChannels((c) => (c.includes(channel) ? c.filter((x) => x !== channel) : [...c, channel]))
-  }
-
   async function submit(e: React.FormEvent) {
     e.preventDefault()
     setError(null)
@@ -122,31 +161,57 @@ export function PostForm({
         parsed[def.key] = def.type === 'int' ? Number(raw) : def.type === 'bool' ? raw === 'true' : raw
       }
 
-      const res = await fetch('/api/listings', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          type,
-          categoryId,
-          title,
-          description,
-          price: priceUnit === 'QUOTE' ? null : Number(price),
-          priceUnit,
-          negotiable,
-          municipalityId,
-          barangay,
-          attributes: parsed,
-          contactChannels: channels,
-        }),
-      })
-      const data: { href?: string; error?: string } = await res.json()
-      if (!res.ok || !data.href) {
-        setError(data.error ?? 'Could not publish that listing')
+      const payload = {
+        type,
+        categoryId,
+        title,
+        description,
+        price: priceUnit === 'QUOTE' ? null : Number(price),
+        priceUnit,
+        negotiable,
+        municipalityId,
+        barangay,
+        attributes: parsed,
+        contactChannels: channels,
+      }
+
+      const res = existing
+        ? await fetch(`/api/listings/${existing.id}`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload),
+          })
+        : await fetch('/api/listings', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload),
+          })
+
+      const data: { id?: string; href?: string; code?: string; slug?: string; error?: string } =
+        await res.json()
+      if (!res.ok) {
+        setError(data.error ?? (existing ? 'Could not save those changes' : 'Could not publish that listing'))
         return
       }
-      router.push(data.href)
+      // Photos could not be attached before the listing had an id.
+      if (!existing && data.id && pendingPhotos.length > 0) {
+        await uploadPendingPhotos(data.id, pendingPhotos)
+      }
+
+      // PATCH answers with the code and slug, since a retitle moves the URL.
+      const href = data.href ?? (data.code && data.slug ? listingPath(data.code, data.slug) : null)
+      if (!href) {
+        setError('Saved, but we could not work out where to send you.')
+        return
+      }
+      router.push(href)
+      router.refresh()
     } catch {
-      setError('Could not publish. Check your connection and try again.')
+      setError(
+        existing
+          ? 'Could not save. Check your connection and try again.'
+          : 'Could not publish. Check your connection and try again.',
+      )
     } finally {
       setBusy(false)
     }
@@ -156,7 +221,7 @@ export function PostForm({
     <form onSubmit={submit} className="mx-auto w-full max-w-2xl px-4 pb-32 pt-4">
       <div className="flex flex-col gap-4">
         <Plate>
-          <PlateHeader>1 · What are you posting?</PlateHeader>
+          <PlateHeader>{existing ? 'What you are selling' : '1 · What are you posting?'}</PlateHeader>
           <div className="flex flex-col gap-3 p-3.5">
             <div className="grid grid-cols-3 gap-2">
               {TYPES.map((t) => (
@@ -191,7 +256,7 @@ export function PostForm({
         </Plate>
 
         <Plate>
-          <PlateHeader>2 · Details</PlateHeader>
+          <PlateHeader>{existing ? 'Details' : '2 · Details'}</PlateHeader>
           <div className="flex flex-col gap-3.5 p-3.5">
             <label className="flex flex-col gap-1.5">
               <span className="label text-[15px] text-muted">Title</span>
@@ -228,7 +293,19 @@ export function PostForm({
         </Plate>
 
         <Plate>
-          <PlateHeader>3 · Price</PlateHeader>
+          <PlateHeader>{existing ? 'Photos' : '3 · Photos'}</PlateHeader>
+          <div className="p-3.5">
+            <PhotoPicker
+              listingId={existing?.id}
+              initial={photos}
+              enabled={photosEnabled}
+              onPendingChange={setPendingPhotos}
+            />
+          </div>
+        </Plate>
+
+        <Plate>
+          <PlateHeader>{existing ? 'Price' : '4 · Price'}</PlateHeader>
           <div className="flex flex-col gap-3 p-3.5">
             <div className="flex gap-2.5">
               <div className="flex flex-1 items-center gap-2 border-[2.5px] border-ink bg-ground px-3">
@@ -270,7 +347,7 @@ export function PostForm({
         </Plate>
 
         <Plate>
-          <PlateHeader>4 · Location</PlateHeader>
+          <PlateHeader>{existing ? 'Location' : '5 · Location'}</PlateHeader>
           <div className="flex flex-col gap-3 p-3.5">
             {/* With one launch town there is no choice to make, so it is
                 stated rather than asked. The barangay below is the part a
@@ -303,36 +380,36 @@ export function PostForm({
           </div>
         </Plate>
 
+        {/* A summary, not a control panel. This was four checkboxes, three of
+            them greyed out and explaining what to add to a profile — a second
+            form embedded in the posting form, at the point where someone is
+            trying to finish. The channels a seller has are almost never
+            per-listing, so the profile owns them and this just reports the
+            result. The link opens a new tab so a half-written listing is not
+            lost to a detour. */}
         <Plate>
-          <PlateHeader>5 · How buyers reach you</PlateHeader>
-          <div className="flex flex-col gap-3 p-3.5">
-            <ChannelRow
-              label={contact.phone ? `Call & SMS · ${contact.phone}` : 'Call & SMS — add a number in your profile'}
-              checked={channels.includes('PHONE')}
-              disabled={!contact.phone}
-              verified={contact.phoneVerified}
-              onToggle={() => {
-                toggleChannel('PHONE')
-                toggleChannel('SMS')
-              }}
-            />
-            <ChannelRow
-              label={contact.messenger ? `Messenger · m.me/${contact.messenger}` : 'Messenger — add a handle in your profile'}
-              checked={channels.includes('MESSENGER')}
-              disabled={!contact.messenger}
-              onToggle={() => toggleChannel('MESSENGER')}
-            />
-            <ChannelRow
-              label={contact.viber ? `Viber · ${contact.viber}` : 'Viber — add a number in your profile'}
-              checked={channels.includes('VIBER')}
-              disabled={!contact.viber}
-              onToggle={() => toggleChannel('VIBER')}
-            />
-            <ChannelRow label="TrustClub profile" checked disabled onToggle={() => {}} alwaysOn />
-            {!contact.phone && !contact.messenger ? (
-              <p className="label m-0 border-2 border-ink bg-yellow px-3 py-2 text-[16px] text-ink">
-                Add at least one way to reach you in <Link href="/me/profile">your profile</Link>, or
-                buyers can only find you through TrustClub.
+          <PlateHeader
+            right={
+              <a
+                href="/me/profile"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="label text-[15px] text-yellow underline"
+              >
+                Edit ↗
+              </a>
+            }
+          >
+            {existing ? 'How buyers reach you' : '6 · How buyers reach you'}
+          </PlateHeader>
+          <div className="flex flex-col gap-2 p-3.5">
+            <p className="label m-0 text-[17px]">
+              {reachableSummary.length > 0 ? reachableSummary.join(' · ') : 'TrustClub profile only'}
+            </p>
+            {reachableSummary.length === 0 ? (
+              <p className="m-0 text-[13px] font-semibold leading-snug text-muted-2">
+                Add a number or a Messenger handle to your profile and buyers can reach you
+                directly. Without one they can only find you through TrustClub.
               </p>
             ) : null}
           </div>
@@ -352,7 +429,7 @@ export function PostForm({
 
       <div className="sticky bottom-0 mt-4 flex gap-2.5 border-t-4 border-ink bg-ground py-3">
         <Link
-          href="/"
+          href={cancelHref ?? '/'}
           className="label flex min-h-[54px] w-[112px] items-center justify-center border-[3px] border-ink bg-panel text-[18px] text-ink hover:text-ink"
         >
           Cancel
@@ -362,44 +439,19 @@ export function PostForm({
           disabled={busy}
           className="font-display hard flex min-h-[54px] flex-1 items-center justify-center border-[3px] border-ink bg-red text-[21px] uppercase text-ground disabled:opacity-60"
         >
-          {busy ? 'Publishing…' : 'Publish listing'}
+          {busy
+            ? existing
+              ? 'Saving…'
+              : 'Publishing…'
+            : existing
+              ? 'Save changes'
+              : 'Publish listing'}
         </button>
       </div>
     </form>
   )
 }
 
-function ChannelRow({
-  label,
-  checked,
-  disabled,
-  verified,
-  alwaysOn,
-  onToggle,
-}: {
-  label: string
-  checked: boolean
-  disabled?: boolean
-  verified?: boolean
-  alwaysOn?: boolean
-  onToggle: () => void
-}) {
-  return (
-    <label className={`flex min-h-[44px] items-center gap-2.5 ${disabled && !alwaysOn ? 'opacity-60' : ''}`}>
-      <input
-        type="checkbox"
-        checked={checked}
-        disabled={disabled}
-        onChange={onToggle}
-        className="!min-h-0 !w-auto h-5 w-5 accent-green"
-      />
-      <span className="label flex-1 text-[17px]">{label}</span>
-      {verified ? (
-        <span className="label border-2 border-ink bg-green px-2 py-0.5 text-[13px] text-ground">Verified</span>
-      ) : null}
-    </label>
-  )
-}
 
 function AttributeInput({
   def,

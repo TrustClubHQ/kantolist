@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import type { ListingStatus, ListingType, PriceUnit } from '@prisma/client'
 import { Plate, EmptyState } from '@/components/ui'
@@ -30,12 +31,20 @@ const TABS: { key: ListingStatus | 'ALL'; label: string }[] = [
 ]
 
 export function MyListings({ listings }: { listings: Row[] }) {
-  const [tab, setTab] = useState<ListingStatus | 'ALL'>('ACTIVE')
+  // Opened from "Manage this listing", which passes the listing's own status:
+  // landing on Active hid the very listing that sent you here.
+  const params = useSearchParams()
+  const requested = params.get('tab')
+  const [tab, setTab] = useState<ListingStatus | 'ALL'>(
+    TABS.some((t) => t.key === requested) ? (requested as ListingStatus | 'ALL') : 'ACTIVE',
+  )
   const [rows, setRows] = useState(listings)
   const [busy, setBusy] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
 
   const visible = tab === 'ALL' ? rows : rows.filter((r) => r.status === tab)
+  const countFor = (key: ListingStatus | 'ALL') =>
+    key === 'ALL' ? rows.length : rows.filter((r) => r.status === key).length
 
   async function act(id: string, body: { status?: ListingStatus; bump?: boolean }) {
     setBusy(id)
@@ -88,6 +97,9 @@ export function MyListings({ listings }: { listings: Row[] }) {
             }`}
           >
             {t.label}
+            {/* The count is why you would pick a tab at all — without it,
+                finding a closed listing means clicking through to look. */}
+            <span className="ml-1.5 text-[13px] opacity-70">{countFor(t.key)}</span>
           </button>
         ))}
       </div>
@@ -148,6 +160,14 @@ export function MyListings({ listings }: { listings: Row[] }) {
               </div>
 
               <div className="flex flex-wrap gap-2">
+                {/* First, because changing what a listing says is the thing an
+                    owner comes here to do most often. */}
+                <Link
+                  href={`${row.href}/edit`}
+                  className="label flex min-h-[44px] items-center justify-center border-[2.5px] border-ink bg-yellow px-3 text-[16px] text-ink hover:text-ink"
+                >
+                  Edit
+                </Link>
                 {row.status === 'ACTIVE' ? (
                   <>
                     <Action busy={busy === row.id} onClick={() => act(row.id, { status: 'RESERVED' })}>

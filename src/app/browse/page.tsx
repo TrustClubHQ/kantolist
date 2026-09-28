@@ -142,7 +142,7 @@ export default async function BrowsePage({ searchParams }: { searchParams: Promi
           {!account && result.total > 0 ? (
             <Plate flat className="mb-4 border-[3px] px-3 py-2.5">
               <p className="m-0 text-[13px] font-semibold text-muted-2">
-                Showing newest first. <Link href="/signin">Log in with TrustClub</Link> to put the
+                Showing newest first. <Link href={`/signin?redirect=${encodeURIComponent(`/browse?${params.toString()}`)}`}>Log in with TrustClub</Link> to put the
                 people your own network vouches for at the top.
               </p>
             </Plate>

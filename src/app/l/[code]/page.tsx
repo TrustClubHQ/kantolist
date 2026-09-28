@@ -12,10 +12,10 @@ import { TrustPointsPair, TrustClubLink } from '@/components/TrustPoints'
 import { ContactSheet } from '@/components/ContactSheet'
 import { ReportLink } from '@/components/ReportLink'
 import { CategoryMark } from '@/components/CategoryMark'
-import { codeFromParam, formatPrice, LISTING_TYPE_LABEL } from '@/lib/listing'
+import { codeFromParam, formatPrice, listingPath, LISTING_TYPE_LABEL } from '@/lib/listing'
 import { parseSchema } from '@/lib/attributes'
 import { timeAgo } from '@/lib/format'
-import { getSellerContact } from '@/lib/seller'
+import { getSellerContact, usableChannels } from '@/lib/seller'
 
 export const dynamic = 'force-dynamic'
 
@@ -63,8 +63,9 @@ export default async function ListingPage({ params }: Params) {
   const isOwner = account?.id === listing.account.id
 
   // Two directed lookups, not one: trust from you toward them is a different
-  // fact from trust from them toward you, and a deal depends on both.
-  const [trustPoints, myTrustPoints] = account
+  // fact from trust from them toward you, and a deal depends on both. Named
+  // by direction, because these were previously swapped on the way to the UI.
+  const [myTrustInThem, theirTrustInMe] = account
     ? await Promise.all([
         getTrustPoints(account.trustclubId, listing.account.trustclubId),
         getTrustPoints(listing.account.trustclubId, account.trustclubId),
@@ -83,7 +84,9 @@ export default async function ListingPage({ params }: Params) {
     .map((def) => ({ def, value: values[def.key] }))
     .filter((r) => r.value !== undefined && r.value !== null && r.value !== '')
 
-  const channels = (listing.contactChannels ?? []) as string[]
+  // Only channels the seller can actually be reached on — a stale choice from
+  // posting time is dropped here rather than offered and then refused.
+  const channels = usableChannels((listing.contactChannels ?? []) as string[], seller)
   const sellerName = listing.account.displayName ?? listing.account.trustclubId
   const closed = listing.status === 'CLOSED' || listing.status === 'EXPIRED'
 
@@ -173,14 +176,14 @@ export default async function ListingPage({ params }: Params) {
 
             {account ? (
               <TrustPointsPair
-                theirPoints={trustPoints}
-                myPoints={myTrustPoints}
+                myTrustInThem={myTrustInThem}
+                theirTrustInMe={theirTrustInMe}
                 isOwn={isOwner}
                 sellerName={sellerName}
               />
             ) : (
               <Link
-                href="/signin"
+                href={`/signin?redirect=${encodeURIComponent(listingPath(listing.code, listing.slug))}`}
                 className="label hard-sm flex min-h-[48px] items-center justify-center border-[3px] border-ink bg-yellow px-3 text-center text-[16px] leading-tight text-ink"
               >
                 Connect with TrustClub to see the Trust Points of this member
@@ -250,6 +253,9 @@ export default async function ListingPage({ params }: Params) {
           maskedPhone={seller.maskedPhone}
           signedIn={!!account}
           isOwner={isOwner}
+          listingStatus={listing.status}
+          signInHref={`/signin?redirect=${encodeURIComponent(listingPath(listing.code, listing.slug))}`}
+          editHref={`${listingPath(listing.code, listing.slug)}/edit`}
         />
       ) : null}
 

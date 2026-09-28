@@ -5,7 +5,10 @@ import { getAccountFromRequest } from '@/lib/auth'
 import { withApiHandler, badRequest, unauthorized, forbidden, notFound } from '@/lib/api'
 import { isAllowedMutatingRequest } from '@/lib/http'
 import { parseSchema, validateAttributes } from '@/lib/attributes'
-import { slugify } from '@/lib/listing'
+import type { ListingType, PriceUnit } from '@prisma/client'
+import { slugify, PRICE_UNITS_FOR_TYPE } from '@/lib/listing'
+
+const TYPES: ListingType[] = ['SELL', 'RENT', 'SERVICE']
 
 type Ctx = { params: Promise<{ id: string }> }
 
@@ -40,13 +43,53 @@ export const PATCH = withApiHandler(async (request: NextRequest, ctx: Ctx) => {
     title?: string
     description?: string
     price?: number | null
+    priceUnit?: string
+    type?: string
+    categoryId?: string
     negotiable?: boolean
     attributes?: unknown
     barangay?: string
     meetupNote?: string
+    contactChannels?: unknown
   } = await request.json().catch(() => ({}))
 
   const data: Prisma.ListingUpdateInput = {}
+
+  // Category and type can change — someone lists a bike under Motorcycle and
+  // fixes it. The attribute schema changes with the category, so the values
+  // are validated against the NEW one below, not the one they were entered
+  // under. Without this the listing keeps attributes its category cannot
+  // describe and the detail table renders nothing.
+  let schemaSource = listing.category.attributeSchema
+  if (body.categoryId !== undefined && body.categoryId !== listing.categoryId) {
+    const category = await prisma.category.findUnique({
+      where: { id: body.categoryId },
+      select: { id: true, attributeSchema: true, isActive: true, parentId: true },
+    })
+    if (!category || !category.isActive) return badRequest('Choose a category')
+    if (!category.parentId) return badRequest('Choose a specific category, not a group')
+    data.category = { connect: { id: category.id } }
+    schemaSource = category.attributeSchema
+  }
+
+  if (body.type !== undefined) {
+    if (!TYPES.includes(body.type as ListingType)) return badRequest('Choose sell, rent or service')
+    data.type = body.type as ListingType
+  }
+
+  if (body.priceUnit !== undefined) {
+    const nextType = (body.type ?? listing.type) as ListingType
+    if (!PRICE_UNITS_FOR_TYPE[nextType].includes(body.priceUnit as PriceUnit)) {
+      return badRequest('That price unit does not apply to this kind of listing')
+    }
+    data.priceUnit = body.priceUnit as PriceUnit
+  }
+
+  if (body.contactChannels !== undefined) {
+    if (!Array.isArray(body.contactChannels)) return badRequest('Invalid contact channels')
+    const channels = body.contactChannels.filter((c): c is string => typeof c === 'string')
+    data.contactChannels = channels as unknown as Prisma.InputJsonValue
+  }
 
   if (body.title !== undefined) {
     const title = body.title.trim()
@@ -62,14 +105,20 @@ export const PATCH = withApiHandler(async (request: NextRequest, ctx: Ctx) => {
   if (body.meetupNote !== undefined) data.meetupNote = body.meetupNote.trim() || null
 
   if (body.price !== undefined) {
-    if (listing.priceUnit === 'QUOTE') return badRequest('A quote listing cannot carry a price')
-    const price = body.price === null ? null : Number(body.price)
-    if (price === null || !Number.isFinite(price) || price < 0) return badRequest('Enter a price')
-    data.price = price
+    const unit = body.priceUnit ?? listing.priceUnit
+    if (unit === 'QUOTE') {
+      // Switching to "ask for a quote" clears the old figure rather than
+      // refusing the edit — the form sends null in that case.
+      data.price = null
+    } else {
+      const price = body.price === null ? null : Number(body.price)
+      if (price === null || !Number.isFinite(price) || price < 0) return badRequest('Enter a price')
+      data.price = price
+    }
   }
 
   if (body.attributes !== undefined) {
-    const validated = validateAttributes(parseSchema(listing.category.attributeSchema), body.attributes)
+    const validated = validateAttributes(parseSchema(schemaSource), body.attributes)
     if (!validated.ok) return badRequest(validated.error)
     data.attributes = validated.values as unknown as Prisma.InputJsonValue
   }

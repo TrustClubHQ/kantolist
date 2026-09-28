@@ -201,7 +201,7 @@ export const POST = withApiHandler(async (request: NextRequest) => {
   })
 
   return NextResponse.json(
-    { code: listing.code, href: listingPath(listing.code, listing.slug) },
+    { id: listing.id, code: listing.code, href: listingPath(listing.code, listing.slug) },
     { status: 201 },
   )
 })

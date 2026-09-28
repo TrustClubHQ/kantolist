@@ -130,7 +130,7 @@ export default async function HomePage() {
               </p>
             </div>
             <Link
-              href="/signin"
+              href="/signin?redirect=%2F"
               className="font-display hard-sm inline-flex shrink-0 items-center justify-center border-[3px] border-ink bg-red px-4 py-3 text-[19px] uppercase text-ground hover:text-ground"
             >
               Log in

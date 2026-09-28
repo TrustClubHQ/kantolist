@@ -4,6 +4,7 @@ import { getCurrentAccount } from '@/lib/auth'
 import { SiteHeader } from '@/components/SiteHeader'
 import { PostForm } from '@/components/PostForm'
 import { parseSchema } from '@/lib/attributes'
+import { photosEnabled } from '@/lib/photo-store'
 
 export const dynamic = 'force-dynamic'
 export const metadata = { title: 'Post a listing' }
@@ -44,6 +45,7 @@ export default async function PostPage() {
           facebook: account.facebookUrl,
           viber: account.viberNumber,
         }}
+        photosEnabled={photosEnabled()}
       />
     </div>
   )

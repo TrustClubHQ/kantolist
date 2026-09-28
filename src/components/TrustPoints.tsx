@@ -70,29 +70,35 @@ export function TrustPoints({
  * why a deal does or does not happen.
  */
 export function TrustPointsPair({
-  theirPoints,
-  myPoints,
+  myTrustInThem,
+  theirTrustInMe,
   via,
   isOwn = false,
   sellerName,
 }: {
-  /** Their standing with your network. */
-  theirPoints: number | null | undefined
-  /** Your standing with theirs — what they see when they look you up. */
-  myPoints: number | null | undefined
+  /** getTrustPoints(viewer → poster): how strongly YOUR network vouches for
+   *  them. This is the number that decides whether to deal with them, so it
+   *  is the headline. */
+  myTrustInThem: number | null | undefined
+  /** getTrustPoints(poster → viewer): what they see when they look YOU up. */
+  theirTrustInMe: number | null | undefined
   via?: string | null
   isOwn?: boolean
   sellerName: string
 }) {
   if (isOwn) return <TrustPointsPanel points={null} isOwn />
 
+  // Named for their direction rather than "theirs" and "mine", which is how
+  // these two ended up swapped: the green panel was labelled "to you" while
+  // holding the viewer's trust in the poster, and the row beneath it claimed
+  // to be the viewer's outgoing trust while holding the incoming figure.
   return (
     <div className="flex flex-col gap-2">
-      <TrustPointsPanel points={theirPoints} via={via} />
+      <TrustPointsPanel points={myTrustInThem} via={via} />
       <TrustRow
-        direction="outgoing"
-        points={myPoints}
-        label="You, to them"
+        direction="incoming"
+        points={theirTrustInMe}
+        label="Their trust in you"
         detail={`What ${sellerName} sees when they look you up on TrustClub.`}
       />
     </div>
@@ -184,8 +190,9 @@ export function TrustPointsPanel({
 
   return (
     <div className="flex items-start gap-2.5 border-[3px] border-ink bg-green px-3 py-3">
+      {/* Outgoing: this is trust flowing from the viewer toward the poster. */}
       <Image
-        src="/indirect_trust_incoming.png"
+        src="/indirect_trust_outgoing.png"
         alt=""
         width={19}
         height={19}
@@ -194,7 +201,7 @@ export function TrustPointsPanel({
       />
       <div className="flex flex-col gap-1">
         <p className="font-display m-0 text-[21px] uppercase text-ground">
-          {formatTrustPoints(points)} trust points to you
+          You trust them {formatTrustPoints(points)} TP
         </p>
         <p className="m-0 text-[13px] font-semibold leading-snug text-green-soft">
           {via ? (

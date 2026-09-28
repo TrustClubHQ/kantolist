@@ -31,6 +31,9 @@ export function ContactSheet({
   maskedPhone,
   signedIn,
   isOwner,
+  listingStatus,
+  signInHref,
+  editHref,
 }: {
   listingId: string
   listingTitle: string
@@ -40,6 +43,12 @@ export function ContactSheet({
   maskedPhone: string | null
   signedIn: boolean
   isOwner: boolean
+  /** So "Manage this listing" lands on the tab that actually holds it. */
+  listingStatus: string
+  /** Sign in and come back to this listing, not to the home page. */
+  signInHref: string
+  /** The owner's edit screen for this listing. */
+  editHref: string
 }) {
   const [open, setOpen] = useState(false)
   const [busy, setBusy] = useState<string | null>(null)
@@ -73,12 +82,21 @@ export function ContactSheet({
   if (isOwner) {
     return (
       <div className="sticky bottom-0 border-t-4 border-ink bg-ground px-4 py-3">
-        <div className="mx-auto max-w-3xl">
+        <div className="mx-auto flex max-w-3xl gap-2.5">
+          {/* Edit is the direct action; Manage is the list with the status
+              buttons. Sending an owner to the list to find the listing they
+              are already looking at was a detour. */}
           <Link
-            href="/me/listings"
-            className="font-display hard flex min-h-[54px] items-center justify-center border-[3px] border-ink bg-yellow text-[21px] uppercase text-ink hover:text-ink"
+            href={`${editHref}`}
+            className="font-display hard flex min-h-[54px] flex-1 items-center justify-center border-[3px] border-ink bg-yellow text-[21px] uppercase text-ink hover:text-ink"
           >
-            Manage this listing
+            Edit listing
+          </Link>
+          <Link
+            href={`/me/listings?tab=${listingStatus}`}
+            className="label flex min-h-[54px] w-[110px] items-center justify-center border-[3px] border-ink bg-panel text-[17px] text-ink hover:text-ink"
+          >
+            All mine
           </Link>
         </div>
       </div>
@@ -129,7 +147,7 @@ export function ContactSheet({
                   return (
                     <Link
                       key={channel}
-                      href="/signin"
+                      href={signInHref}
                       className="hard flex min-h-[54px] items-center justify-center gap-2 border-[3px] border-dim-edge bg-dim text-ink hover:text-ink"
                     >
                       <span className="label text-[19px] text-muted-2">

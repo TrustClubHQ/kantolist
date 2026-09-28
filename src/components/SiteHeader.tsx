@@ -1,5 +1,7 @@
 import Link from 'next/link'
+import Image from 'next/image'
 import { getCurrentAccount } from '@/lib/auth'
+import { SignInLink } from '@/components/SignInLink'
 
 /** The signboard header. */
 export async function SiteHeader({ location }: { location?: string }) {
@@ -12,8 +14,22 @@ export async function SiteHeader({ location }: { location?: string }) {
       <div className="mx-auto flex max-w-6xl items-center gap-2 px-3 py-2.5 sm:gap-3 sm:px-4 sm:py-3">
         <Link href="/" className="flex min-h-[44px] shrink-0 items-center gap-1.5 text-ground hover:text-ground sm:gap-2.5">
           <KaritonMark />
-          <span className="font-display text-[20px] uppercase leading-none sm:text-[24px]">
-            Kanto<span className="text-yellow">List</span>
+          <span className="flex flex-col leading-none">
+            <span className="font-display text-[20px] uppercase leading-none sm:text-[24px]">
+              Kanto<span className="text-yellow">List</span>
+            </span>
+            {/* The same lockup TruRate carries: the trust comes from
+                somewhere, and saying so is the whole proposition. */}
+            <span className="mt-0.5 flex items-center gap-1 text-[9px] font-semibold uppercase tracking-wide text-[#FFD9A0] sm:text-[10px]">
+              Powered by
+              <Image
+                src="/TCLogo-Horizontal-Positive-minpadding.png"
+                alt="TrustClub"
+                width={560}
+                height={149}
+                className="h-[9px] w-auto object-contain brightness-0 invert sm:h-[11px]"
+              />
+            </span>
           </span>
         </Link>
 
@@ -24,7 +40,6 @@ export async function SiteHeader({ location }: { location?: string }) {
         <div className="ml-auto flex shrink-0 items-center gap-1.5 sm:gap-3">
           {account ? (
             <>
-              {/* "My listings" is two words too many for a 390px bar. */}
               <Link
                 href="/me/listings"
                 className="label flex min-h-[44px] items-center px-1 text-[16px] text-ground hover:text-yellow"
@@ -40,14 +55,27 @@ export async function SiteHeader({ location }: { location?: string }) {
                   Reports
                 </Link>
               ) : null}
+              {/* Who you are signed in as. Without it the only difference
+                  between signed in and signed out was "Log in" quietly
+                  becoming "Mine", which nobody reads as an account state. */}
+              <Link
+                href="/me/profile"
+                title={`Signed in as @${account.trustclubId}`}
+                className="label flex min-h-[44px] items-center gap-1.5 border-2 border-ground px-2 text-[15px] text-ground hover:bg-ground hover:text-red"
+              >
+                <span
+                  aria-hidden
+                  className="font-display flex h-[22px] w-[22px] shrink-0 items-center justify-center bg-ground text-[13px] text-red"
+                >
+                  {(account.displayName ?? account.trustclubId).charAt(0).toUpperCase()}
+                </span>
+                <span className="hidden max-w-[120px] truncate sm:inline">
+                  {account.displayName ?? `@${account.trustclubId}`}
+                </span>
+              </Link>
             </>
           ) : (
-            <Link
-              href="/signin"
-              className="label flex min-h-[44px] items-center border-2 border-ground px-2.5 text-[15px] text-ground hover:bg-ground hover:text-red"
-            >
-              Log in
-            </Link>
+            <SignInLink className="label flex min-h-[44px] items-center border-2 border-ground px-2.5 text-[15px] text-ground hover:bg-ground hover:text-red" />
           )}
           {/* Posting is the point of the site, so the button is on every screen
               size — it used to be sm: and up, which hid it from most users. */}

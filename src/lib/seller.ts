@@ -21,6 +21,28 @@ export interface SellerContact {
   hasViber: boolean
 }
 
+/**
+ * The channels a listing offers that the seller can actually be reached on.
+ *
+ * A listing stores the channels chosen when it was posted. If the seller later
+ * clears their number or Messenger handle, that choice goes stale — the sheet
+ * kept offering the channel and the API answered "the seller has not set up
+ * that channel", which is a dead end presented as an option. Anything without
+ * a destination is dropped before it is ever shown.
+ */
+export function usableChannels(chosen: string[], contact: SellerContact): string[] {
+  const reachable: Record<string, boolean> = {
+    PHONE: contact.hasPhone,
+    SMS: contact.hasPhone,
+    MESSENGER: contact.hasMessenger,
+    FACEBOOK: contact.hasFacebook,
+    VIBER: contact.hasViber,
+    // Every member has a TrustClub profile — that is what they signed in with.
+    TRUSTCLUB: true,
+  }
+  return chosen.filter((c) => reachable[c])
+}
+
 export async function getSellerContact(accountId: string): Promise<SellerContact> {
   const account = await prisma.account.findUnique({
     where: { id: accountId },
