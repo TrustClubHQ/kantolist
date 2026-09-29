@@ -84,6 +84,7 @@ export default async function EditListingPage({ params }: { params: Promise<{ co
           negotiable: listing.negotiable,
           barangay: listing.barangay ?? '',
           attributes,
+          videoUrl: listing.videoUrl,
         }}
         cancelHref={listingPath(listing.code, listing.slug)}
         photosEnabled={photosEnabled()}

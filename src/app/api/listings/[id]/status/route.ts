@@ -4,7 +4,7 @@ import { prisma } from '@/lib/prisma'
 import { getAccountFromRequest } from '@/lib/auth'
 import { withApiHandler, badRequest, unauthorized, forbidden, notFound } from '@/lib/api'
 import { isAllowedMutatingRequest } from '@/lib/http'
-import { expiryFor, BUMP_COOLDOWN_DAYS } from '@/lib/listing'
+import { BUMP_COOLDOWN_DAYS } from '@/lib/listing'
 
 type Ctx = { params: Promise<{ id: string }> }
 
@@ -36,7 +36,7 @@ export const POST = withApiHandler(async (request: NextRequest, ctx: Ctx) => {
     }
     const bumped = await prisma.listing.update({
       where: { id: listing.id },
-      data: { postedAt: new Date(), bumpedAt: new Date(), expiresAt: expiryFor(listing.type) },
+      data: { postedAt: new Date(), bumpedAt: new Date() },
     })
     return NextResponse.json({ status: bumped.status, postedAt: bumped.postedAt })
   }
@@ -56,7 +56,7 @@ export const POST = withApiHandler(async (request: NextRequest, ctx: Ctx) => {
       // Re-opening a closed or expired listing restarts its clock; otherwise it
       // would come back already expired.
       ...(next === 'ACTIVE' && listing.status !== 'RESERVED'
-        ? { postedAt: new Date(), expiresAt: expiryFor(listing.type) }
+        ? { postedAt: new Date() }
         : {}),
     },
   })

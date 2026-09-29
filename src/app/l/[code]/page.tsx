@@ -12,7 +12,7 @@ import { ContactSheet } from '@/components/ContactSheet'
 import { ReportLink } from '@/components/ReportLink'
 import { CategoryMark } from '@/components/CategoryMark'
 import { PhotoGallery } from '@/components/PhotoGallery'
-import { codeFromParam, formatPrice, listingPath, LISTING_TYPE_LABEL } from '@/lib/listing'
+import { codeFromParam, formatPrice, listingPath, videoHostName, LISTING_TYPE_LABEL } from '@/lib/listing'
 import { parseSchema } from '@/lib/attributes'
 import { timeAgo } from '@/lib/format'
 import { getSellerContact, usableChannels } from '@/lib/seller'
@@ -88,6 +88,9 @@ export default async function ListingPage({ params }: Params) {
   // posting time is dropped here rather than offered and then refused.
   const channels = usableChannels((listing.contactChannels ?? []) as string[], seller)
   const sellerName = listing.account.displayName ?? listing.account.trustclubId
+  // Named, so the button says where it is about to take someone. A stored link
+  // whose host is no longer one we allow is simply not offered.
+  const videoHost = listing.videoUrl ? videoHostName(listing.videoUrl) : null
   const closed = listing.status === 'CLOSED' || listing.status === 'EXPIRED'
 
   return (
@@ -139,6 +142,18 @@ export default async function ListingPage({ params }: Params) {
             Posted {timeAgo(listing.postedAt)} · #{listing.code}
           </p>
         </div>
+
+        {listing.videoUrl && videoHost ? (
+          <a
+            href={listing.videoUrl}
+            target="_blank"
+            rel="noopener noreferrer nofollow"
+            className="font-display hard mt-4 flex min-h-[54px] items-center justify-center gap-2 border-[3px] border-ink bg-panel text-[19px] uppercase text-ink hover:text-ink"
+          >
+            <PlayMark />
+            Watch on {videoHost}
+          </a>
+        ) : null}
 
         <section className="mt-4">
           <Plate className="flex flex-col gap-3 p-3.5">
@@ -243,5 +258,13 @@ export default async function ListingPage({ params }: Params) {
 
       <SiteFooter />
     </div>
+  )
+}
+
+function PlayMark() {
+  return (
+    <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" fill="currentColor">
+      <path d="M8 5.5v13l11-6.5z" />
+    </svg>
   )
 }

@@ -30,7 +30,6 @@ export const GET = withApiHandler(async (request: NextRequest) => {
       priceUnit: l.priceUnit,
       image: l.images[0]?.url ?? null,
       postedAt: l.postedAt,
-      expiresAt: l.expiresAt,
       bumpedAt: l.bumpedAt,
       viewCount: l.viewCount,
       contactCount: l._count.contacts,

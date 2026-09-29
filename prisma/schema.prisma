@@ -118,9 +118,12 @@ model Listing {
   /// profile later never silently changes what an old listing advertises.
   contactChannels Json @default("[]") @map("contact_channels")
 
+  /// A link to a video the seller already posted elsewhere (YouTube, Facebook
+  /// or TikTok). KantoList does not host video.
+  videoUrl String? @map("video_url")
+
   status    ListingStatus @default(ACTIVE)
   postedAt  DateTime      @default(now()) @map("posted_at")
-  expiresAt DateTime      @map("expires_at")
   bumpedAt  DateTime?     @map("bumped_at")
   closedAt  DateTime?     @map("closed_at")
   viewCount Int           @default(0) @map("view_count")

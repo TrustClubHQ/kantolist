@@ -7,7 +7,7 @@ import { isAllowedMutatingRequest } from '@/lib/http'
 import { searchListings, type SortKey } from '@/lib/search'
 import { parseSchema, validateAttributes } from '@/lib/attributes'
 import {
-  slugify, expiryFor, listingPath,
+  slugify, listingPath, parseVideoUrl,
   PRICE_UNITS_FOR_TYPE, MAX_ACTIVE_LISTINGS, MAX_ACTIVE_LISTINGS_UNTRUSTED, MAX_NEW_LISTINGS_PER_DAY,
 } from '@/lib/listing'
 import { generateCode } from '@/lib/code'
@@ -89,6 +89,7 @@ interface CreateBody {
   meetupNote?: string
   contactChannels?: string[]
   serviceAreaIds?: string[]
+  videoUrl?: string
 }
 
 export const POST = withApiHandler(async (request: NextRequest) => {
@@ -135,6 +136,9 @@ export const POST = withApiHandler(async (request: NextRequest) => {
 
   const validated = validateAttributes(parseSchema(category.attributeSchema), body.attributes)
   if (!validated.ok) return badRequest(validated.error)
+
+  const video = parseVideoUrl(body.videoUrl)
+  if ('error' in video) return badRequest(video.error)
 
   const description = (body.description ?? '').trim().slice(0, MAX_DESCRIPTION)
 
@@ -191,8 +195,8 @@ export const POST = withApiHandler(async (request: NextRequest) => {
       barangay: body.barangay?.trim() || null,
       meetupNote: body.meetupNote?.trim() || null,
       contactChannels: channels as unknown as Prisma.InputJsonValue,
+      videoUrl: video.url,
       status: 'ACTIVE',
-      expiresAt: expiryFor(type),
       serviceAreas:
         type === 'SELL' || !body.serviceAreaIds?.length
           ? undefined

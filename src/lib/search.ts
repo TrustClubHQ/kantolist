@@ -77,7 +77,6 @@ export async function municipalityScope(
 async function buildWhere(params: SearchParams): Promise<Prisma.ListingWhereInput> {
   const where: Prisma.ListingWhereInput = {
     status: { in: LISTED_STATUSES },
-    expiresAt: { gt: new Date() },
   }
 
   if (params.type) where.type = params.type

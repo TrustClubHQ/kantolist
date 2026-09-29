@@ -17,7 +17,11 @@ import { logger } from '@/lib/logger'
  * never finish a sign-in.
  */
 
-const MAX_BYTES = 6 * 1024 * 1024
+// Under the 4.5MB a serverless request body can carry: past that the platform
+// refuses the upload before this check runs, and the seller sees a bare network
+// error instead of a sentence. The browser scales photos down before sending,
+// so this is a floor for odd files rather than the normal path.
+const MAX_BYTES = 4 * 1024 * 1024
 const ALLOWED = new Map([
   ['image/jpeg', 'jpg'],
   ['image/png', 'png'],
@@ -40,7 +44,7 @@ export type UploadResult =
 export async function storePhoto(file: File, listingCode: string): Promise<UploadResult> {
   const ext = ALLOWED.get(file.type)
   if (!ext) return { ok: false, error: 'Photos must be JPG, PNG or WebP' }
-  if (file.size > MAX_BYTES) return { ok: false, error: 'Each photo must be 6MB or smaller' }
+  if (file.size > MAX_BYTES) return { ok: false, error: 'Each photo must be 4MB or smaller' }
   if (file.size === 0) return { ok: false, error: 'That file was empty' }
 
   // Random, not the original filename: a name chosen by the uploader is both a

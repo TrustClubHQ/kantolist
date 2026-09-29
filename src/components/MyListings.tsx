@@ -18,7 +18,6 @@ interface Row {
   priceUnit: PriceUnit | null
   image: string | null
   postedAt: string
-  expiresAt: string
   viewCount: number
   contactCount: number
 }
@@ -152,11 +151,6 @@ export function MyListings({ listings }: { listings: Row[] }) {
                 <span className="label text-[15px] font-semibold text-muted">
                   Posted {timeAgo(row.postedAt)}
                 </span>
-                {row.status === 'ACTIVE' ? (
-                  <span className="label text-[15px] font-semibold text-muted">
-                    Expires {new Date(row.expiresAt).toLocaleDateString('en-PH', { day: 'numeric', month: 'short' })}
-                  </span>
-                ) : null}
               </div>
 
               <div className="flex flex-wrap gap-2">

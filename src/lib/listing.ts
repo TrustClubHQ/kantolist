@@ -1,12 +1,5 @@
 import type { ListingType, PriceUnit } from '@prisma/client'
 
-/** Days an ACTIVE listing stays visible before it expires. */
-export const LISTING_TTL_DAYS: Record<ListingType, number> = {
-  SELL: 30,
-  RENT: 60,
-  SERVICE: 60,
-}
-
 /** A bump resets postedAt, at most this often. */
 export const BUMP_COOLDOWN_DAYS = 7
 
@@ -25,10 +18,63 @@ export function slugify(title: string): string {
     .slice(0, 60)
 }
 
-export function expiryFor(type: ListingType, from = new Date()): Date {
-  const d = new Date(from)
-  d.setDate(d.getDate() + LISTING_TTL_DAYS[type])
-  return d
+/**
+ * A video the seller already posted somewhere else. KantoList does not host
+ * video — a minute of phone footage is larger than every photo on the site put
+ * together — so this is a link out, and only to the places sellers here
+ * actually use. An unknown host is refused rather than stored and rendered as
+ * a link to anywhere.
+ */
+export const VIDEO_HOSTS: Record<string, string> = {
+  'youtube.com': 'YouTube',
+  'www.youtube.com': 'YouTube',
+  'm.youtube.com': 'YouTube',
+  'youtu.be': 'YouTube',
+  'facebook.com': 'Facebook',
+  'www.facebook.com': 'Facebook',
+  'm.facebook.com': 'Facebook',
+  'web.facebook.com': 'Facebook',
+  'fb.watch': 'Facebook',
+  'tiktok.com': 'TikTok',
+  'www.tiktok.com': 'TikTok',
+  'vm.tiktok.com': 'TikTok',
+}
+
+/** The platform's name, for a button that says where it is about to go. */
+export function videoHostName(url: string): string | null {
+  try {
+    return VIDEO_HOSTS[new URL(url).hostname.toLowerCase()] ?? null
+  } catch {
+    return null
+  }
+}
+
+/**
+ * `null` for an empty box, a string for a link worth storing, and an `error`
+ * for anything else — a typo should be said out loud at the form, not dropped
+ * silently on the way to the database.
+ */
+export function parseVideoUrl(raw: string | null | undefined): { url: string | null } | { error: string } {
+  const value = (raw ?? '').trim()
+  if (!value) return { url: null }
+  // A pasted link often arrives bare; assume the secure scheme rather than
+  // refusing something the seller can see works in their browser.
+  const withScheme = /^https?:\/\//i.test(value) ? value : `https://${value}`
+  let parsed: URL
+  try {
+    parsed = new URL(withScheme)
+  } catch {
+    return { error: 'That does not look like a link' }
+  }
+  if (parsed.protocol !== 'https:' && parsed.protocol !== 'http:') {
+    return { error: 'That does not look like a link' }
+  }
+  if (!VIDEO_HOSTS[parsed.hostname.toLowerCase()]) {
+    return { error: 'Paste a YouTube, Facebook or TikTok link' }
+  }
+  parsed.protocol = 'https:'
+  parsed.hash = ''
+  return { url: parsed.toString() }
 }
 
 /** Which price units make sense for each listing type — enforced on write. */

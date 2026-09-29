@@ -34,7 +34,6 @@ export default async function MyListingsPage() {
           priceUnit: l.priceUnit,
           image: l.images[0]?.url ?? null,
           postedAt: l.postedAt.toISOString(),
-          expiresAt: l.expiresAt.toISOString(),
           viewCount: l.viewCount,
           contactCount: l._count.contacts,
         }))}

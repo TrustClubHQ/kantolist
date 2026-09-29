@@ -6,7 +6,7 @@ import { withApiHandler, badRequest, unauthorized, forbidden, notFound } from '@
 import { isAllowedMutatingRequest } from '@/lib/http'
 import { parseSchema, validateAttributes } from '@/lib/attributes'
 import type { ListingType, PriceUnit } from '@prisma/client'
-import { slugify, PRICE_UNITS_FOR_TYPE } from '@/lib/listing'
+import { slugify, parseVideoUrl, PRICE_UNITS_FOR_TYPE } from '@/lib/listing'
 
 const TYPES: ListingType[] = ['SELL', 'RENT', 'SERVICE']
 
@@ -50,6 +50,7 @@ export const PATCH = withApiHandler(async (request: NextRequest, ctx: Ctx) => {
     attributes?: unknown
     barangay?: string
     meetupNote?: string
+    videoUrl?: string
     contactChannels?: unknown
   } = await request.json().catch(() => ({}))
 
@@ -103,6 +104,12 @@ export const PATCH = withApiHandler(async (request: NextRequest, ctx: Ctx) => {
   if (body.negotiable !== undefined) data.negotiable = !!body.negotiable
   if (body.barangay !== undefined) data.barangay = body.barangay.trim() || null
   if (body.meetupNote !== undefined) data.meetupNote = body.meetupNote.trim() || null
+
+  if (body.videoUrl !== undefined) {
+    const video = parseVideoUrl(body.videoUrl)
+    if ('error' in video) return badRequest(video.error)
+    data.videoUrl = video.url
+  }
 
   if (body.price !== undefined) {
     const unit = body.priceUnit ?? listing.priceUnit

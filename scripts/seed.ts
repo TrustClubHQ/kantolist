@@ -15,7 +15,7 @@
  * muscle memory.
  */
 import { PrismaClient, type Prisma } from '@prisma/client'
-import { slugify, expiryFor } from '../src/lib/listing'
+import { slugify } from '../src/lib/listing'
 import { generateCode } from '../src/lib/code'
 import { MUNICIPALITIES, ADJACENT, CATEGORIES } from './reference-data'
 
@@ -277,7 +277,6 @@ async function main(): Promise<void> {
         contactChannels: channels as unknown as Prisma.InputJsonValue,
         status: l.status ?? 'ACTIVE',
         postedAt,
-        expiresAt: expiryFor(l.type, postedAt),
         viewCount: Math.floor(Math.random() * 300),
       },
     })

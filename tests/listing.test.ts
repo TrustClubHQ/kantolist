@@ -1,6 +1,6 @@
 import {
-  slugify, expiryFor, formatPrice, listingPath, codeFromParam,
-  PRICE_UNITS_FOR_TYPE, LISTING_TTL_DAYS,
+  slugify, formatPrice, listingPath, codeFromParam, parseVideoUrl, videoHostName,
+  PRICE_UNITS_FOR_TYPE,
 } from '@/lib/listing'
 import { generateCode } from '@/lib/code'
 
@@ -31,13 +31,38 @@ describe('generateCode', () => {
   })
 })
 
-describe('expiryFor', () => {
-  it('gives rentals and services a longer life than sales', () => {
-    const from = new Date('2026-09-10T00:00:00Z')
-    const days = (d: Date) => Math.round((d.getTime() - from.getTime()) / 86400_000)
-    expect(days(expiryFor('SELL', from))).toBe(LISTING_TTL_DAYS.SELL)
-    expect(days(expiryFor('RENT', from))).toBe(LISTING_TTL_DAYS.RENT)
-    expect(days(expiryFor('SERVICE', from))).toBe(LISTING_TTL_DAYS.SERVICE)
+describe('parseVideoUrl', () => {
+  it('accepts the platforms sellers here actually use', () => {
+    expect(parseVideoUrl('https://youtu.be/abc123')).toEqual({ url: 'https://youtu.be/abc123' })
+    expect(parseVideoUrl('https://www.tiktok.com/@nena/video/7231')).toEqual({
+      url: 'https://www.tiktok.com/@nena/video/7231',
+    })
+    expect(parseVideoUrl('https://fb.watch/xyz/')).toEqual({ url: 'https://fb.watch/xyz/' })
+  })
+
+  it('takes a link pasted without its scheme, and secures it', () => {
+    expect(parseVideoUrl('youtube.com/watch?v=abc')).toEqual({ url: 'https://youtube.com/watch?v=abc' })
+    expect(parseVideoUrl('http://www.facebook.com/reel/99')).toEqual({
+      url: 'https://www.facebook.com/reel/99',
+    })
+  })
+
+  it('treats an empty box as no video rather than an error', () => {
+    expect(parseVideoUrl('')).toEqual({ url: null })
+    expect(parseVideoUrl('   ')).toEqual({ url: null })
+    expect(parseVideoUrl(undefined)).toEqual({ url: null })
+  })
+
+  it('refuses anywhere else, so the button cannot lead off the map', () => {
+    expect(parseVideoUrl('https://example.com/video.mp4')).toHaveProperty('error')
+    expect(parseVideoUrl('javascript:alert(1)')).toHaveProperty('error')
+    expect(parseVideoUrl('not a link at all')).toHaveProperty('error')
+  })
+
+  it('names the platform for the button', () => {
+    expect(videoHostName('https://youtu.be/abc')).toBe('YouTube')
+    expect(videoHostName('https://vm.tiktok.com/abc')).toBe('TikTok')
+    expect(videoHostName('https://example.com/abc')).toBeNull()
   })
 })
 

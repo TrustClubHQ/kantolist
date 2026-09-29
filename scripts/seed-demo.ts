@@ -19,7 +19,7 @@ import { PrismaClient, type Prisma } from '@prisma/client'
 import { DEMO_ACCOUNTS, DEMO_LISTINGS, DEMO_TRUST } from './demo-data'
 import { photoForCategory } from './category-photos'
 import { generateCode } from '../src/lib/code'
-import { slugify, expiryFor } from '../src/lib/listing'
+import { slugify } from '../src/lib/listing'
 
 const prisma = new PrismaClient()
 
@@ -152,7 +152,6 @@ async function main(): Promise<void> {
         contactChannels: channels as unknown as Prisma.InputJsonValue,
         status: l.status ?? 'ACTIVE',
         postedAt,
-        expiresAt: expiryFor(l.type, postedAt),
         closedAt: l.status === 'CLOSED' ? new Date() : null,
         viewCount: views,
         images: photosFor(l).length

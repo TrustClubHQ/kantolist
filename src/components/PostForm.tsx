@@ -56,6 +56,7 @@ export interface EditableListing {
   negotiable: boolean
   barangay: string
   attributes: Record<string, string>
+  videoUrl: string | null
 }
 
 export function PostForm({
@@ -108,6 +109,7 @@ export function PostForm({
     return municipalities.length === 1 ? municipalities[0].id : ''
   })
   const [barangay, setBarangay] = useState(existing?.barangay ?? '')
+  const [videoUrl, setVideoUrl] = useState(existing?.videoUrl ?? '')
   const [attributes, setAttributes] = useState<Record<string, string>>(existing?.attributes ?? {})
   // Every channel the seller actually has. There is no longer a per-listing
   // toggle: which apps someone is reachable on is a fact about them, not about
@@ -176,6 +178,7 @@ export function PostForm({
         municipalityId,
         barangay,
         attributes: parsed,
+        videoUrl,
         contactChannels: channels,
       }
 
@@ -307,14 +310,28 @@ export function PostForm({
         </Plate>
 
         <Plate>
-          <PlateHeader>{existing ? 'Photos' : '3 · Photos'}</PlateHeader>
-          <div className="p-3.5">
+          <PlateHeader>{existing ? 'Photos and video' : '3 · Photos and video'}</PlateHeader>
+          <div className="flex flex-col gap-3 p-3.5">
             <PhotoPicker
               listingId={existing?.id}
               initial={photos}
               enabled={photosEnabled}
               onPendingChange={setPendingPhotos}
             />
+            <label className="flex flex-col gap-1">
+              <span className="label text-[16px]">Video link (optional)</span>
+              <input
+                type="url"
+                inputMode="url"
+                value={videoUrl}
+                onChange={(e) => setVideoUrl(e.target.value)}
+                placeholder="Paste a YouTube, Facebook or TikTok link"
+                className="min-h-[48px] border-[2.5px] border-ink bg-ground px-3 text-[16px]"
+              />
+              <span className="m-0 text-[13px] font-semibold leading-snug text-muted-2">
+                Videos stay on the app you posted them to — buyers open the link from the listing.
+              </span>
+            </label>
           </div>
         </Plate>
 

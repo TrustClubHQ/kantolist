@@ -9,6 +9,97 @@ export interface ListingPhoto {
 }
 
 /**
+ * Phone photos are far bigger than a listing page can use: a 12MP shot is
+ * 4000px wide and several megabytes, and it travels over the kind of mobile
+ * connection this site is built for. So each one is scaled down in the browser
+ * before it is sent — which also keeps uploads under the 4.5MB a serverless
+ * request can carry, where a straight-from-the-camera photo would be refused
+ * by the platform before our own size check ever ran.
+ */
+const MAX_EDGE = 1600
+const JPEG_QUALITY = 0.82
+/** Below this a photo is already small enough that re-encoding only loses detail. */
+const LEAVE_ALONE_BYTES = 600 * 1024
+
+export interface PreparedPhoto {
+  file: File
+  width: number | null
+  height: number | null
+}
+
+function canvasFor(width: number, height: number): HTMLCanvasElement {
+  const canvas = document.createElement('canvas')
+  canvas.width = width
+  canvas.height = height
+  return canvas
+}
+
+function toBlob(canvas: HTMLCanvasElement): Promise<Blob | null> {
+  return new Promise((resolve) => canvas.toBlob(resolve, 'image/jpeg', JPEG_QUALITY))
+}
+
+/**
+ * Never throws and never refuses: a browser that cannot decode the file, or
+ * produces something larger than what it started with, sends the original. A
+ * photo the seller picked should not go missing because the resize did not work.
+ */
+export async function prepareForUpload(file: File): Promise<PreparedPhoto> {
+  let bitmap: ImageBitmap
+  try {
+    bitmap = await createImageBitmap(file)
+  } catch {
+    return { file, width: null, height: null }
+  }
+
+  const { width, height } = bitmap
+  const scale = Math.min(1, MAX_EDGE / Math.max(width, height))
+  if (scale === 1 && file.size <= LEAVE_ALONE_BYTES) {
+    bitmap.close()
+    return { file, width, height }
+  }
+
+  const target = { width: Math.round(width * scale), height: Math.round(height * scale) }
+  try {
+    const canvas = canvasFor(target.width, target.height)
+    const ctx = canvas.getContext('2d')
+    if (!ctx) throw new Error('no 2d context')
+    // A transparent PNG becomes white rather than black, which is what JPEG
+    // gives you for an unpainted canvas.
+    ctx.fillStyle = '#ffffff'
+    ctx.fillRect(0, 0, target.width, target.height)
+    ctx.drawImage(bitmap, 0, 0, target.width, target.height)
+    const blob = await toBlob(canvas)
+    if (!blob || blob.size >= file.size) return { file, width, height }
+    const name = file.name.replace(/\.[^.]+$/, '') || 'photo'
+    return {
+      file: new File([blob], `${name}.jpg`, { type: 'image/jpeg' }),
+      width: target.width,
+      height: target.height,
+    }
+  } catch {
+    return { file, width, height }
+  } finally {
+    bitmap.close()
+  }
+}
+
+/**
+ * The upload body: the scaled photo, plus its pixel size so the listing page
+ * can size its stage to the photo's shape instead of cropping it into a fixed
+ * band. The size is only ever a layout hint, and the server clamps it.
+ */
+async function photoForm(file: File): Promise<FormData> {
+  const prepared = await prepareForUpload(file)
+  const body = new FormData()
+  body.append('photo', prepared.file)
+  if (prepared.width && prepared.height) {
+    body.append('width', String(prepared.width))
+    body.append('height', String(prepared.height))
+  }
+  return body
+}
+
+/**
  * Photos on a listing.
  *
  * Two modes, because a new listing has no id to attach anything to yet:
@@ -20,34 +111,6 @@ export interface ListingPhoto {
  * file picker that cannot keep the file is the same mistake as the QR on a
  * deployment that could not finish a sign-in.
  */
-/**
- * The photo's own pixel size, sent with the upload so the listing page can size
- * its stage to the photo's shape instead of cropping it into a fixed band. Only
- * ever a layout hint — the server clamps it — so reading it in the browser is
- * cheaper than decoding the file again on the way in.
- */
-async function readDimensions(file: File): Promise<{ width: number; height: number } | null> {
-  try {
-    const bitmap = await createImageBitmap(file)
-    const size = { width: bitmap.width, height: bitmap.height }
-    bitmap.close()
-    return size.width > 0 && size.height > 0 ? size : null
-  } catch {
-    return null
-  }
-}
-
-async function photoForm(file: File): Promise<FormData> {
-  const body = new FormData()
-  body.append('photo', file)
-  const size = await readDimensions(file)
-  if (size) {
-    body.append('width', String(size.width))
-    body.append('height', String(size.height))
-  }
-  return body
-}
-
 export function PhotoPicker({
   listingId,
   initial = [],
