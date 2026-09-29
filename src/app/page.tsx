@@ -87,8 +87,9 @@ export default async function HomePage() {
           <Plate className="p-6">
             <p className="label m-0 text-[20px]">{t('home.empty')}</p>
             <p className="mt-2 text-sm text-muted-2">
-              {t('home.emptyHelp', { link: '' }).split('{link}')[0]}
-              <Link href="/post">{t('home.emptyLink')}</Link>
+              {t('home.emptyHelp.before')}
+              <Link href="/post">{t('home.emptyHelp.link')}</Link>
+              {t('home.emptyHelp.after')}
             </p>
           </Plate>
         ) : (

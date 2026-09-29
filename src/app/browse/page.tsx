@@ -145,11 +145,11 @@ export default async function BrowsePage({ searchParams }: { searchParams: Promi
           {!account && result.total > 0 ? (
             <Plate flat className="mb-4 border-[3px] px-3 py-2.5">
               <p className="m-0 text-[13px] font-semibold text-muted-2">
-                {t('browse.signInPrompt', { link: '' }).split('{link}')[0]}
+                {t('browse.signInPrompt.before')}
                 <Link href={`/signin?redirect=${encodeURIComponent(`/browse?${params.toString()}`)}`}>
-                  {t('browse.signInPromptLink')}
+                  {t('browse.signInPrompt.link')}
                 </Link>
-                {t('browse.signInPrompt', { link: '' }).split('{link}')[1]}
+                {t('browse.signInPrompt.after')}
               </p>
             </Plate>
           ) : null}

@@ -145,8 +145,9 @@ const en: Record<string, string> = {
   'home.noDataHelp':
     'The database has no categories — it was never seeded, or this deployment is pointed at the wrong one.',
   'home.empty': 'Nothing listed yet',
-  'home.emptyHelp': 'Be the first — {link}.',
-  'home.emptyLink': 'post a listing',
+  'home.emptyHelp.before': 'Be the first — ',
+  'home.emptyHelp.link': 'post a listing',
+  'home.emptyHelp.after': '.',
   'home.cta.title': 'See who you can trust',
   'home.cta.body': 'Log in with TrustClub to sort listings by your own connections.',
   'search.placeholder': 'Motorcycle, videoke, mechanic…',
@@ -171,8 +172,11 @@ const en: Record<string, string> = {
   'browse.sort.price_asc': 'Cheapest',
   'browse.sort.price_desc': 'Priciest',
   'browse.sort.trustLocked': 'Log in to rank by your own trust network',
-  'browse.signInPrompt': 'Showing newest first. {link} to put the people your own network vouches for at the top.',
-  'browse.signInPromptLink': 'Log in with TrustClub',
+  // Split around the link rather than interpolated: a sentence with a link in
+  // the middle of it cannot be one string in JSX.
+  'browse.signInPrompt.before': 'Showing newest first. ',
+  'browse.signInPrompt.link': 'Log in with TrustClub',
+  'browse.signInPrompt.after': ' to put the people your own network vouches for at the top.',
   'browse.noData': 'This deployment has no data',
   'browse.noDataHelp':
     'The database has no categories, so it was never seeded or the deployment is pointed at the wrong one. Listings cannot load until that is fixed.',
@@ -710,8 +714,9 @@ const tl: Record<string, string> = {
   'home.noDataHelp':
     'Walang kategorya ang database — hindi ito na-seed, o mali ang database na naka-turo sa deployment na ito.',
   'home.empty': 'Wala pang nakapost',
-  'home.emptyHelp': 'Ikaw na ang mauna — {link}.',
-  'home.emptyLink': 'mag-post ng listing',
+  'home.emptyHelp.before': 'Ikaw na ang mauna — ',
+  'home.emptyHelp.link': 'mag-post ng listing',
+  'home.emptyHelp.after': '.',
   'home.cta.title': 'Tingnan kung sino ang mapagkakatiwalaan mo',
   'home.cta.body': 'Mag-log in sa TrustClub para ma-sort ang listing ayon sa koneksyon mo.',
   'search.placeholder': 'Motor, videoke, mekaniko…',
@@ -734,9 +739,9 @@ const tl: Record<string, string> = {
   'browse.sort.price_asc': 'Pinakamura',
   'browse.sort.price_desc': 'Pinakamahal',
   'browse.sort.trustLocked': 'Mag-log in para ma-ranggo ayon sa sarili mong trust network',
-  'browse.signInPrompt':
-    'Pinakabago muna ang nakikita mo. {link} para mauna ang mga taong pinagkakatiwalaan ng network mo.',
-  'browse.signInPromptLink': 'Mag-log in sa TrustClub',
+  'browse.signInPrompt.before': 'Pinakabago muna ang nakikita mo. ',
+  'browse.signInPrompt.link': 'Mag-log in sa TrustClub',
+  'browse.signInPrompt.after': ' para mauna ang mga taong pinagkakatiwalaan ng network mo.',
   'browse.noData': 'Walang data ang deployment na ito',
   'browse.noDataHelp':
     'Walang kategorya ang database, kaya hindi ito na-seed o mali ang naka-turo na database. Hindi mag-lo-load ang listing hangga\'t hindi ito naaayos.',
@@ -817,15 +822,17 @@ const tl: Record<string, string> = {
     'May mali sa listing na ito? Bawasan ang trust points ng nag-post sa TrustClub — iyon ang magpapababa sa kanila para sa lahat ng nagtitiwala sa iyo.',
   'listing.reportAction': 'I-review si @{id} sa TrustClub',
 
-  'time.justNow': 'ngayon lang',
-  'time.minutes': '{count} minuto na ang nakalipas',
-  'time.hour': '1 oras na ang nakalipas',
-  'time.hours': '{count} oras na ang nakalipas',
+  // Short, because these sit inside a meta line that already carries the
+  // listing code: "na-post 17 oras na · #6ZQXNC" is what someone would say.
+  'time.justNow': 'kanina lang',
+  'time.minutes': '{count} minuto na',
+  'time.hour': '1 oras na',
+  'time.hours': '{count} oras na',
   'time.yesterday': 'kahapon',
-  'time.days': '{count} araw na ang nakalipas',
-  'time.week': '1 linggo na ang nakalipas',
-  'time.weeks': '{count} linggo na ang nakalipas',
-  'time.months': '{count} buwan na ang nakalipas',
+  'time.days': '{count} araw na',
+  'time.week': '1 linggo na',
+  'time.weeks': '{count} linggo na',
+  'time.months': '{count} buwan na',
 
   'trust.unknown': 'Hindi alam ang tiwala',
   'trust.unknown.help':
