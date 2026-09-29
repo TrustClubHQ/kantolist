@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import { requestT } from '@/lib/i18n-server'
 import { getAccountFromRequest } from '@/lib/auth'
 import { withApiHandler, badRequest, unauthorized, forbidden } from '@/lib/api'
 import { isAllowedMutatingRequest } from '@/lib/http'
@@ -27,6 +28,7 @@ export const PATCH = withApiHandler(async (request: NextRequest) => {
   const account = await getAccountFromRequest(request)
   if (!account) return unauthorized()
 
+  const t = requestT(request)
   const body: {
     displayName?: string
     phone?: string | null
@@ -40,7 +42,7 @@ export const PATCH = withApiHandler(async (request: NextRequest) => {
 
   if (body.displayName !== undefined) {
     const name = body.displayName.trim().slice(0, 80)
-    if (!name) return badRequest('Enter a name buyers will recognise')
+    if (!name) return badRequest(t('api.enterName'))
     data.displayName = name
   }
 
@@ -50,7 +52,7 @@ export const PATCH = withApiHandler(async (request: NextRequest) => {
       data.phoneVerifiedAt = null
     } else {
       const normalized = normalizePhPhone(body.phone)
-      if (!normalized) return badRequest('Enter a Philippine mobile number, e.g. 0917 555 1234')
+      if (!normalized) return badRequest(t('api.enterPhPhone'))
       // Changing the number drops verification — the new one is unproven.
       if (normalized !== account.phone) data.phoneVerifiedAt = null
       data.phone = normalized
@@ -68,10 +70,10 @@ export const PATCH = withApiHandler(async (request: NextRequest) => {
       try {
         host = new URL(url).hostname.toLowerCase()
       } catch {
-        return badRequest('That does not look like a Facebook link')
+        return badRequest(t('api.badFacebookLink'))
       }
       if (!/(^|\.)facebook\.com$|(^|\.)fb\.com$/.test(host)) {
-        return badRequest('That does not look like a Facebook link')
+        return badRequest(t('api.badFacebookLink'))
       }
       data.facebookUrl = url.slice(0, 200)
     } else {
@@ -83,7 +85,7 @@ export const PATCH = withApiHandler(async (request: NextRequest) => {
     if (!body.viberNumber) data.viberNumber = null
     else {
       const normalized = normalizePhPhone(body.viberNumber)
-      if (!normalized) return badRequest('Enter a Philippine mobile number for Viber')
+      if (!normalized) return badRequest(t('api.enterViberPhone'))
       data.viberNumber = normalized
     }
   }
@@ -91,7 +93,7 @@ export const PATCH = withApiHandler(async (request: NextRequest) => {
   if (body.municipalityId !== undefined) {
     if (body.municipalityId) {
       const exists = await prisma.municipality.findUnique({ where: { id: body.municipalityId } })
-      if (!exists) return badRequest('That location is not available')
+      if (!exists) return badRequest(t('api.locationUnavailable'))
     }
     data.municipalityId = body.municipalityId || null
   }

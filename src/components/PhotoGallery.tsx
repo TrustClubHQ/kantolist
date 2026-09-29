@@ -3,6 +3,8 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import Image from 'next/image'
 
+import { useT } from '@/components/LanguageProvider'
+
 export interface GalleryImage {
   id: string
   url: string
@@ -40,6 +42,7 @@ function stageRatio(first: GalleryImage | undefined): number | null {
 }
 
 export function PhotoGallery({ images, title }: { images: GalleryImage[]; title: string }) {
+  const t = useT()
   const [index, setIndex] = useState(0)
   const strip = useRef<HTMLDivElement>(null)
   // Photos uploaded before the size was recorded have none stored, so the first
@@ -91,13 +94,13 @@ export function PhotoGallery({ images, title }: { images: GalleryImage[]; title:
             if (e.key === 'ArrowLeft') go(index - 1)
           }}
           aria-roledescription={many ? 'carousel' : undefined}
-          aria-label={many ? `${images.length} photos of ${title}` : undefined}
+          aria-label={many ? t('listing.photoCount', { count: images.length, title }) : undefined}
         >
           {images.map((image, i) => (
             <div key={image.id} className="relative h-full w-full shrink-0 snap-center">
               <Image
                 src={image.url}
-                alt={i === 0 ? title : `${title} — photo ${i + 1}`}
+                alt={i === 0 ? title : t('listing.photoOf', { title, number: i + 1 })}
                 fill
                 sizes="(max-width: 900px) 100vw, 768px"
                 className="object-contain"
@@ -125,8 +128,18 @@ export function PhotoGallery({ images, title }: { images: GalleryImage[]; title:
             {/* Shown from the small breakpoint up: on a phone the thumbnails
                 below and the swipe already do this, and an arrow sitting on
                 top of the photo would cover part of it. */}
-            <Arrow side="left" disabled={index === 0} onClick={() => go(index - 1)} />
-            <Arrow side="right" disabled={index === images.length - 1} onClick={() => go(index + 1)} />
+            <Arrow
+              side="left"
+              label={t('listing.photoPrevious')}
+              disabled={index === 0}
+              onClick={() => go(index - 1)}
+            />
+            <Arrow
+              side="right"
+              label={t('listing.photoNext')}
+              disabled={index === images.length - 1}
+              onClick={() => go(index + 1)}
+            />
           </>
         ) : null}
       </div>
@@ -139,7 +152,7 @@ export function PhotoGallery({ images, title }: { images: GalleryImage[]; title:
                 key={image.id}
                 type="button"
                 onClick={() => go(i)}
-                aria-label={`Show photo ${i + 1}`}
+                aria-label={t('listing.photoShow', { number: i + 1 })}
                 aria-current={i === index}
                 className={`relative h-[54px] w-[54px] shrink-0 border-[3px] sm:h-[60px] sm:w-[60px] ${
                   i === index ? 'border-red' : 'border-ink opacity-70'
@@ -157,10 +170,12 @@ export function PhotoGallery({ images, title }: { images: GalleryImage[]; title:
 
 function Arrow({
   side,
+  label,
   disabled,
   onClick,
 }: {
   side: 'left' | 'right'
+  label: string
   disabled: boolean
   onClick: () => void
 }) {
@@ -169,7 +184,7 @@ function Arrow({
       type="button"
       onClick={onClick}
       disabled={disabled}
-      aria-label={side === 'left' ? 'Previous photo' : 'Next photo'}
+      aria-label={label}
       className={`font-display absolute top-1/2 hidden h-[48px] w-[40px] -translate-y-1/2 items-center justify-center border-[3px] border-ink bg-ground text-[22px] text-ink disabled:opacity-40 sm:flex ${
         side === 'left' ? 'left-2' : 'right-2'
       }`}

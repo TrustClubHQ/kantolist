@@ -1,11 +1,14 @@
+'use client'
+
 import Link from 'next/link'
 import Image from 'next/image'
 import type { ListingStatus, ListingType, PriceUnit } from '@prisma/client'
 import { Badge, Price } from '@/components/ui'
 import { TrustPoints } from '@/components/TrustPoints'
 import { CategoryMark } from '@/components/CategoryMark'
-import { formatPrice, LISTING_TYPE_LABEL } from '@/lib/listing'
+import { formatPrice, listingTypeLabel } from '@/lib/listing'
 import { timeAgo } from '@/lib/format'
+import { useT } from '@/components/LanguageProvider'
 
 export interface ListingCardData {
   href: string
@@ -32,8 +35,9 @@ export interface ListingCardData {
  * because that is the order a buyer scanning a list actually reads them.
  */
 export function ListingCard({ listing, layout = 'grid' }: { listing: ListingCardData; layout?: 'grid' | 'row' }) {
+  const t = useT()
   const reserved = listing.status === 'RESERVED'
-  const badgeText = reserved ? 'Reserved' : LISTING_TYPE_LABEL[listing.type]
+  const badgeText = reserved ? t('card.reserved') : listingTypeLabel(listing.type, t)
 
   if (layout === 'row') {
     return (
@@ -42,14 +46,14 @@ export function ListingCard({ listing, layout = 'grid' }: { listing: ListingCard
           <Photo src={listing.image} alt="" categorySlug={listing.categorySlug} parentSlug={listing.parentSlug} />
         </div>
         <div className="flex min-w-0 flex-1 flex-col gap-1.5 px-3 py-2.5">
-          <Price size="sm">{formatPrice(listing.price, listing.priceUnit)}</Price>
+          <Price size="sm">{formatPrice(listing.price, listing.priceUnit, t)}</Price>
           <span className="label text-[17px]">{listing.title}</span>
           <div className="flex flex-wrap items-center gap-2">
             {listing.signedIn ? (
           <TrustPoints points={listing.trustPoints} via={listing.via} isOwn={listing.isOwn} />
         ) : null}
             <span className="label text-[14px] font-semibold text-muted">
-              {listing.municipality} · {timeAgo(listing.postedAt)}
+              {listing.municipality} · {timeAgo(listing.postedAt, t)}
             </span>
           </div>
         </div>
@@ -70,13 +74,13 @@ export function ListingCard({ listing, layout = 'grid' }: { listing: ListingCard
             non-breaking spaces, so "negotiable" needs its own wrap opportunity
             or the whole line is one unbreakable token and clips on a phone. */}
         <div className="flex flex-wrap items-baseline gap-x-1.5">
-          <Price size="sm">{formatPrice(listing.price, listing.priceUnit)}</Price>
+          <Price size="sm">{formatPrice(listing.price, listing.priceUnit, t)}</Price>
           {listing.negotiable ? (
             // "neg." on a phone — the long form pushed itself onto its own
             // line on most cards, and it is how a PH classified writes it.
             <span className="font-cond text-[13px] font-semibold text-muted-2 sm:text-[14px]">
-              <span className="sm:hidden">neg.</span>
-              <span className="hidden sm:inline">negotiable</span>
+              <span className="sm:hidden">{t('card.negotiable.short')}</span>
+              <span className="hidden sm:inline">{t('card.negotiable')}</span>
             </span>
           ) : null}
         </div>
@@ -89,7 +93,7 @@ export function ListingCard({ listing, layout = 'grid' }: { listing: ListingCard
           <TrustPoints points={listing.trustPoints} via={listing.via} isOwn={listing.isOwn} />
         ) : null}
         <span className="label text-[14px] font-semibold text-muted">
-          {listing.municipality} · {timeAgo(listing.postedAt)}
+          {listing.municipality} · {timeAgo(listing.postedAt, t)}
         </span>
       </div>
     </Link>

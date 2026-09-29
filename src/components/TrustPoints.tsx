@@ -1,5 +1,8 @@
+'use client'
+
 import Image from 'next/image'
-import { formatTrustPoints, trustState, TRUST_STATE_TEXT } from '@/lib/trust-format'
+import { formatTrustPoints, trustState, trustStateText } from '@/lib/trust-format'
+import { useT } from '@/components/LanguageProvider'
 
 /**
  * The trust badge — the single most important label in the product, since it
@@ -30,6 +33,7 @@ export function TrustPoints({
   direction?: 'incoming' | 'outgoing'
   size?: 'sm' | 'md'
 }) {
+  const t = useT()
   const state = isOwn ? 'self' : trustState(points)
   const icon = direction === 'incoming' ? '/indirect_trust_incoming.png' : '/indirect_trust_outgoing.png'
   const px = size === 'md' ? 14 : 12
@@ -37,7 +41,7 @@ export function TrustPoints({
   if (state === 'none' || state === 'unknown') {
     return (
       <span className="label inline-flex w-fit self-start items-center gap-1.5 border-2 border-dim-edge bg-dim px-2 py-0.5 text-[13px] text-muted">
-        {TRUST_STATE_TEXT[state]}
+        {trustStateText(state, t)}
       </span>
     )
   }
@@ -45,7 +49,7 @@ export function TrustPoints({
   if (state === 'self') {
     return (
       <span className="label inline-flex w-fit self-start items-center gap-1.5 border-2 border-ink bg-yellow px-2 py-0.5 text-[13px] text-ink">
-        {TRUST_STATE_TEXT.self}
+        {trustStateText('self', t)}
       </span>
     )
   }
@@ -57,7 +61,7 @@ export function TrustPoints({
         <span className="text-[15px]">{formatTrustPoints(points)}</span>
         <span className="text-[11px] opacity-80">TP</span>
       </span>
-      {via ? <span className="opacity-80">· via @{via}</span> : null}
+      {via ? <span className="opacity-80">{t('trust.via', { via })}</span> : null}
     </span>
   )
 }
@@ -86,6 +90,7 @@ export function TrustPointsPair({
   isOwn?: boolean
   sellerName: string
 }) {
+  const t = useT()
   if (isOwn) return <TrustPointsPanel points={null} isOwn />
 
   // Named for their direction rather than "theirs" and "mine", which is how
@@ -98,8 +103,8 @@ export function TrustPointsPair({
       <TrustRow
         direction="incoming"
         points={theirTrustInMe}
-        label="Their trust in you"
-        detail={`What ${sellerName} sees when they look you up on TrustClub.`}
+        label={t('trust.theirs')}
+        detail={t('trust.theirs.help', { name: sellerName })}
       />
     </div>
   )
@@ -117,6 +122,7 @@ function TrustRow({
   label: string
   detail: string
 }) {
+  const t = useT()
   const state = trustState(points)
   const icon = direction === 'incoming' ? '/indirect_trust_incoming.png' : '/indirect_trust_outgoing.png'
 
@@ -135,7 +141,9 @@ function TrustRow({
           </>
         ) : (
           // Never 0 for a lookup that failed — "n/a" says we do not know.
-          <span className="text-[15px] text-muted">{state === 'unknown' ? 'n/a' : '0 TP'}</span>
+          <span className="text-[15px] text-muted">
+            {state === 'unknown' ? t('trust.na') : t('trust.zero')}
+          </span>
         )}
       </span>
     </div>
@@ -155,14 +163,15 @@ export function TrustPointsPanel({
   via?: string | null
   isOwn?: boolean
 }) {
+  const t = useT()
   const state = isOwn ? 'self' : trustState(points)
 
   if (state === 'unknown') {
     return (
       <div className="border-[3px] border-dim-edge bg-dim px-3 py-3">
-        <p className="label m-0 text-[19px] text-muted">Trust unknown</p>
+        <p className="label m-0 text-[19px] text-muted">{t('trust.unknown')}</p>
         <p className="m-0 mt-1 text-[13px] font-semibold leading-snug text-muted-2">
-          We could not reach TrustClub to check your connection to this member. Try again shortly.
+          {t('trust.unknown.help')}
         </p>
       </div>
     )
@@ -171,10 +180,9 @@ export function TrustPointsPanel({
   if (state === 'none') {
     return (
       <div className="border-[3px] border-dim-edge bg-dim px-3 py-3">
-        <p className="label m-0 text-[19px] text-muted-2">No trust path yet</p>
+        <p className="label m-0 text-[19px] text-muted-2">{t('trust.none.title')}</p>
         <p className="m-0 mt-1 text-[13px] font-semibold leading-snug text-muted-2">
-          Nobody you trust on TrustClub has vouched for this member. That does not make them a bad
-          seller — it means you have no way to check. Be extra careful about deposits.
+          {t('trust.none.help')}
         </p>
       </div>
     )
@@ -183,7 +191,7 @@ export function TrustPointsPanel({
   if (state === 'self') {
     return (
       <div className="border-[3px] border-ink bg-yellow px-3 py-3">
-        <p className="label m-0 text-[19px] text-ink">This is your listing</p>
+        <p className="label m-0 text-[19px] text-ink">{t('trust.self.title')}</p>
       </div>
     )
   }
@@ -201,16 +209,10 @@ export function TrustPointsPanel({
       />
       <div className="flex flex-col gap-1">
         <p className="font-display m-0 text-[21px] uppercase text-ground">
-          You trust them {formatTrustPoints(points)} TP
+          {t('trust.you', { points: formatTrustPoints(points) })}
         </p>
         <p className="m-0 text-[13px] font-semibold leading-snug text-green-soft">
-          {via ? (
-            <>
-              Through <strong className="text-yellow">@{via}</strong>, whom you trust directly.
-            </>
-          ) : (
-            <>How strongly the people you trust on TrustClub vouch for this member.</>
-          )}
+          {via ? t('trust.you.via', { via }) : t('trust.you.help')}
         </p>
       </div>
     </div>

@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { Plate, PlateHeader } from '@/components/ui'
 import { TrustClubLink } from '@/components/TrustPoints'
+import { useT } from '@/components/LanguageProvider'
 
 interface AccountForm {
   trustclubId: string
@@ -22,6 +23,7 @@ export function ProfileForm({
   account: AccountForm
   municipalities: { id: string; name: string; province: string }[]
 }) {
+  const t = useT()
   const [form, setForm] = useState(account)
   const [busy, setBusy] = useState(false)
   const [message, setMessage] = useState<{ kind: 'ok' | 'error'; text: string } | null>(null)
@@ -49,12 +51,12 @@ export function ProfileForm({
       })
       const data: { error?: string } = await res.json().catch(() => ({}))
       if (!res.ok) {
-        setMessage({ kind: 'error', text: data.error ?? 'Could not save your profile' })
+        setMessage({ kind: 'error', text: data.error ?? t('profile.failed') })
         return
       }
-      setMessage({ kind: 'ok', text: 'Saved' })
+      setMessage({ kind: 'ok', text: t('profile.saved') })
     } catch {
-      setMessage({ kind: 'error', text: 'Could not reach the server. Try again.' })
+      setMessage({ kind: 'error', text: t('profile.offline') })
     } finally {
       setBusy(false)
     }
@@ -67,23 +69,23 @@ export function ProfileForm({
 
   return (
     <form onSubmit={save} className="mx-auto w-full max-w-2xl px-4 py-5">
-      <h1 className="font-display m-0 text-[30px] uppercase leading-none">My profile</h1>
+      <h1 className="font-display m-0 text-[30px] uppercase leading-none">{t('profile.title')}</h1>
       <div className="mt-2">
         <TrustClubLink trustclubId={form.trustclubId} />
       </div>
 
       <div className="mt-4 flex flex-col gap-4">
         <Plate>
-          <PlateHeader>Who buyers see</PlateHeader>
+          <PlateHeader>{t('profile.section.who')}</PlateHeader>
           <div className="flex flex-col gap-3.5 p-3.5">
             <label className="flex flex-col gap-1.5">
-              <span className="label text-[15px] text-muted">Display name</span>
+              <span className="label text-[15px] text-muted">{t('profile.name')}</span>
               <input
                 value={form.displayName}
                 onChange={(e) => set('displayName', e.target.value)}
                 maxLength={80}
                 required
-                placeholder="Your name or your shop's name"
+                placeholder={t('profile.namePlaceholder')}
               />
             </label>
             {/* Hidden entirely while we are in one town — asking a member to
@@ -91,9 +93,9 @@ export function ProfileForm({
                 content. Their listings carry the town regardless. */}
             {municipalities.length > 1 ? (
               <label className="flex flex-col gap-1.5">
-                <span className="label text-[15px] text-muted">Your town</span>
+                <span className="label text-[15px] text-muted">{t('profile.town')}</span>
                 <select value={form.municipalityId} onChange={(e) => set('municipalityId', e.target.value)}>
-                  <option value="">Not set</option>
+                  <option value="">{t('profile.townNotSet')}</option>
                   {municipalities.map((m) => (
                     <option key={m.id} value={m.id}>
                       {m.name}, {m.province}
@@ -106,46 +108,44 @@ export function ProfileForm({
         </Plate>
 
         <Plate>
-          <PlateHeader right={form.phoneVerified ? 'Phone verified' : undefined}>
-            How buyers reach you
+          <PlateHeader right={form.phoneVerified ? t('profile.phoneVerified') : undefined}>
+            {t('profile.section.reach')}
           </PlateHeader>
           <div className="flex flex-col gap-3.5 p-3.5">
             <label className="flex flex-col gap-1.5">
-              <span className="label text-[15px] text-muted">Mobile number</span>
+              <span className="label text-[15px] text-muted">{t('profile.phone')}</span>
               <input
                 value={form.phone}
                 onChange={(e) => set('phone', e.target.value)}
                 inputMode="tel"
-                placeholder="0917 555 1234"
+                placeholder={t('profile.phonePlaceholder')}
               />
-              <span className="text-xs font-semibold text-muted">
-                Shown in full only to logged-in members. Changing it clears verification.
-              </span>
+              <span className="text-xs font-semibold text-muted">{t('profile.phoneHelp')}</span>
             </label>
             <label className="flex flex-col gap-1.5">
-              <span className="label text-[15px] text-muted">Messenger handle</span>
+              <span className="label text-[15px] text-muted">{t('profile.messenger')}</span>
               <input
                 value={form.messengerHandle}
                 onChange={(e) => set('messengerHandle', e.target.value)}
-                placeholder="your.facebook.name"
+                placeholder={t('profile.messengerPlaceholder')}
               />
             </label>
             <label className="flex flex-col gap-1.5">
-              <span className="label text-[15px] text-muted">Viber number</span>
+              <span className="label text-[15px] text-muted">{t('profile.viber')}</span>
               <input
                 value={form.viberNumber}
                 onChange={(e) => set('viberNumber', e.target.value)}
                 inputMode="tel"
-                placeholder="0917 555 1234"
+                placeholder={t('profile.phonePlaceholder')}
               />
             </label>
             <label className="flex flex-col gap-1.5">
-              <span className="label text-[15px] text-muted">Facebook page or profile</span>
+              <span className="label text-[15px] text-muted">{t('profile.facebook')}</span>
               <input
                 value={form.facebookUrl}
                 onChange={(e) => set('facebookUrl', e.target.value)}
                 inputMode="url"
-                placeholder="https://facebook.com/yourpage"
+                placeholder={t('profile.facebookPlaceholder')}
               />
             </label>
           </div>
@@ -167,14 +167,14 @@ export function ProfileForm({
             onClick={signOut}
             className="label min-h-[54px] w-[130px] border-[3px] border-ink bg-panel text-[18px]"
           >
-            Log out
+            {t('profile.logOut')}
           </button>
           <button
             type="submit"
             disabled={busy}
             className="font-display hard min-h-[54px] flex-1 border-[3px] border-ink bg-red text-[21px] uppercase text-ground disabled:opacity-60"
           >
-            {busy ? 'Saving…' : 'Save profile'}
+            {busy ? t('profile.saving') : t('profile.save')}
           </button>
         </div>
       </div>

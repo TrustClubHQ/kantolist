@@ -6,6 +6,8 @@ import { QRCodeSVG, QRCodeCanvas } from 'qrcode.react'
 import { useIsMobile } from '@/hooks/useIsMobile'
 import { Plate } from '@/components/ui'
 import { isSafeRedirect } from '@/lib/http'
+import { useT } from '@/components/LanguageProvider'
+import type { T } from '@/lib/i18n'
 
 /**
  * The TrustClub device-authorization flow, matching TruRate's presentation.
@@ -36,18 +38,23 @@ interface StartResponse {
  * and the browser not sending the cookie back — which made every report of the
  * failure identical and none of them actionable.
  */
-const ERRORS: Record<string, string> = {
-  access_denied: 'That request was declined in TrustClub.',
-  expired_token: 'TrustClub says that code has expired. Get a new one.',
-  session_gone: 'This site lost track of that sign-in before it finished.',
-  no_session: 'Your browser did not send the sign-in back to us.',
-  invalid_grant: 'That sign-in did not go through. Try again.',
-  invalid_client: 'TrustClub sign-in is misconfigured on this deployment.',
-  unsupported_grant_type: 'TrustClub sign-in is misconfigured on this deployment.',
-  not_configured: 'Sign-in is not fully set up on this deployment yet.',
-  verify_failed: 'We could not verify that sign-in. Try again.',
-  network_error: 'Could not reach TrustClub. Check your connection.',
-  timeout: 'TrustClub took too long to answer. Try again.',
+const ERROR_CODES = new Set([
+  'access_denied',
+  'expired_token',
+  'session_gone',
+  'no_session',
+  'invalid_grant',
+  'invalid_client',
+  'unsupported_grant_type',
+  'not_configured',
+  'verify_failed',
+  'network_error',
+  'timeout',
+])
+
+function errorText(code: string | undefined, t: T): string {
+  if (code && ERROR_CODES.has(code)) return t(`signin.error.${code}`)
+  return t('signin.error.unknown', { code: code ?? 'unknown' })
 }
 
 export function TrustClubConnect({
@@ -57,6 +64,15 @@ export function TrustClubConnect({
   redirectTo?: string
   devLoginEnabled: boolean
 }) {
+  const t = useT()
+  // The poll below must not restart when the language changes: switching
+  // language mid-sign-in would abandon the device code the member is already
+  // approving on their phone. So the effect reads the current translator
+  // through a ref instead of depending on it.
+  const tRef = useRef(t)
+  useEffect(() => {
+    tRef.current = t
+  }, [t])
   const [phase, setPhase] = useState<Phase>('starting')
   const [verificationUri, setVerificationUri] = useState('')
   const [error, setError] = useState('')
@@ -104,7 +120,7 @@ export function TrustClubConnect({
             // sign-in…" and then a fresh QR — indistinguishable from the page
             // ignoring an approval the member had just given, and it hid the
             // reason from them and from the logs.
-            setError(ERRORS[data.error ?? ''] ?? `That sign-in did not complete (${data.error ?? 'unknown'}).`)
+            setError(errorText(data.error, tRef.current))
             setPhase('error')
             return
           }
@@ -126,7 +142,9 @@ export function TrustClubConnect({
         const data: StartResponse = await res.json()
         if (aborted) return
         if (!res.ok) {
-          setError(ERRORS[data.error ?? ''] ?? 'Could not start the TrustClub sign-in.')
+          setError(
+            data.error ? errorText(data.error, tRef.current) : tRef.current('signin.error.start'),
+          )
           setPhase('error')
           return
         }
@@ -143,7 +161,7 @@ export function TrustClubConnect({
         poll(2000)
       } catch {
         if (!aborted) {
-          setError('Could not reach the server. Check your connection.')
+          setError(tRef.current('signin.error.offline'))
           setPhase('error')
         }
       }
@@ -165,7 +183,7 @@ export function TrustClubConnect({
     }
     canvas.toBlob((blob) => {
       if (!blob) {
-        setDownloadError('Could not save the QR code.')
+        setDownloadError(t('signin.qrFailed'))
         return
       }
       const url = URL.createObjectURL(blob)
@@ -177,17 +195,17 @@ export function TrustClubConnect({
         a.click()
         document.body.removeChild(a)
       } catch {
-        setDownloadError('Could not save the QR code.')
+        setDownloadError(t('signin.qrFailed'))
       } finally {
         URL.revokeObjectURL(url)
       }
     }, 'image/png')
-  }, [])
+  }, [t])
 
   if (phase === 'starting') {
     return (
       <Plate className="p-6 text-center">
-        <p className="label m-0 text-[18px] text-muted">Preparing sign-in…</p>
+        <p className="label m-0 text-[18px] text-muted">{t('signin.preparing')}</p>
       </Plate>
     )
   }
@@ -195,7 +213,7 @@ export function TrustClubConnect({
   if (phase === 'success') {
     return (
       <Plate className="p-6 text-center">
-        <p className="font-display m-0 text-[22px] uppercase text-green">Signed in — taking you back…</p>
+        <p className="font-display m-0 text-[22px] uppercase text-green">{t('signin.done')}</p>
       </Plate>
     )
   }
@@ -211,7 +229,7 @@ export function TrustClubConnect({
           onClick={() => setRestartKey((k) => k + 1)}
           className="font-display hard min-h-[54px] border-[3px] border-ink bg-red text-[20px] uppercase text-ground"
         >
-          Try again
+          {t('signin.retry')}
         </button>
         {devLoginEnabled ? <DevLogin /> : null}
       </div>
@@ -229,10 +247,10 @@ export function TrustClubConnect({
             </div>
           ) : null}
           <p className="label m-0 max-w-[19rem] text-center text-[18px] leading-snug">
-            Scan this with the TrustClub app on your phone
+            {t('signin.scanDesktop')}
           </p>
           <p className="m-0 text-center text-[13px] font-semibold text-muted">
-            Keep this page open — it continues on its own once you approve.
+            {t('signin.keepOpen')}
           </p>
         </Plate>
         {devLoginEnabled ? <DevLogin /> : null}
@@ -258,13 +276,13 @@ export function TrustClubConnect({
               className="shrink-0 invert"
               aria-hidden
             />
-            Connect with TrustClub
+            {t('signin.connect')}
           </a>
         ) : null}
 
         <div className="my-5 flex w-full items-center gap-3">
           <span className="h-[2px] flex-1 bg-dim-edge" />
-          <span className="label text-[14px] tracking-widest text-muted">or</span>
+          <span className="label text-[14px] tracking-widest text-muted">{t('signin.or')}</span>
           <span className="h-[2px] flex-1 bg-dim-edge" />
         </div>
 
@@ -282,7 +300,7 @@ export function TrustClubConnect({
         ) : null}
 
         <p className="m-0 mt-3 max-w-[15rem] text-center text-[13px] font-semibold leading-snug text-muted">
-          Scan this from another phone, or save it to open later.
+          {t('signin.scanOther')}
         </p>
 
         <button
@@ -295,7 +313,7 @@ export function TrustClubConnect({
             <polyline points="7 10 12 15 17 10" />
             <line x1="12" y1="15" x2="12" y2="3" />
           </svg>
-          Save QR code
+          {t('signin.saveQr')}
         </button>
 
         {downloadError ? (
@@ -309,6 +327,7 @@ export function TrustClubConnect({
 
 /** Local convenience only — the route behind it refuses to exist in production. */
 function DevLogin() {
+  const t = useT()
   const [accounts, setAccounts] = useState<{ trustclubId: string; displayName: string | null }[]>([])
 
   useEffect(() => {
@@ -333,7 +352,7 @@ function DevLogin() {
 
   return (
     <Plate flat className="p-3">
-      <p className="label m-0 text-[15px] text-muted">Dev login (local only)</p>
+      <p className="label m-0 text-[15px] text-muted">{t('signin.devLogin')}</p>
       <div className="mt-2 flex flex-wrap gap-1.5">
         {accounts.map((a) => (
           <button

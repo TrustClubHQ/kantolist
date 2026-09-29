@@ -4,7 +4,9 @@ import { useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import type { AttributeDef } from '@/lib/attributes'
-import { Plate, PlateHeader } from '@/components/ui'
+import { Plate, PlateHeader, Spinner } from '@/components/ui'
+import { useT } from '@/components/LanguageProvider'
+import { attributeLabel, categoryName } from '@/lib/i18n'
 import { listingPath } from '@/lib/listing'
 import { PhotoPicker, uploadPendingPhotos, type ListingPhoto } from '@/components/PhotoPicker'
 
@@ -15,31 +17,16 @@ import { PhotoPicker, uploadPendingPhotos, type ListingPhoto } from '@/component
 
 interface CategoryNode {
   id: string
+  /** Carried so the name can be translated; the stored name is the fallback. */
+  slug: string
   name: string
-  children: { id: string; name: string; attributes: AttributeDef[] }[]
+  children: { id: string; slug: string; name: string; attributes: AttributeDef[] }[]
 }
 
 const TYPES = [
-  { key: 'SELL', label: 'Sell', units: [{ key: 'TOTAL', label: 'total' }] },
-  {
-    key: 'RENT',
-    label: 'Rent out',
-    units: [
-      { key: 'PER_DAY', label: 'per day' },
-      { key: 'PER_WEEK', label: 'per week' },
-      { key: 'PER_MONTH', label: 'per month' },
-      { key: 'PER_HOUR', label: 'per hour' },
-    ],
-  },
-  {
-    key: 'SERVICE',
-    label: 'Offer a service',
-    units: [
-      { key: 'PER_JOB', label: 'per job' },
-      { key: 'PER_HOUR', label: 'per hour' },
-      { key: 'QUOTE', label: 'ask for a quote' },
-    ],
-  },
+  { key: 'SELL', units: ['TOTAL'] },
+  { key: 'RENT', units: ['PER_DAY', 'PER_WEEK', 'PER_MONTH', 'PER_HOUR'] },
+  { key: 'SERVICE', units: ['PER_JOB', 'PER_HOUR', 'QUOTE'] },
 ] as const
 
 type TypeKey = (typeof TYPES)[number]['key']
@@ -90,6 +77,7 @@ export function PostForm({
   /** Photos already on the listing, when editing. */
   photos?: ListingPhoto[]
 }) {
+  const t = useT()
   const router = useRouter()
   const [type, setType] = useState<TypeKey>((existing?.type as TypeKey) ?? 'SELL')
   const [categoryId, setCategoryId] = useState(existing?.categoryId ?? '')
@@ -125,20 +113,24 @@ export function PostForm({
 
   const reachableSummary = useMemo(() => {
     const parts: string[] = []
-    if (contact.phone) parts.push(`Call & SMS ${contact.phone}`)
-    if (contact.messenger) parts.push(`Messenger m.me/${contact.messenger}`)
-    if (contact.viber) parts.push(`Viber ${contact.viber}`)
+    if (contact.phone) parts.push(t('post.contact.call', { phone: contact.phone }))
+    if (contact.messenger) parts.push(t('post.contact.messenger', { handle: contact.messenger }))
+    if (contact.viber) parts.push(t('post.contact.viber', { number: contact.viber }))
     return parts
-  }, [contact.phone, contact.messenger, contact.viber])
+  }, [contact.phone, contact.messenger, contact.viber, t])
   const [error, setError] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
+  // What the button says while it works. Publishing is several round trips —
+  // the listing, then a photo at a time — and counting them off is the
+  // difference between "working" and "stuck".
+  const [progress, setProgress] = useState<{ done: number; total: number } | null>(null)
   const [pendingPhotos, setPendingPhotos] = useState<File[]>([])
   const [publishedWithoutPhotos, setPublishedWithoutPhotos] = useState<{
     href: string
     message: string
   } | null>(null)
 
-  const currentType = TYPES.find((t) => t.key === type)!
+  const currentType = TYPES.find((entry) => entry.key === type)!
   const leaf = useMemo(
     () => categories.flatMap((c) => c.children).find((c) => c.id === categoryId),
     [categories, categoryId],
@@ -147,7 +139,7 @@ export function PostForm({
   function chooseType(next: TypeKey) {
     setType(next)
     // The old unit is usually invalid for the new type, so reset to its first.
-    const unit = TYPES.find((t) => t.key === next)!.units[0].key
+    const unit = TYPES.find((entry) => entry.key === next)!.units[0]
     setPriceUnit(unit)
   }
 
@@ -197,7 +189,7 @@ export function PostForm({
       const data: { id?: string; href?: string; code?: string; slug?: string; error?: string } =
         await res.json()
       if (!res.ok) {
-        setError(data.error ?? (existing ? 'Could not save those changes' : 'Could not publish that listing'))
+        setError(data.error ?? t(existing ? 'post.error.save' : 'post.error.publish'))
         return
       }
       // Photos could not be attached before the listing had an id. If they
@@ -205,7 +197,9 @@ export function PostForm({
       // to the edit screen rather than navigating away from the only place
       // the problem was visible.
       if (!existing && data.id && pendingPhotos.length > 0) {
-        const outcome = await uploadPendingPhotos(data.id, pendingPhotos)
+        const outcome = await uploadPendingPhotos(data.id, pendingPhotos, (done, total) =>
+          setProgress({ done, total }),
+        )
         if (outcome.failed > 0) {
           setPublishedWithoutPhotos({
             href: data.href ?? '/',
@@ -218,19 +212,16 @@ export function PostForm({
       // PATCH answers with the code and slug, since a retitle moves the URL.
       const href = data.href ?? (data.code && data.slug ? listingPath(data.code, data.slug) : null)
       if (!href) {
-        setError('Saved, but we could not work out where to send you.')
+        setError(t('post.error.noRedirect'))
         return
       }
       router.push(href)
       router.refresh()
     } catch {
-      setError(
-        existing
-          ? 'Could not save. Check your connection and try again.'
-          : 'Could not publish. Check your connection and try again.',
-      )
+      setError(t(existing ? 'post.error.saveOffline' : 'post.error.publishOffline'))
     } finally {
       setBusy(false)
+      setProgress(null)
     }
   }
 
@@ -238,31 +229,31 @@ export function PostForm({
     <form onSubmit={submit} className="mx-auto w-full max-w-2xl px-4 pb-32 pt-4">
       <div className="flex flex-col gap-4">
         <Plate>
-          <PlateHeader>{existing ? 'What you are selling' : '1 · What are you posting?'}</PlateHeader>
+          <PlateHeader>{t(existing ? 'post.section.what' : 'post.step.what')}</PlateHeader>
           <div className="flex flex-col gap-3 p-3.5">
             <div className="grid grid-cols-3 gap-2">
-              {TYPES.map((t) => (
+              {TYPES.map((entry) => (
                 <button
-                  key={t.key}
+                  key={entry.key}
                   type="button"
-                  onClick={() => chooseType(t.key)}
+                  onClick={() => chooseType(entry.key)}
                   className={`label min-h-[70px] border-[2.5px] border-ink px-2 text-[15px] ${
-                    type === t.key ? 'bg-yellow' : 'bg-ground'
+                    type === entry.key ? 'bg-yellow' : 'bg-ground'
                   }`}
                 >
-                  {t.label}
+                  {t(`post.type.${entry.key}`)}
                 </button>
               ))}
             </div>
             <label className="flex flex-col gap-1.5">
-              <span className="label text-[15px] text-muted">Category</span>
+              <span className="label text-[15px] text-muted">{t('post.field.category')}</span>
               <select value={categoryId} onChange={(e) => setCategoryId(e.target.value)} required>
-                <option value="">Choose a category…</option>
+                <option value="">{t('post.field.categoryPlaceholder')}</option>
                 {categories.map((parent) => (
-                  <optgroup key={parent.id} label={parent.name}>
+                  <optgroup key={parent.id} label={categoryName(t, parent.slug, parent.name)}>
                     {parent.children.map((child) => (
                       <option key={child.id} value={child.id}>
-                        {child.name}
+                        {categoryName(t, child.slug, child.name)}
                       </option>
                     ))}
                   </optgroup>
@@ -273,18 +264,20 @@ export function PostForm({
         </Plate>
 
         <Plate>
-          <PlateHeader>{existing ? 'Details' : '2 · Details'}</PlateHeader>
+          <PlateHeader>{t(existing ? 'post.section.details' : 'post.step.details')}</PlateHeader>
           <div className="flex flex-col gap-3.5 p-3.5">
             <label className="flex flex-col gap-1.5">
-              <span className="label text-[15px] text-muted">Title</span>
+              <span className="label text-[15px] text-muted">{t('post.field.title')}</span>
               <input
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
                 maxLength={70}
                 required
-                placeholder="Honda Click 125i, daily rental"
+                placeholder={t('post.field.titlePlaceholder')}
               />
-              <span className="text-xs font-semibold text-muted">{70 - title.length} characters left</span>
+              <span className="text-xs font-semibold text-muted">
+                {t('post.field.charsLeft', { count: 70 - title.length })}
+              </span>
             </label>
 
             {leaf ? (
@@ -294,23 +287,23 @@ export function PostForm({
                 ))}
               </div>
             ) : (
-              <p className="label m-0 text-[16px] text-muted">Choose a category to see its questions.</p>
+              <p className="label m-0 text-[16px] text-muted">{t('post.field.noCategory')}</p>
             )}
 
             <label className="flex flex-col gap-1.5">
-              <span className="label text-[15px] text-muted">Description</span>
+              <span className="label text-[15px] text-muted">{t('post.field.description')}</span>
               <textarea
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
                 maxLength={4000}
-                placeholder="Describe the condition, what's included, pick-up or delivery…"
+                placeholder={t('post.field.descriptionPlaceholder')}
               />
             </label>
           </div>
         </Plate>
 
         <Plate>
-          <PlateHeader>{existing ? 'Photos and video' : '3 · Photos and video'}</PlateHeader>
+          <PlateHeader>{t(existing ? 'post.section.photos' : 'post.step.photos')}</PlateHeader>
           <div className="flex flex-col gap-3 p-3.5">
             <PhotoPicker
               listingId={existing?.id}
@@ -319,24 +312,24 @@ export function PostForm({
               onPendingChange={setPendingPhotos}
             />
             <label className="flex flex-col gap-1">
-              <span className="label text-[16px]">Video link (optional)</span>
+              <span className="label text-[16px]">{t('post.field.video')}</span>
               <input
                 type="url"
                 inputMode="url"
                 value={videoUrl}
                 onChange={(e) => setVideoUrl(e.target.value)}
-                placeholder="Paste a YouTube, Facebook or TikTok link"
+                placeholder={t('post.field.videoPlaceholder')}
                 className="min-h-[48px] border-[2.5px] border-ink bg-ground px-3 text-[16px]"
               />
               <span className="m-0 text-[13px] font-semibold leading-snug text-muted-2">
-                Videos stay on the app you posted them to — buyers open the link from the listing.
+                {t('post.field.videoHelp')}
               </span>
             </label>
           </div>
         </Plate>
 
         <Plate>
-          <PlateHeader>{existing ? 'Price' : '4 · Price'}</PlateHeader>
+          <PlateHeader>{t(existing ? 'post.section.price' : 'post.step.price')}</PlateHeader>
           <div className="flex flex-col gap-3 p-3.5">
             <div className="flex gap-2.5">
               <div className="flex flex-1 items-center gap-2 border-[2.5px] border-ink bg-ground px-3">
@@ -347,20 +340,20 @@ export function PostForm({
                   onChange={(e) => setPrice(e.target.value.replace(/\D/g, ''))}
                   disabled={priceUnit === 'QUOTE'}
                   required={priceUnit !== 'QUOTE'}
-                  aria-label="Price"
-                  placeholder={priceUnit === 'QUOTE' ? 'No price' : '0'}
+                  aria-label={t('post.field.price')}
+                  placeholder={priceUnit === 'QUOTE' ? t('post.field.noPrice') : '0'}
                   className="!border-0 !bg-transparent !px-0 font-display text-[24px] text-red"
                 />
               </div>
               <select
                 value={priceUnit}
                 onChange={(e) => setPriceUnit(e.target.value)}
-                aria-label="Price unit"
+                aria-label={t('post.field.priceUnit')}
                 className="w-[150px]"
               >
-                {currentType.units.map((u) => (
-                  <option key={u.key} value={u.key}>
-                    {u.label}
+                {currentType.units.map((unit) => (
+                  <option key={unit} value={unit}>
+                    {t(`post.unit.${unit}`)}
                   </option>
                 ))}
               </select>
@@ -372,13 +365,13 @@ export function PostForm({
                 onChange={(e) => setNegotiable(e.target.checked)}
                 className="!min-h-0 !w-auto h-5 w-5 accent-green"
               />
-              <span className="label text-[17px]">Price is negotiable</span>
+              <span className="label text-[17px]">{t('post.field.negotiable')}</span>
             </label>
           </div>
         </Plate>
 
         <Plate>
-          <PlateHeader>{existing ? 'Location' : '5 · Location'}</PlateHeader>
+          <PlateHeader>{t(existing ? 'post.section.location' : 'post.step.location')}</PlateHeader>
           <div className="flex flex-col gap-3 p-3.5">
             {/* With one launch town there is no choice to make, so it is
                 stated rather than asked. The barangay below is the part a
@@ -392,9 +385,9 @@ export function PostForm({
                 value={municipalityId}
                 onChange={(e) => setMunicipalityId(e.target.value)}
                 required
-                aria-label="Municipality"
+                aria-label={t('post.field.municipality')}
               >
-                <option value="">Choose your town…</option>
+                <option value="">{t('post.field.municipalityPlaceholder')}</option>
                 {municipalities.map((m) => (
                   <option key={m.id} value={m.id}>
                     {m.name}, {m.province}
@@ -405,8 +398,8 @@ export function PostForm({
             <input
               value={barangay}
               onChange={(e) => setBarangay(e.target.value)}
-              placeholder="Barangay or meet-up spot (optional)"
-              aria-label="Barangay or meet-up spot"
+              placeholder={t('post.field.barangayPlaceholder')}
+              aria-label={t('post.field.barangay')}
             />
           </div>
         </Plate>
@@ -427,20 +420,21 @@ export function PostForm({
                 rel="noopener noreferrer"
                 className="label text-[15px] text-yellow underline"
               >
-                Edit ↗
+                {t('post.contact.edit')}
               </a>
             }
           >
-            {existing ? 'How buyers reach you' : '6 · How buyers reach you'}
+            {t(existing ? 'post.section.contact' : 'post.step.contact')}
           </PlateHeader>
           <div className="flex flex-col gap-2 p-3.5">
             <p className="label m-0 text-[17px]">
-              {reachableSummary.length > 0 ? reachableSummary.join(' · ') : 'TrustClub profile only'}
+              {reachableSummary.length > 0
+                ? reachableSummary.join(' · ')
+                : t('post.contact.trustclubOnly')}
             </p>
             {reachableSummary.length === 0 ? (
               <p className="m-0 text-[13px] font-semibold leading-snug text-muted-2">
-                Add a number or a Messenger handle to your profile and buyers can reach you
-                directly. Without one they can only find you through TrustClub.
+                {t('post.contact.help')}
               </p>
             ) : null}
           </div>
@@ -448,21 +442,20 @@ export function PostForm({
 
         <div className="flex items-start gap-2.5 border-[3px] border-ink bg-green px-3.5 py-3">
           <p className="m-0 text-[13px] font-semibold leading-snug text-green-soft">
-            Your listing ranks higher for people whose TrustClub network reaches you. Ask the people
-            you have dealt with to trust you on TrustClub.
+            {t('post.trustNote')}
           </p>
         </div>
 
         {publishedWithoutPhotos ? (
           <div className="flex flex-col gap-2 border-[3px] border-ink bg-yellow px-3.5 py-2.5">
             <p className="label m-0 text-[17px] text-ink">
-              Your listing is published, but the photos were not added.
+              {t('post.publishedWithoutPhotos')}
             </p>
             <p className="m-0 text-[13px] font-semibold leading-snug text-ink">
               {publishedWithoutPhotos.message}
             </p>
             <Link href={publishedWithoutPhotos.href} className="label text-[16px] text-ink underline">
-              Open the listing →
+              {t('post.openListing')}
             </Link>
           </div>
         ) : null}
@@ -476,20 +469,19 @@ export function PostForm({
           href={cancelHref ?? '/'}
           className="label flex min-h-[54px] w-[112px] items-center justify-center border-[3px] border-ink bg-panel text-[18px] text-ink hover:text-ink"
         >
-          Cancel
+          {t('post.cancel')}
         </Link>
         <button
           type="submit"
           disabled={busy}
-          className="font-display hard flex min-h-[54px] flex-1 items-center justify-center border-[3px] border-ink bg-red text-[21px] uppercase text-ground disabled:opacity-60"
+          className="font-display hard flex min-h-[54px] flex-1 items-center justify-center gap-2.5 border-[3px] border-ink bg-red text-[21px] uppercase text-ground disabled:opacity-70"
         >
+          {busy ? <Spinner /> : null}
           {busy
-            ? existing
-              ? 'Saving…'
-              : 'Publishing…'
-            : existing
-              ? 'Save changes'
-              : 'Publish listing'}
+            ? progress
+              ? t('post.uploadingPhoto', { number: progress.done + 1, total: progress.total })
+              : t(existing ? 'post.saving' : 'post.publishing')
+            : t(existing ? 'post.save' : 'post.publish')}
         </button>
       </div>
     </form>
@@ -506,12 +498,15 @@ function AttributeInput({
   value: string
   onChange: (key: string, value: string) => void
 }) {
+  const t = useT()
+  const label = attributeLabel(t, def.key, def.label)
+
   if (def.type === 'enum') {
     return (
       <label className="flex flex-col gap-1.5">
-        <span className="label text-[15px] text-muted">{def.label}</span>
+        <span className="label text-[15px] text-muted">{label}</span>
         <select value={value} onChange={(e) => onChange(def.key, e.target.value)} required={def.required}>
-          <option value="">Choose…</option>
+          <option value="">{t('post.field.choose')}</option>
           {(def.options ?? []).map((o) => (
             <option key={o} value={o}>
               {o}
@@ -525,7 +520,7 @@ function AttributeInput({
   if (def.type === 'bool') {
     return (
       <label className="flex min-h-[44px] items-center justify-between gap-3 sm:col-span-2">
-        <span className="label text-[17px]">{def.label}</span>
+        <span className="label text-[17px]">{label}</span>
         <input
           type="checkbox"
           checked={value === 'true'}
@@ -540,7 +535,7 @@ function AttributeInput({
     return (
       <label className="flex flex-col gap-1.5">
         <span className="label text-[15px] text-muted">
-          {def.label}
+          {label}
           {def.unit ? ` (${def.unit})` : ''}
         </span>
         <input
@@ -557,7 +552,7 @@ function AttributeInput({
 
   return (
     <label className="flex flex-col gap-1.5">
-      <span className="label text-[15px] text-muted">{def.label}</span>
+      <span className="label text-[15px] text-muted">{label}</span>
       <input value={value} maxLength={120} required={def.required} onChange={(e) => onChange(def.key, e.target.value)} />
     </label>
   )

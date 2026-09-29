@@ -2,10 +2,12 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { getCurrentAccount } from '@/lib/auth'
 import { SignInLink } from '@/components/SignInLink'
+import { LanguageToggle } from '@/components/LanguageToggle'
+import { getT } from '@/lib/i18n-server'
 
 /** The signboard header. */
 export async function SiteHeader({ location }: { location?: string }) {
-  const account = await getCurrentAccount()
+  const [account, t] = await Promise.all([getCurrentAccount(), getT()])
 
   return (
     <header className="border-b-4 border-ink bg-red">
@@ -23,7 +25,7 @@ export async function SiteHeader({ location }: { location?: string }) {
             {/* "Powered by" stays small; the TrustClub mark carries the
                 weight, since that is the part doing the vouching. */}
             <span className="mt-[3px] flex items-center gap-1.5 text-[8px] font-semibold uppercase tracking-wide text-[#FFD9A0] sm:text-[9px]">
-              Powered by
+              {t('header.poweredBy')}
               <Image
                 src="/TCLogo-Horizontal-Positive-minpadding.png"
                 alt="TrustClub"
@@ -46,15 +48,15 @@ export async function SiteHeader({ location }: { location?: string }) {
                 href="/me/listings"
                 className="label flex min-h-[44px] items-center px-1 text-[16px] text-ground hover:text-yellow"
               >
-                <span className="sm:hidden">Mine</span>
-                <span className="hidden sm:inline">My listings</span>
+                <span className="sm:hidden">{t('header.mine.short')}</span>
+                <span className="hidden sm:inline">{t('header.mine')}</span>
               </Link>
               {account.isStaff ? (
                 <Link
                   href="/admin/reports"
                   className="label hidden min-h-[44px] items-center text-[16px] text-ground hover:text-yellow sm:flex"
                 >
-                  Reports
+                  {t('header.reports')}
                 </Link>
               ) : null}
               {/* Who you are signed in as. Without it the only difference
@@ -62,7 +64,7 @@ export async function SiteHeader({ location }: { location?: string }) {
                   becoming "Mine", which nobody reads as an account state. */}
               <Link
                 href="/me/profile"
-                title={`Signed in as @${account.trustclubId}`}
+                title={t('header.signedInAs', { id: account.trustclubId })}
                 className="label flex min-h-[44px] items-center gap-1.5 border-2 border-ground px-2 text-[15px] text-ground hover:bg-ground hover:text-red"
               >
                 <span
@@ -81,13 +83,14 @@ export async function SiteHeader({ location }: { location?: string }) {
           )}
           {/* Posting is the point of the site, so the button is on every screen
               size — it used to be sm: and up, which hid it from most users. */}
+          <LanguageToggle />
           <Link
             href="/post"
-            aria-label="Post a listing"
+            aria-label={t('header.postAria')}
             className="label hard-sm flex min-h-[44px] min-w-[44px] items-center justify-center gap-1.5 border-[3px] border-ink bg-yellow px-2.5 text-[16px] text-ink sm:px-3"
           >
             <PlusIcon />
-            <span className="hidden sm:inline">Post</span>
+            <span className="hidden sm:inline">{t('header.post')}</span>
           </Link>
         </div>
       </div>

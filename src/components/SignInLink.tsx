@@ -3,6 +3,8 @@
 import Link from 'next/link'
 import { usePathname, useSearchParams } from 'next/navigation'
 
+import { useT } from '@/components/LanguageProvider'
+
 /**
  * A log-in link that comes back to where you were.
  *
@@ -16,11 +18,12 @@ import { usePathname, useSearchParams } from 'next/navigation'
  */
 export function SignInLink({
   className = '',
-  children = 'Log in',
+  children,
 }: {
   className?: string
   children?: React.ReactNode
 }) {
+  const t = useT()
   const pathname = usePathname()
   const params = useSearchParams()
 
@@ -33,7 +36,7 @@ export function SignInLink({
 
   return (
     <Link href={target} className={className}>
-      {children}
+      {children ?? t('signin.link')}
     </Link>
   )
 }

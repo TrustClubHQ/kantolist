@@ -3,6 +3,8 @@
 import { useState } from 'react'
 import Link from 'next/link'
 
+import { useT } from '@/components/LanguageProvider'
+
 /**
  * The only call to action in the product.
  *
@@ -11,15 +13,6 @@ import Link from 'next/link'
  * that keeps the phone number off the page for anonymous visitors, so a
  * scraper cannot harvest numbers by walking every listing.
  */
-
-const CHANNEL_LABEL: Record<string, string> = {
-  PHONE: 'Call',
-  SMS: 'Send SMS',
-  MESSENGER: 'Message on Messenger',
-  FACEBOOK: 'Facebook profile',
-  VIBER: 'Chat on Viber',
-  TRUSTCLUB: 'Check their TrustClub profile',
-}
 
 const CHANNEL_ORDER = ['PHONE', 'SMS', 'MESSENGER', 'VIBER', 'FACEBOOK', 'TRUSTCLUB']
 
@@ -48,6 +41,7 @@ export function ContactSheet({
   /** The owner's edit screen for this listing. */
   editHref: string
 }) {
+  const t = useT()
   const [open, setOpen] = useState(false)
   const [busy, setBusy] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
@@ -66,12 +60,12 @@ export function ContactSheet({
       })
       const data: { target?: string; error?: string; signInRequired?: boolean } = await res.json()
       if (!res.ok || !data.target) {
-        setError(data.error ?? 'Could not open that just now')
+        setError(data.error ?? t('contact.failed'))
         return
       }
       window.location.href = data.target
     } catch {
-      setError('Could not open that just now. Check your connection.')
+      setError(t('contact.offline'))
     } finally {
       setBusy(null)
     }
@@ -89,7 +83,7 @@ export function ContactSheet({
             href={`${editHref}`}
             className="font-display hard flex min-h-[54px] flex-1 items-center justify-center border-[3px] border-ink bg-yellow text-[21px] uppercase text-ink hover:text-ink"
           >
-            Edit listing
+            {t('contact.owner.edit')}
           </Link>
         </div>
       </div>
@@ -106,7 +100,7 @@ export function ContactSheet({
             className="font-display hard flex min-h-[54px] w-full items-center justify-center gap-2 border-[3px] border-ink bg-red text-[21px] uppercase text-ground"
           >
             <PhoneIcon />
-            Contact {firstName}
+            {t('contact.button', { name: firstName })}
           </button>
         </div>
       </div>
@@ -116,7 +110,7 @@ export function ContactSheet({
           className="fixed inset-0 z-50 flex flex-col justify-end bg-[rgba(23,19,14,0.6)]"
           role="dialog"
           aria-modal="true"
-          aria-label={`Contact ${sellerName}`}
+          aria-label={t('contact.heading', { name: sellerName })}
           onClick={(e) => {
             if (e.target === e.currentTarget) setOpen(false)
           }}
@@ -124,14 +118,16 @@ export function ContactSheet({
           <div className="max-h-[90vh] overflow-y-auto border-t-4 border-ink bg-ground">
             <div className="border-b-4 border-ink bg-red px-5 py-4 text-center">
               <p className="font-display m-0 text-[25px] uppercase leading-tight text-ground">
-                Contact {sellerName}
+                {t('contact.heading', { name: sellerName })}
               </p>
-              <p className="label m-0 mt-1 text-[16px] text-[#FFD9A0]">About “{listingTitle}”</p>
+              <p className="label m-0 mt-1 text-[16px] text-[#FFD9A0]">
+                {t('contact.about', { title: listingTitle })}
+              </p>
             </div>
 
             <div className="mx-auto flex max-w-3xl flex-col gap-2.5 px-5 pb-3 pt-4">
               <p className="label m-0 text-center text-[16px] tracking-wide text-muted">
-                Choose how to reach them
+                {t('contact.choose')}
               </p>
 
               {ordered.map((channel) => {
@@ -144,7 +140,9 @@ export function ContactSheet({
                       className="hard flex min-h-[54px] items-center justify-center gap-2 border-[3px] border-dim-edge bg-dim text-ink hover:text-ink"
                     >
                       <span className="label text-[19px] text-muted-2">
-                        {maskedPhone ?? 'Phone hidden'} — log in to see
+                        {t('contact.logInToSee', {
+                          phone: maskedPhone ?? t('contact.phoneHidden'),
+                        })}
                       </span>
                     </Link>
                   )
@@ -164,7 +162,7 @@ export function ContactSheet({
                     }`}
                   >
                     <span className={channel === 'PHONE' ? 'font-display text-[20px] uppercase' : 'label text-[20px]'}>
-                      {busy === channel ? 'Opening…' : CHANNEL_LABEL[channel]}
+                      {busy === channel ? t('contact.opening') : t(`contact.channel.${channel}`)}
                     </span>
                   </button>
                 )
@@ -184,7 +182,7 @@ export function ContactSheet({
                 onClick={() => setOpen(false)}
                 className="label min-h-[50px] w-full border-[3px] border-ink bg-dim text-[19px] text-muted-2"
               >
-                Close
+                {t('contact.close')}
               </button>
             </div>
           </div>

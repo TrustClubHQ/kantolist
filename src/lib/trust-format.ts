@@ -1,3 +1,5 @@
+import type { T } from './i18n'
+
 /**
  * Trust point presentation, kept identical to TruRate so the number means the
  * same thing to a member who uses both products.
@@ -37,9 +39,7 @@ export function trustState(points: number | null | undefined): TrustState {
   return 'some'
 }
 
-export const TRUST_STATE_TEXT: Record<TrustState, string> = {
-  unknown: 'Trust unknown',
-  none: 'No trust path',
-  self: 'Your listing',
-  some: '',
+/** The badge text for a state, in the reader's language. */
+export function trustStateText(state: TrustState, t: T): string {
+  return state === 'some' ? '' : t(`trust.${state}`)
 }

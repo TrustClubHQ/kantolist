@@ -7,12 +7,14 @@ import { ListingCard } from '@/components/ListingCard'
 import { SearchBar } from '@/components/SearchBar'
 import { Plate } from '@/components/ui'
 import { searchListings } from '@/lib/search'
+import { getT } from '@/lib/i18n-server'
+import { categoryName } from '@/lib/i18n'
 import { listingPath } from '@/lib/listing'
 
 export const dynamic = 'force-dynamic'
 
 export default async function HomePage() {
-  const account = await getCurrentAccount()
+  const [account, t] = await Promise.all([getCurrentAccount(), getT()])
 
   const [categories, result] = await Promise.all([
     prisma.category.findMany({
@@ -36,16 +38,14 @@ export default async function HomePage() {
       <section className="border-b-4 border-ink bg-ground px-3 py-5 sm:px-4 sm:py-6">
         <div className="mx-auto max-w-6xl">
           <h1 className="font-display m-0 text-[34px] uppercase leading-[0.94] sm:text-[52px]">
-            Buy, rent,
+            {t('home.hero.line1')}
             <br />
-            get it fixed —
+            {t('home.hero.line2')}
             <br />
-            <span className="text-red">right on your corner.</span>
+            <span className="text-red">{t('home.hero.line3')}</span>
           </h1>
           <p className="mt-3 max-w-md text-[15px] font-semibold leading-snug text-muted-2">
-            {account
-              ? 'Listings from people your TrustClub network already vouches for come first.'
-              : 'Log in with TrustClub and listings from people your own network vouches for come first.'}
+            {account ? t('home.hero.signedIn') : t('home.hero.signedOut')}
           </p>
           <div className="mt-5 max-w-2xl">
             <SearchBar />
@@ -54,7 +54,7 @@ export default async function HomePage() {
       </section>
 
       <section className="mx-auto w-full max-w-6xl px-3 py-5 sm:px-4 sm:py-6">
-        <h2 className="label m-0 mb-3 text-[20px]">Browse by category</h2>
+        <h2 className="label m-0 mb-3 text-[20px]">{t('home.categories')}</h2>
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
           {categories.map((c) => (
             <Link
@@ -62,7 +62,7 @@ export default async function HomePage() {
               href={`/browse?category=${c.slug}`}
               className="hard-sm flex min-h-[74px] items-center justify-center border-[3px] border-ink bg-panel px-3 py-3 text-center text-ink hover:bg-yellow hover:text-ink"
             >
-              <span className="label text-[17px]">{c.name}</span>
+              <span className="label text-[17px]">{categoryName(t, c.slug, c.name)}</span>
             </Link>
           ))}
         </div>
@@ -71,26 +71,24 @@ export default async function HomePage() {
       <section className="mx-auto w-full max-w-6xl px-3 pb-5 sm:px-4 sm:pb-6">
         <div className="mb-3 flex items-baseline justify-between gap-3">
           <h2 className="label m-0 text-[20px]">
-            {result.trustRanked ? 'Trusted by your network' : 'Newest in your area'}
+            {result.trustRanked ? t('home.trusted') : t('home.newest')}
           </h2>
           <Link href="/browse" className="label -my-2 flex min-h-[44px] items-center text-[16px] text-red">
-            See all
+            {t('home.seeAll')}
           </Link>
         </div>
 
         {categories.length === 0 ? (
           <Plate className="p-6">
-            <p className="label m-0 text-[20px]">This deployment has no data</p>
-            <p className="mt-2 text-sm text-muted-2">
-              The database has no categories — it was never seeded, or this
-              deployment is pointed at the wrong one.
-            </p>
+            <p className="label m-0 text-[20px]">{t('home.noData')}</p>
+            <p className="mt-2 text-sm text-muted-2">{t('home.noDataHelp')}</p>
           </Plate>
         ) : featured.length === 0 ? (
           <Plate className="p-6">
-            <p className="label m-0 text-[20px]">Nothing listed yet</p>
+            <p className="label m-0 text-[20px]">{t('home.empty')}</p>
             <p className="mt-2 text-sm text-muted-2">
-              Be the first — <Link href="/post">post a listing</Link>.
+              {t('home.emptyHelp', { link: '' }).split('{link}')[0]}
+              <Link href="/post">{t('home.emptyLink')}</Link>
             </p>
           </Plate>
         ) : (
@@ -124,16 +122,14 @@ export default async function HomePage() {
         <section className="mx-auto w-full max-w-6xl px-3 pb-5 sm:px-4 sm:pb-6">
           <Plate className="flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between">
             <div>
-              <p className="label m-0 text-[20px]">See who you can trust</p>
-              <p className="m-0 mt-1 text-sm text-muted-2">
-                Log in with TrustClub to sort listings by your own connections.
-              </p>
+              <p className="label m-0 text-[20px]">{t('home.cta.title')}</p>
+              <p className="m-0 mt-1 text-sm text-muted-2">{t('home.cta.body')}</p>
             </div>
             <Link
               href="/signin?redirect=%2F"
               className="font-display hard-sm inline-flex shrink-0 items-center justify-center border-[3px] border-ink bg-red px-4 py-3 text-[19px] uppercase text-ground hover:text-ground"
             >
-              Log in
+              {t('signin.link')}
             </Link>
           </Plate>
         </section>

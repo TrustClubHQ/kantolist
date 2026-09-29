@@ -5,6 +5,11 @@ import Link from 'next/link'
 import type { ListingStatus, ReportReason, ReportStatus } from '@prisma/client'
 import { Plate, EmptyState } from '@/components/ui'
 import { timeAgo } from '@/lib/format'
+import { translatorFor } from '@/lib/i18n'
+
+/** The report queue is staff-only and stays in English, so it does not read
+    the visitor's language — it uses the English dictionary directly. */
+const staffEnglish = translatorFor('en')
 
 interface ReportRow {
   id: string
@@ -88,7 +93,7 @@ export function ReportQueue({ reports, status }: { reports: ReportRow[]; status:
                   {REASON_LABEL[r.reason]}
                 </span>
                 <span className="label text-[15px] font-semibold text-muted">
-                  {r.reporter ? `@${r.reporter}` : 'anonymous'} · {timeAgo(r.createdAt)}
+                  {r.reporter ? `@${r.reporter}` : 'anonymous'} · {timeAgo(r.createdAt, staffEnglish)}
                 </span>
               </div>
 

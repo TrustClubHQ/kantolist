@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import type { Prisma } from '@prisma/client'
 import { prisma } from '@/lib/prisma'
+import { requestT } from '@/lib/i18n-server'
 import { getAccountFromRequest } from '@/lib/auth'
 import { withApiHandler, badRequest, unauthorized, forbidden, notFound } from '@/lib/api'
 import { isAllowedMutatingRequest } from '@/lib/http'
@@ -24,17 +25,19 @@ function findListing(id: string) {
 
 /** Edits are owner-only; staff moderate through the report queue, not by editing. */
 async function loadOwned(request: NextRequest, id: string): Promise<LoadResult> {
+  const t = requestT(request)
   const account = await getAccountFromRequest(request)
   if (!account) return { error: unauthorized() }
   const listing = await findListing(id)
-  if (!listing) return { error: notFound('Listing not found') }
-  if (listing.accountId !== account.id) return { error: forbidden('This is not your listing') }
+  if (!listing) return { error: notFound(t('api.listingNotFound')) }
+  if (listing.accountId !== account.id) return { error: forbidden(t('api.notYourListing')) }
   return { listing }
 }
 
 export const PATCH = withApiHandler(async (request: NextRequest, ctx: Ctx) => {
   if (!isAllowedMutatingRequest(request)) return forbidden()
   const { id } = await ctx.params
+  const t = requestT(request)
   const owned = await loadOwned(request, id)
   if (owned.error) return owned.error
   const { listing } = owned
@@ -67,35 +70,35 @@ export const PATCH = withApiHandler(async (request: NextRequest, ctx: Ctx) => {
       where: { id: body.categoryId },
       select: { id: true, attributeSchema: true, isActive: true, parentId: true },
     })
-    if (!category || !category.isActive) return badRequest('Choose a category')
-    if (!category.parentId) return badRequest('Choose a specific category, not a group')
+    if (!category || !category.isActive) return badRequest(t('api.chooseCategory'))
+    if (!category.parentId) return badRequest(t('api.chooseLeafCategory'))
     data.category = { connect: { id: category.id } }
     schemaSource = category.attributeSchema
   }
 
   if (body.type !== undefined) {
-    if (!TYPES.includes(body.type as ListingType)) return badRequest('Choose sell, rent or service')
+    if (!TYPES.includes(body.type as ListingType)) return badRequest(t('api.chooseType'))
     data.type = body.type as ListingType
   }
 
   if (body.priceUnit !== undefined) {
     const nextType = (body.type ?? listing.type) as ListingType
     if (!PRICE_UNITS_FOR_TYPE[nextType].includes(body.priceUnit as PriceUnit)) {
-      return badRequest('That price unit does not apply to this kind of listing')
+      return badRequest(t('api.unitNotForType'))
     }
     data.priceUnit = body.priceUnit as PriceUnit
   }
 
   if (body.contactChannels !== undefined) {
-    if (!Array.isArray(body.contactChannels)) return badRequest('Invalid contact channels')
+    if (!Array.isArray(body.contactChannels)) return badRequest(t('api.badChannels'))
     const channels = body.contactChannels.filter((c): c is string => typeof c === 'string')
     data.contactChannels = channels as unknown as Prisma.InputJsonValue
   }
 
   if (body.title !== undefined) {
     const title = body.title.trim()
-    if (!title) return badRequest('A title is required')
-    if (title.length > 70) return badRequest('Keep the title to 70 characters or fewer')
+    if (!title) return badRequest(t('api.titleRequired'))
+    if (title.length > 70) return badRequest(t('api.titleTooLong', { max: 70 }))
     data.title = title
     data.slug = slugify(title)
   }
@@ -119,7 +122,7 @@ export const PATCH = withApiHandler(async (request: NextRequest, ctx: Ctx) => {
       data.price = null
     } else {
       const price = body.price === null ? null : Number(body.price)
-      if (price === null || !Number.isFinite(price) || price < 0) return badRequest('Enter a price')
+      if (price === null || !Number.isFinite(price) || price < 0) return badRequest(t('api.enterPrice'))
       data.price = price
     }
   }

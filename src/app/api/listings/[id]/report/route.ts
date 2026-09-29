@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import type { ReportReason } from '@prisma/client'
 import { prisma } from '@/lib/prisma'
+import { requestT } from '@/lib/i18n-server'
 import { getAccountFromRequest } from '@/lib/auth'
 import { withApiHandler, badRequest, notFound, forbidden, unauthorized } from '@/lib/api'
 import { isAllowedMutatingRequest } from '@/lib/http'
@@ -15,13 +16,14 @@ export const POST = withApiHandler(async (request: NextRequest, ctx: Ctx) => {
 
   // Reporting requires an account: an anonymous report queue is a spam queue.
   const account = await getAccountFromRequest(request)
-  if (!account) return unauthorized('Sign in to report a listing')
+  const t = requestT(request)
+  if (!account) return unauthorized(t('api.signInToReport'))
 
   const body: { reason?: ReportReason; note?: string } = await request.json().catch(() => ({}))
-  if (!body.reason || !REASONS.includes(body.reason)) return badRequest('Pick a reason')
+  if (!body.reason || !REASONS.includes(body.reason)) return badRequest(t('api.pickReason'))
 
   const listing = await prisma.listing.findUnique({ where: { id }, select: { id: true } })
-  if (!listing) return notFound('Listing not found')
+  if (!listing) return notFound(t('api.listingNotFound'))
 
   const existing = await prisma.report.findFirst({
     where: { listingId: listing.id, reporterAccountId: account.id, status: 'OPEN' },

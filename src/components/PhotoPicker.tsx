@@ -2,6 +2,8 @@
 
 import { useRef, useState } from 'react'
 import Image from 'next/image'
+import { Spinner } from '@/components/ui'
+import { useT } from '@/components/LanguageProvider'
 
 export interface ListingPhoto {
   id: string
@@ -125,6 +127,7 @@ export function PhotoPicker({
   onPendingChange?: (files: File[]) => void
   max?: number
 }) {
+  const t = useT()
   const [photos, setPhotos] = useState<ListingPhoto[]>(initial)
   const [pending, setPending] = useState<{ file: File; preview: string }[]>([])
   const [busy, setBusy] = useState(false)
@@ -136,7 +139,7 @@ export function PhotoPicker({
   if (!enabled) {
     return (
       <p className="m-0 text-[13px] font-semibold leading-snug text-muted-2">
-        Photo storage is not set up on this deployment yet, so listings cannot carry pictures.
+        {t('post.photos.disabled')}
       </p>
     )
   }
@@ -147,7 +150,7 @@ export function PhotoPicker({
     const room = max - total
     const chosen = Array.from(files).slice(0, Math.max(0, room))
     if (chosen.length === 0) {
-      setError(`A listing can have up to ${max} photos`)
+      setError(t('post.photos.max', { max }))
       return
     }
 
@@ -167,13 +170,13 @@ export function PhotoPicker({
         })
         const data: { id?: string; url?: string; error?: string } = await res.json()
         if (!res.ok || !data.id || !data.url) {
-          setError(data.error ?? 'Could not add that photo')
+          setError(data.error ?? t('post.photos.failed'))
           break
         }
         setPhotos((p) => [...p, { id: data.id!, url: data.url! }])
       }
     } catch {
-      setError('Could not upload. Check your connection and try again.')
+      setError(t('post.photos.offline'))
     } finally {
       setBusy(false)
       if (input.current) input.current.value = ''
@@ -187,7 +190,7 @@ export function PhotoPicker({
       method: 'DELETE',
     })
     if (!res.ok) {
-      setError('Could not remove that photo')
+      setError(t('post.photos.removeFailed'))
       return
     }
     setPhotos((p) => p.filter((x) => x.id !== photo.id))
@@ -209,7 +212,7 @@ export function PhotoPicker({
             <button
               type="button"
               onClick={() => remove(photo)}
-              aria-label="Remove photo"
+              aria-label={t('post.photos.remove')}
               className="label absolute right-0 top-0 flex h-[26px] w-[26px] items-center justify-center border-l-2 border-b-2 border-ink bg-ground text-[15px]"
             >
               ✕
@@ -224,7 +227,7 @@ export function PhotoPicker({
             <button
               type="button"
               onClick={() => removePending(i)}
-              aria-label="Remove photo"
+              aria-label={t('post.photos.remove')}
               className="label absolute right-0 top-0 flex h-[26px] w-[26px] items-center justify-center border-l-2 border-b-2 border-ink bg-ground text-[15px]"
             >
               ✕
@@ -245,14 +248,19 @@ export function PhotoPicker({
         type="button"
         disabled={busy || total >= max}
         onClick={() => input.current?.click()}
-        className="label min-h-[48px] border-[2.5px] border-ink bg-panel px-3 text-[17px] disabled:opacity-60"
+        className="label flex min-h-[48px] items-center justify-center gap-2 border-[2.5px] border-ink bg-panel px-3 text-[17px] disabled:opacity-70"
       >
-        {busy ? 'Adding…' : total === 0 ? 'Add photos' : `Add more (${total}/${max})`}
+        {busy ? <Spinner className="h-[16px] w-[16px]" /> : null}
+        {busy
+          ? t('post.photos.adding')
+          : total === 0
+            ? t('post.photos.add')
+            : t('post.photos.addMore', { count: total, max })}
       </button>
 
       {!listingId && pending.length > 0 ? (
         <p className="m-0 text-[13px] font-semibold leading-snug text-muted-2">
-          These upload once the listing is published.
+          {t('post.photos.pending')}
         </p>
       ) : null}
       {error ? (
@@ -273,10 +281,13 @@ export function PhotoPicker({
 export async function uploadPendingPhotos(
   listingId: string,
   files: File[],
+  /** Called before each photo goes up, so the button can count them off. */
+  onProgress?: (done: number, total: number) => void,
 ): Promise<{ failed: number; error?: string }> {
   let failed = 0
   let error: string | undefined
-  for (const file of files) {
+  for (const [index, file] of files.entries()) {
+    onProgress?.(index, files.length)
     try {
       const res = await fetch(`/api/listings/${listingId}/photos`, {
         method: 'POST',

@@ -1,11 +1,12 @@
 import { redirect } from 'next/navigation'
+import { translatedTitle } from '@/lib/page-title'
 import { prisma } from '@/lib/prisma'
 import { getCurrentAccount } from '@/lib/auth'
 import { SiteHeader } from '@/components/SiteHeader'
 import { ProfileForm } from '@/components/ProfileForm'
 
 export const dynamic = 'force-dynamic'
-export const metadata = { title: 'My profile' }
+export const generateMetadata = translatedTitle('title.profile')
 
 export default async function ProfilePage() {
   const account = await getCurrentAccount()

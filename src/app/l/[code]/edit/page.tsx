@@ -1,4 +1,5 @@
 import { notFound, redirect } from 'next/navigation'
+import { translatedTitle } from '@/lib/page-title'
 import { prisma } from '@/lib/prisma'
 import { getCurrentAccount } from '@/lib/auth'
 import { SiteHeader } from '@/components/SiteHeader'
@@ -8,7 +9,7 @@ import { codeFromParam, listingPath } from '@/lib/listing'
 import { photosEnabled } from '@/lib/photo-store'
 
 export const dynamic = 'force-dynamic'
-export const metadata = { title: 'Edit listing' }
+export const generateMetadata = translatedTitle('title.edit')
 
 /**
  * Editing reuses the posting form rather than duplicating it: one screen to
@@ -45,10 +46,16 @@ export default async function EditListingPage({ params }: { params: Promise<{ co
   const parents = categories.filter((c) => !c.parentId)
   const tree = parents.map((p) => ({
     id: p.id,
+    slug: p.slug,
     name: p.name,
     children: categories
       .filter((c) => c.parentId === p.id)
-      .map((c) => ({ id: c.id, name: c.name, attributes: parseSchema(c.attributeSchema) })),
+      .map((c) => ({
+        id: c.id,
+        slug: c.slug,
+        name: c.name,
+        attributes: parseSchema(c.attributeSchema),
+      })),
   }))
 
   // The form holds every field as a string, so a number or boolean coming out

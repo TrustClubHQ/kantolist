@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import type { ListingType, Prisma } from '@prisma/client'
 import { prisma } from '@/lib/prisma'
+import { requestT } from '@/lib/i18n-server'
 import { getAccountFromRequest } from '@/lib/auth'
 import { withApiHandler, badRequest, unauthorized, forbidden } from '@/lib/api'
 import { isAllowedMutatingRequest } from '@/lib/http'
@@ -94,44 +95,45 @@ interface CreateBody {
 
 export const POST = withApiHandler(async (request: NextRequest) => {
   if (!isAllowedMutatingRequest(request)) return forbidden()
+  const t = requestT(request)
   const account = await getAccountFromRequest(request)
-  if (!account) return unauthorized('Sign in with TrustClub to post a listing')
+  if (!account) return unauthorized(t('api.signInToPost'))
 
   const body: CreateBody = await request.json().catch(() => ({}))
 
   const title = body.title?.trim()
-  if (!title) return badRequest('A title is required')
-  if (title.length > MAX_TITLE) return badRequest(`Keep the title to ${MAX_TITLE} characters or fewer`)
+  if (!title) return badRequest(t('api.titleRequired'))
+  if (title.length > MAX_TITLE) return badRequest(t('api.titleTooLong', { max: MAX_TITLE }))
 
-  if (!body.type || !TYPES.includes(body.type)) return badRequest('Pick what you are posting')
+  if (!body.type || !TYPES.includes(body.type)) return badRequest(t('api.pickType'))
   const type = body.type
 
-  if (!body.categoryId) return badRequest('Pick a category')
+  if (!body.categoryId) return badRequest(t('api.pickCategory'))
   const category = await prisma.category.findUnique({
     where: { id: body.categoryId },
     select: { id: true, attributeSchema: true, children: { select: { id: true } }, isActive: true },
   })
-  if (!category || !category.isActive) return badRequest('That category is not available')
+  if (!category || !category.isActive) return badRequest(t('api.categoryUnavailable'))
   // A listing belongs to a leaf: a parent is a heading, not a place to file things.
-  if (category.children.length > 0) return badRequest('Pick a specific sub-category')
+  if (category.children.length > 0) return badRequest(t('api.pickSubCategory'))
 
-  if (!body.municipalityId) return badRequest('Pick a location')
+  if (!body.municipalityId) return badRequest(t('api.pickLocation'))
   const municipality = await prisma.municipality.findUnique({ where: { id: body.municipalityId } })
-  if (!municipality) return badRequest('That location is not available')
+  if (!municipality) return badRequest(t('api.locationUnavailable'))
 
   const allowedUnits = PRICE_UNITS_FOR_TYPE[type]
   const priceUnit = (body.priceUnit ?? allowedUnits[0]) as (typeof allowedUnits)[number]
   if (!allowedUnits.includes(priceUnit)) {
-    return badRequest(`A ${type.toLowerCase()} listing cannot be priced ${priceUnit}`)
+    return badRequest(t('api.badPriceUnit', { type: type.toLowerCase(), unit: priceUnit }))
   }
 
   const price = body.price === null || body.price === undefined ? null : Number(body.price)
   if (priceUnit === 'QUOTE') {
     // "Ask for a quote" means no number; storing one would contradict the label.
-    if (price !== null) return badRequest('A quote listing cannot carry a price')
+    if (price !== null) return badRequest(t('api.quoteHasNoPrice'))
   } else {
-    if (price === null || !Number.isFinite(price) || price < 0) return badRequest('Enter a price')
-    if (price > 100_000_000) return badRequest('That price looks wrong')
+    if (price === null || !Number.isFinite(price) || price < 0) return badRequest(t('api.enterPrice'))
+    if (price > 100_000_000) return badRequest(t('api.priceTooHigh'))
   }
 
   const validated = validateAttributes(parseSchema(category.attributeSchema), body.attributes)
@@ -152,10 +154,10 @@ export const POST = withApiHandler(async (request: NextRequest) => {
     }),
   ])
   if (todayCount >= MAX_NEW_LISTINGS_PER_DAY) {
-    return forbidden('You have posted a lot today. Try again tomorrow.')
+    return forbidden(t('api.tooManyToday'))
   }
   if (activeCount >= MAX_ACTIVE_LISTINGS) {
-    return forbidden('You have reached the maximum number of active listings')
+    return forbidden(t('api.tooManyActive'))
   }
   if (activeCount >= MAX_ACTIVE_LISTINGS_UNTRUSTED && !account.phoneVerifiedAt) {
     // The spec wants this gated on "nobody vouches for this member", but trust
@@ -163,9 +165,7 @@ export const POST = withApiHandler(async (request: NextRequest) => {
     // id has, only how much a specific viewer extends to it. Until an aggregate
     // endpoint exists (spec §12 Q1), a verified phone is the cheapest real
     // signal we control, so it is what unlocks the larger allowance.
-    return forbidden(
-      `New members can have ${MAX_ACTIVE_LISTINGS_UNTRUSTED} active listings. Verify your phone number to post more.`,
-    )
+    return forbidden(t('api.verifyToPostMore', { count: MAX_ACTIVE_LISTINGS_UNTRUSTED }))
   }
 
   // Snapshot the channels the poster actually has, so an old listing never

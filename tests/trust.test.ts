@@ -1,3 +1,7 @@
+import { translatorFor } from '../src/lib/i18n'
+
+const en = translatorFor('en')
+
 import { compareByTrust, type RankedListing } from '@/lib/search'
 import { formatTrustPoints, trustState } from '@/lib/trust-format'
 import { maskPhone, normalizePhPhone, timeAgo } from '@/lib/format'
@@ -93,10 +97,10 @@ describe('maskPhone', () => {
 describe('timeAgo', () => {
   it('is coarse, because listings age in days', () => {
     const now = Date.now()
-    expect(timeAgo(new Date(now - 30_000))).toBe('just now')
-    expect(timeAgo(new Date(now - 2 * 3600_000))).toBe('2 hours ago')
-    expect(timeAgo(new Date(now - 26 * 3600_000))).toBe('yesterday')
-    expect(timeAgo(new Date(now - 3 * 86400_000))).toBe('3 days ago')
-    expect(timeAgo(new Date(now - 21 * 86400_000))).toBe('3 weeks ago')
+    expect(timeAgo(new Date(now - 30_000), en)).toBe('just now')
+    expect(timeAgo(new Date(now - 2 * 3600_000), en)).toBe('2 hours ago')
+    expect(timeAgo(new Date(now - 26 * 3600_000), en)).toBe('yesterday')
+    expect(timeAgo(new Date(now - 3 * 86400_000), en)).toBe('3 days ago')
+    expect(timeAgo(new Date(now - 21 * 86400_000), en)).toBe('3 weeks ago')
   })
 })

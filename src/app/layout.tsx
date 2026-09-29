@@ -1,13 +1,18 @@
 import type { Metadata, Viewport } from 'next'
 import './globals.css'
+import { LanguageProvider } from '@/components/LanguageProvider'
+import { getLanguage } from '@/lib/i18n-server'
+import { translate } from '@/lib/i18n'
 
-export const metadata: Metadata = {
-  title: {
-    default: 'KantoList — buy, rent and hire on your corner',
-    template: '%s · KantoList',
-  },
-  description:
-    'Classifieds for your town, ranked by the people your TrustClub network already vouches for. Sell, rent out or offer a service — then talk to the buyer directly.',
+export async function generateMetadata(): Promise<Metadata> {
+  const language = await getLanguage()
+  return {
+    title: {
+      default: translate(language, 'meta.title'),
+      template: '%s · KantoList',
+    },
+    description: translate(language, 'meta.description'),
+  }
 }
 
 export const viewport: Viewport = {
@@ -16,9 +21,13 @@ export const viewport: Viewport = {
   themeColor: '#C6362B',
 }
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default async function RootLayout({ children }: { children: React.ReactNode }) {
+  // The language is decided here, once, from the cookie the toggle writes —
+  // so the server render and the client render agree from the first paint.
+  const language = await getLanguage()
+
   return (
-    <html lang="en">
+    <html lang={language === 'tl' ? 'tl' : 'en'}>
       <head>
         {/* Google Fonts is loaded by link rather than next/font so a build
             without network access still succeeds — the fallback stacks in
@@ -33,7 +42,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           href="https://fonts.googleapis.com/css2?family=Anton&family=Barlow+Condensed:wght@600;700&family=Barlow:wght@400;600;700&display=swap"
         />
       </head>
-      <body>{children}</body>
+      <body>
+        <LanguageProvider language={language}>{children}</LanguageProvider>
+      </body>
     </html>
   )
 }

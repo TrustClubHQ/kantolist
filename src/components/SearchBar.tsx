@@ -3,7 +3,10 @@
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useState } from 'react'
 
+import { useT } from '@/components/LanguageProvider'
+
 export function SearchBar({ defaultValue = '' }: { defaultValue?: string }) {
+  const t = useT()
   const router = useRouter()
   const params = useSearchParams()
   const [q, setQ] = useState(defaultValue)
@@ -29,8 +32,8 @@ export function SearchBar({ defaultValue = '' }: { defaultValue?: string }) {
         <input
           value={q}
           onChange={(e) => setQ(e.target.value)}
-          placeholder="Motorcycle, videoke, mechanic…"
-          aria-label="Search listings"
+          placeholder={t('search.placeholder')}
+          aria-label={t('search.label')}
           className="label !min-h-[46px] !border-0 !bg-transparent !px-0 text-[18px] placeholder:text-muted"
         />
       </div>
@@ -38,7 +41,7 @@ export function SearchBar({ defaultValue = '' }: { defaultValue?: string }) {
         type="submit"
         className="font-display hard shrink-0 border-[3px] border-ink bg-red px-4 text-[19px] uppercase text-ground"
       >
-        Find
+        {t('search.action')}
       </button>
     </form>
   )

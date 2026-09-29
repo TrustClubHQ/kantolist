@@ -1,33 +1,40 @@
-/** "2 days ago" — coarse on purpose; listings age in days, not seconds. */
-export function timeAgo(date: Date | string): string {
+import type { T } from './i18n'
+
+/**
+ * "2 days ago" — coarse on purpose; listings age in days, not seconds.
+ *
+ * The translator is a parameter rather than a hook so this stays usable from
+ * server components, client components and tests alike.
+ */
+export function timeAgo(date: Date | string, t: T): string {
   const then = typeof date === 'string' ? new Date(date) : date
   const seconds = Math.max(0, Math.floor((Date.now() - then.getTime()) / 1000))
   const days = Math.floor(seconds / 86400)
 
   if (seconds < 3600) {
     const minutes = Math.floor(seconds / 60)
-    return minutes <= 1 ? 'just now' : `${minutes} minutes ago`
+    return minutes <= 1 ? t('time.justNow') : t('time.minutes', { count: minutes })
   }
   if (days < 1) {
     const hours = Math.floor(seconds / 3600)
-    return hours === 1 ? '1 hour ago' : `${hours} hours ago`
+    return hours === 1 ? t('time.hour') : t('time.hours', { count: hours })
   }
-  if (days === 1) return 'yesterday'
-  if (days < 7) return `${days} days ago`
-  if (days < 14) return '1 week ago'
-  if (days < 60) return `${Math.floor(days / 7)} weeks ago`
-  return `${Math.floor(days / 30)} months ago`
+  if (days === 1) return t('time.yesterday')
+  if (days < 7) return t('time.days', { count: days })
+  if (days < 14) return t('time.week')
+  if (days < 60) return t('time.weeks', { count: Math.floor(days / 7) })
+  return t('time.months', { count: Math.floor(days / 30) })
 }
 
 /**
  * Trust badge text. `null` means the lookup failed or was never made — say so,
  * rather than printing a 0 that would libel the poster as untrusted.
  */
-export function trustLabel(points: number | null | undefined, via?: string | null): string {
-  if (points === undefined || points === null) return 'Trust unknown'
-  if (!Number.isFinite(points)) return 'Your listing'
-  if (points <= 0) return 'No trust path'
-  return via ? `${points} TP · via @${via}` : `${points} TP`
+export function trustLabel(points: number | null | undefined, t: T, via?: string | null): string {
+  if (points === undefined || points === null) return t('trust.unknown')
+  if (!Number.isFinite(points)) return t('trust.self')
+  if (points <= 0) return t('trust.none')
+  return via ? `${points} TP ${t('trust.via', { via })}` : `${points} TP`
 }
 
 /** A PH mobile, masked for anonymous viewers: +63 9•• ••• 1234 */

@@ -11,15 +11,12 @@ import { EmptyState, Plate } from '@/components/ui'
 import { searchListings, PAGE_SIZE, type SortKey } from '@/lib/search'
 import { listingPath } from '@/lib/listing'
 import { parseSchema } from '@/lib/attributes'
+import { getT } from '@/lib/i18n-server'
+import { categoryName } from '@/lib/i18n'
 
 export const dynamic = 'force-dynamic'
 
-const SORTS: { key: SortKey; label: string }[] = [
-  { key: 'trust', label: 'Trust' },
-  { key: 'newest', label: 'Newest' },
-  { key: 'price_asc', label: 'Cheapest' },
-  { key: 'price_desc', label: 'Priciest' },
-]
+const SORTS: SortKey[] = ['trust', 'newest', 'price_asc', 'price_desc']
 
 type Search = Record<string, string | string[] | undefined>
 
@@ -29,7 +26,7 @@ function one(v: string | string[] | undefined): string | undefined {
 
 export default async function BrowsePage({ searchParams }: { searchParams: Promise<Search> }) {
   const sp = await searchParams
-  const account = await getCurrentAccount()
+  const [account, t] = await Promise.all([getCurrentAccount(), getT()])
 
   const params = new URLSearchParams()
   for (const [k, v] of Object.entries(sp)) {
@@ -73,7 +70,11 @@ export default async function BrowsePage({ searchParams }: { searchParams: Promi
   )
 
   const totalPages = Math.max(1, Math.ceil(result.total / PAGE_SIZE))
-  const heading = category ? category.name : one(sp.q) ? `“${one(sp.q)}”` : 'Everything'
+  const heading = category
+    ? categoryName(t, category.slug, category.name)
+    : one(sp.q)
+      ? `“${one(sp.q)}”`
+      : t('browse.everything')
 
   function withParam(key: string, value?: string): string {
     const next = new URLSearchParams(params.toString())
@@ -108,31 +109,33 @@ export default async function BrowsePage({ searchParams }: { searchParams: Promi
             <div>
               <h1 className="font-display m-0 text-[30px] uppercase leading-none">{heading}</h1>
               <p className="label m-0 mt-1.5 text-[16px] text-muted-2">
-                {result.total} {result.total === 1 ? 'listing' : 'listings'}
-                {result.trustRanked ? ' · ranked by your TrustClub network' : ''}
+                {result.total === 1
+                  ? t('browse.countOne')
+                  : t('browse.countMany', { count: result.total })}
+                {result.trustRanked ? t('browse.ranked') : ''}
               </p>
             </div>
             <div className="-mx-3 flex gap-2 overflow-x-auto px-3 pb-1 sm:mx-0 sm:flex-wrap sm:overflow-visible sm:px-0">
-              {SORTS.map((s) => {
-                const active = (sort ?? (account ? 'trust' : 'newest')) === s.key
-                const disabled = s.key === 'trust' && !account
+              {SORTS.map((key) => {
+                const active = (sort ?? (account ? 'trust' : 'newest')) === key
+                const disabled = key === 'trust' && !account
                 return disabled ? (
                   <span
-                    key={s.key}
-                    title="Log in to rank by your own trust network"
+                    key={key}
+                    title={t('browse.sort.trustLocked')}
                     className="label flex min-h-[40px] shrink-0 items-center whitespace-nowrap border-[2.5px] border-dim-edge bg-dim px-3 text-[16px] text-muted"
                   >
-                    {s.label}
+                    {t(`browse.sort.${key}`)}
                   </span>
                 ) : (
                   <Link
-                    key={s.key}
-                    href={withParam('sort', s.key)}
+                    key={key}
+                    href={withParam('sort', key)}
                     className={`label flex min-h-[40px] shrink-0 items-center whitespace-nowrap border-[2.5px] border-ink px-3 text-[16px] ${
                       active ? 'bg-yellow text-ink' : 'bg-panel text-ink'
                     }`}
                   >
-                    {s.label}
+                    {t(`browse.sort.${key}`)}
                   </Link>
                 )
               })}
@@ -142,8 +145,11 @@ export default async function BrowsePage({ searchParams }: { searchParams: Promi
           {!account && result.total > 0 ? (
             <Plate flat className="mb-4 border-[3px] px-3 py-2.5">
               <p className="m-0 text-[13px] font-semibold text-muted-2">
-                Showing newest first. <Link href={`/signin?redirect=${encodeURIComponent(`/browse?${params.toString()}`)}`}>Log in with TrustClub</Link> to put the
-                people your own network vouches for at the top.
+                {t('browse.signInPrompt', { link: '' }).split('{link}')[0]}
+                <Link href={`/signin?redirect=${encodeURIComponent(`/browse?${params.toString()}`)}`}>
+                  {t('browse.signInPromptLink')}
+                </Link>
+                {t('browse.signInPrompt', { link: '' }).split('{link}')[1]}
               </p>
             </Plate>
           ) : null}
@@ -153,15 +159,9 @@ export default async function BrowsePage({ searchParams }: { searchParams: Promi
             // wrong database rather than an empty result. Saying "nothing
             // matches those filters" here hid exactly that behind a page that
             // looked like it was working.
-            <EmptyState title="This deployment has no data">
-              The database has no categories, so it was never seeded or the
-              deployment is pointed at the wrong one. Listings cannot load until
-              that is fixed.
-            </EmptyState>
+            <EmptyState title={t('browse.noData')}>{t('browse.noDataHelp')}</EmptyState>
           ) : result.items.length === 0 ? (
-            <EmptyState title="Nothing matches those filters">
-              Try widening the price range, or turning on nearby towns.
-            </EmptyState>
+            <EmptyState title={t('browse.empty')}>{t('browse.emptyHelp')}</EmptyState>
           ) : (
             <div className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-3">
               {result.items.map(({ listing, trustPoints }) => (
@@ -192,17 +192,17 @@ export default async function BrowsePage({ searchParams }: { searchParams: Promi
             <nav className="mt-6 flex items-center justify-between gap-3">
               {page > 1 ? (
                 <Link href={withParam('page', String(page - 1))} className="label flex min-h-[48px] items-center border-[3px] border-ink bg-panel px-4 text-[17px]">
-                  Previous
+                  {t('browse.previous')}
                 </Link>
               ) : (
                 <span />
               )}
               <span className="label text-[16px] text-muted-2">
-                Page {page} of {totalPages}
+                {t('browse.page', { page, total: totalPages })}
               </span>
               {page < totalPages ? (
                 <Link href={withParam('page', String(page + 1))} className="label flex min-h-[48px] items-center border-[3px] border-ink bg-panel px-4 text-[17px]">
-                  Next
+                  {t('browse.next')}
                 </Link>
               ) : (
                 <span />

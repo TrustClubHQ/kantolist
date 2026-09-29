@@ -3,6 +3,8 @@
 import { useRouter } from 'next/navigation'
 import { useMemo, useState } from 'react'
 import type { AttributeDef } from '@/lib/attributes'
+import { useT } from '@/components/LanguageProvider'
+import { attributeLabel, categoryName, type T } from '@/lib/i18n'
 
 /**
  * Filtering, sized for a phone.
@@ -46,6 +48,7 @@ function countActive(current: Record<string, string>): number {
 }
 
 export function FilterControls(props: Props) {
+  const t = useT()
   const [open, setOpen] = useState(false)
   const activeCount = countActive(props.current)
 
@@ -62,14 +65,14 @@ export function FilterControls(props: Props) {
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" aria-hidden="true">
               <path d="M4 6h16M7 12h10M10 18h4" />
             </svg>
-            Filters
+            {t('filter.heading')}
           </span>
           {activeCount > 0 ? (
             <span className="label border-2 border-ink bg-yellow px-2 py-0.5 text-[14px]">
-              {activeCount} on
+              {t('filter.on', { count: activeCount })}
             </span>
           ) : (
-            <span className="label text-[15px] text-muted">All listings</span>
+            <span className="label text-[15px] text-muted">{t('filter.allListings')}</span>
           )}
         </button>
       </div>
@@ -79,7 +82,7 @@ export function FilterControls(props: Props) {
           className="fixed inset-0 z-50 flex flex-col justify-end bg-[rgba(23,19,14,0.6)] lg:hidden"
           role="dialog"
           aria-modal="true"
-          aria-label="Filters"
+          aria-label={t('filter.heading')}
           onClick={(e) => {
             if (e.target === e.currentTarget) setOpen(false)
           }}
@@ -105,6 +108,7 @@ function FilterPanel({
   onDone,
   sheet = false,
 }: Props & { onDone?: () => void; sheet?: boolean }) {
+  const t = useT()
   const router = useRouter()
   const [draft, setDraft] = useState<Record<string, string>>(current)
 
@@ -143,22 +147,28 @@ function FilterPanel({
     onDone?.()
   }
 
-  const selectedCategoryName = categories.find((c) => c.slug === draft.category)?.name
+  const selectedCategory = categories.find((c) => c.slug === draft.category)
+  const selectedCategoryName = selectedCategory
+    ? categoryName(t, selectedCategory.slug, selectedCategory.name)
+    : undefined
   // `attributes` was resolved server-side from the *applied* category, so the
   // heading over them has to name that one — not the draft the user is still
   // picking, which would label bike attributes "Motorcycles".
-  const appliedCategoryName = categories.find((c) => c.slug === current.category)?.name
+  const appliedCategory = categories.find((c) => c.slug === current.category)
+  const appliedCategoryName = appliedCategory
+    ? categoryName(t, appliedCategory.slug, appliedCategory.name)
+    : undefined
 
   return (
     <div className={sheet ? '' : 'hard border-[3px] border-ink bg-panel'}>
       <div className="label sticky top-0 z-10 flex items-baseline justify-between bg-ink px-3.5 py-2 text-[18px] tracking-wide text-ground">
-        <span>Filters</span>
+        <span>{t('filter.heading')}</span>
         <span className="flex items-center gap-3">
           <button type="button" onClick={reset} className="label text-yellow">
-            Reset
+            {t('filter.reset')}
           </button>
           {sheet ? (
-            <button type="button" onClick={onDone} aria-label="Close filters" className="label text-ground">
+            <button type="button" onClick={onDone} aria-label={t('filter.close')} className="label text-ground">
               ✕
             </button>
           ) : null}
@@ -167,8 +177,8 @@ function FilterPanel({
 
       <div className="flex flex-col gap-4 p-4">
         <Section
-          label="Category"
-          summary={selectedCategoryName ?? 'All categories'}
+          label={t('filter.category')}
+          summary={selectedCategoryName ?? t('filter.allCategories')}
           defaultOpen={!draft.category}
         >
           <div className="flex flex-col gap-1.5">
@@ -184,7 +194,7 @@ function FilterPanel({
                       draft.category === parent.slug || childSelected ? 'bg-yellow' : 'bg-ground'
                     }`}
                   >
-                    {parent.name}
+                    {categoryName(t, parent.slug, parent.name)}
                     <Chevron open={expanded} />
                   </button>
 
@@ -199,7 +209,9 @@ function FilterPanel({
                             : 'border-dim-edge bg-panel text-muted-2'
                         }`}
                       >
-                        Everything in {parent.name}
+                        {t('filter.everythingIn', {
+                          category: categoryName(t, parent.slug, parent.name),
+                        })}
                       </button>
                       {parent.children.map((child) => (
                         <button
@@ -212,7 +224,7 @@ function FilterPanel({
                               : 'border-dim-edge bg-panel text-muted-2'
                           }`}
                         >
-                          {child.name}
+                          {categoryName(t, child.slug, child.name)}
                         </button>
                       ))}
                     </div>
@@ -223,47 +235,42 @@ function FilterPanel({
           </div>
         </Section>
 
-        <Section label="Listing type" summary={typeLabel(draft.type)} defaultOpen={false}>
+        <Section label={t('filter.type')} summary={typeSummary(draft.type, t)} defaultOpen={false}>
           <div className="flex gap-1.5">
-            {[
-              { key: undefined, label: 'All' },
-              { key: 'SELL', label: 'Sale' },
-              { key: 'RENT', label: 'Rent' },
-              { key: 'SERVICE', label: 'Service' },
-            ].map((t) => (
+            {[undefined, 'SELL', 'RENT', 'SERVICE'].map((key) => (
               <button
-                key={t.label}
+                key={key ?? 'all'}
                 type="button"
-                onClick={() => set('type', t.key)}
+                onClick={() => set('type', key)}
                 className={`label flex-1 border-[2.5px] border-ink py-2 text-[15px] ${
-                  (draft.type ?? undefined) === t.key ? 'bg-ink text-ground' : 'bg-ground text-ink'
+                  (draft.type ?? undefined) === key ? 'bg-ink text-ground' : 'bg-ground text-ink'
                 }`}
               >
-                {t.label}
+                {key ? t(`filter.type.${key}`) : t('filter.type.all')}
               </button>
             ))}
           </div>
         </Section>
 
         <Section
-          label="Price"
-          summary={priceSummary(draft.min, draft.max)}
+          label={t('filter.price')}
+          summary={priceSummary(draft.min, draft.max, t)}
           defaultOpen={!!(draft.min || draft.max)}
         >
           <div className="flex items-center gap-2">
             <input
               inputMode="numeric"
-              placeholder="Any"
-              aria-label="Minimum price"
+              placeholder={t('filter.any')}
+              aria-label={t('filter.price.min')}
               value={draft.min ?? ''}
               onChange={(e) => set('min', e.target.value.replace(/\D/g, ''))}
               className="!min-h-[44px] text-[15px]"
             />
-            <span className="label text-muted">to</span>
+            <span className="label text-muted">{t('filter.to')}</span>
             <input
               inputMode="numeric"
-              placeholder="Any"
-              aria-label="Maximum price"
+              placeholder={t('filter.any')}
+              aria-label={t('filter.price.max')}
               value={draft.max ?? ''}
               onChange={(e) => set('max', e.target.value.replace(/\D/g, ''))}
               className="!min-h-[44px] text-[15px]"
@@ -276,21 +283,21 @@ function FilterPanel({
             one. It returns by itself once a second town is seeded. */}
         {municipalities.length > 1 ? (
           <Section
-            label="Location"
+            label={t('filter.location')}
             summary={
               municipalities.find((m) => m.id === draft.municipality)?.name ??
-              (draft.nearby === 'true' ? 'Nearby towns' : 'Anywhere')
+              (draft.nearby === 'true' ? t('filter.nearbyTowns') : t('filter.anywhere'))
             }
             defaultOpen={false}
           >
             <div className="flex flex-col gap-2">
               <select
-                aria-label="Municipality"
+                aria-label={t('filter.municipality')}
                 value={draft.municipality ?? ''}
                 onChange={(e) => set('municipality', e.target.value || undefined)}
                 className="!min-h-[44px] text-[15px]"
               >
-                <option value="">Anywhere</option>
+                <option value="">{t('filter.anywhere')}</option>
                 {municipalities.map((m) => (
                   <option key={m.id} value={m.id}>
                     {m.name}, {m.province}
@@ -304,7 +311,7 @@ function FilterPanel({
                   onChange={(e) => set('nearby', e.target.checked ? 'true' : undefined)}
                   className="!min-h-0 !w-auto h-5 w-5 accent-green"
                 />
-                <span className="label text-[16px]">Include nearby towns</span>
+                <span className="label text-[16px]">{t('filter.nearby')}</span>
               </label>
             </div>
           </Section>
@@ -313,7 +320,7 @@ function FilterPanel({
         {attributes.length > 0 ? (
           <div className="flex flex-col gap-4 border-t-[3px] border-ink pt-4">
             <span className="font-display text-[18px] uppercase text-red">
-              {appliedCategoryName ?? 'Details'}
+              {appliedCategoryName ?? t('filter.details')}
             </span>
             {attributes
               .filter((a) => a.filterable !== false)
@@ -330,7 +337,7 @@ function FilterPanel({
           onClick={apply}
           className="font-display hard-sm min-h-[52px] w-full border-[3px] border-ink bg-red text-[19px] uppercase text-ground"
         >
-          Show results
+          {t('filter.apply')}
         </button>
       </div>
     </div>
@@ -390,33 +397,33 @@ function Chevron({ open }: { open: boolean }) {
   )
 }
 
-function typeLabel(v: string | undefined): string {
-  if (v === 'SELL') return 'For sale'
-  if (v === 'RENT') return 'For rent'
-  if (v === 'SERVICE') return 'Services'
-  return 'All'
+function typeSummary(value: string | undefined, t: T): string {
+  if (value === 'SELL' || value === 'RENT' || value === 'SERVICE') {
+    return t(`filter.type.summary.${value}`)
+  }
+  return t('filter.type.all')
 }
 
-function priceSummary(min: string | undefined, max: string | undefined): string {
+function priceSummary(min: string | undefined, max: string | undefined, t: T): string {
   const f = (n: string) => '₱' + Number(n).toLocaleString('en-PH')
   if (min && max) return `${f(min)} – ${f(max)}`
-  if (min) return `${f(min)} and up`
-  if (max) return `Up to ${f(max)}`
-  return 'Any'
+  if (min) return t('filter.andUp', { amount: f(min) })
+  if (max) return t('filter.upTo', { amount: f(max) })
+  return t('filter.any')
 }
 
-function attributeSummary(attr: AttributeDef, draft: Record<string, string>): string {
+function attributeSummary(attr: AttributeDef, draft: Record<string, string>, t: T): string {
   if (attr.type === 'int') {
     const min = draft[`${attr.key}_min`]
     const max = draft[`${attr.key}_max`]
     const unit = attr.unit ? ` ${attr.unit}` : ''
     if (min && max) return `${min}–${max}${unit}`
-    if (min) return `${min}${unit} and up`
-    if (max) return `Up to ${max}${unit}`
-    return 'Any'
+    if (min) return t('filter.andUp', { amount: `${min}${unit}` })
+    if (max) return t('filter.upTo', { amount: `${max}${unit}` })
+    return t('filter.any')
   }
-  if (attr.type === 'bool') return draft[attr.key] === 'true' ? 'Yes' : 'Any'
-  return draft[attr.key] ?? 'Any'
+  if (attr.type === 'bool') return draft[attr.key] === 'true' ? t('filter.yes') : t('filter.any')
+  return draft[attr.key] ?? t('filter.any')
 }
 
 function AttributeFilter({
@@ -428,16 +435,18 @@ function AttributeFilter({
   draft: Record<string, string>
   set: (key: string, value: string | undefined) => void
 }) {
-  const summary = attributeSummary(attr, draft)
-  const active = summary !== 'Any'
-  const label = attr.label + (attr.unit && attr.type === 'int' ? ` (${attr.unit})` : '')
+  const t = useT()
+  const name = attributeLabel(t, attr.key, attr.label)
+  const summary = attributeSummary(attr, draft, t)
+  const active = summary !== t('filter.any')
+  const label = name + (attr.unit && attr.type === 'int' ? ` (${attr.unit})` : '')
 
   // A bool is a single switch — a collapsible section around one checkbox is
   // more chrome than control, so it stays inline.
   if (attr.type === 'bool') {
     return (
       <label className="flex min-h-[44px] items-center justify-between gap-3">
-        <span className="label text-[16px]">{attr.label}</span>
+        <span className="label text-[16px]">{name}</span>
         <input
           type="checkbox"
           checked={draft[attr.key] === 'true'}
@@ -490,16 +499,16 @@ function AttributeFilter({
         <div className="flex items-center gap-2">
           <input
             inputMode="numeric"
-            placeholder="Min"
-            aria-label={`Minimum ${attr.label}`}
+            placeholder={t('filter.min')}
+            aria-label={t('filter.minOf', { label: name })}
             value={draft[`${attr.key}_min`] ?? ''}
             onChange={(e) => set(`${attr.key}_min`, e.target.value.replace(/\D/g, ''))}
             className="!min-h-[44px] text-[15px]"
           />
           <input
             inputMode="numeric"
-            placeholder="Max"
-            aria-label={`Maximum ${attr.label}`}
+            placeholder={t('filter.max')}
+            aria-label={t('filter.maxOf', { label: name })}
             value={draft[`${attr.key}_max`] ?? ''}
             onChange={(e) => set(`${attr.key}_max`, e.target.value.replace(/\D/g, ''))}
             className="!min-h-[44px] text-[15px]"

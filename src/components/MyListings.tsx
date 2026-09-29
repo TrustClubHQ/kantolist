@@ -7,6 +7,7 @@ import type { ListingStatus, ListingType, PriceUnit } from '@prisma/client'
 import { Plate, EmptyState } from '@/components/ui'
 import { formatPrice } from '@/lib/listing'
 import { timeAgo } from '@/lib/format'
+import { useT } from '@/components/LanguageProvider'
 
 interface Row {
   id: string
@@ -22,20 +23,16 @@ interface Row {
   contactCount: number
 }
 
-const TABS: { key: ListingStatus | 'ALL'; label: string }[] = [
-  { key: 'ACTIVE', label: 'Active' },
-  { key: 'RESERVED', label: 'Reserved' },
-  { key: 'CLOSED', label: 'Closed' },
-  { key: 'ALL', label: 'All' },
-]
+const TABS: (ListingStatus | 'ALL')[] = ['ACTIVE', 'RESERVED', 'CLOSED', 'ALL']
 
 export function MyListings({ listings }: { listings: Row[] }) {
+  const t = useT()
   // Opened from "Manage this listing", which passes the listing's own status:
   // landing on Active hid the very listing that sent you here.
   const params = useSearchParams()
   const requested = params.get('tab')
   const [tab, setTab] = useState<ListingStatus | 'ALL'>(
-    TABS.some((t) => t.key === requested) ? (requested as ListingStatus | 'ALL') : 'ACTIVE',
+    TABS.some((key) => key === requested) ? (requested as ListingStatus | 'ALL') : 'ACTIVE',
   )
   const [rows, setRows] = useState(listings)
   const [busy, setBusy] = useState<string | null>(null)
@@ -56,7 +53,7 @@ export function MyListings({ listings }: { listings: Row[] }) {
       })
       const data: { status?: ListingStatus; postedAt?: string; error?: string } = await res.json()
       if (!res.ok) {
-        setError(data.error ?? 'Could not update that listing')
+        setError(data.error ?? t('mine.failed'))
         return
       }
       setRows((current) =>
@@ -67,7 +64,7 @@ export function MyListings({ listings }: { listings: Row[] }) {
         ),
       )
     } catch {
-      setError('Could not reach the server. Try again.')
+      setError(t('mine.offline'))
     } finally {
       setBusy(null)
     }
@@ -76,29 +73,29 @@ export function MyListings({ listings }: { listings: Row[] }) {
   return (
     <main className="mx-auto w-full max-w-3xl px-4 py-5">
       <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
-        <h1 className="font-display m-0 text-[30px] uppercase leading-none">My listings</h1>
+        <h1 className="font-display m-0 text-[30px] uppercase leading-none">{t('mine.title')}</h1>
         <Link
           href="/post"
           className="label hard-sm border-[3px] border-ink bg-yellow px-3 py-2 text-[17px] text-ink hover:text-ink"
         >
-          Post another
+          {t('mine.postAnother')}
         </Link>
       </div>
 
       <div className="mb-4 flex gap-1.5">
-        {TABS.map((t) => (
+        {TABS.map((key) => (
           <button
-            key={t.key}
+            key={key}
             type="button"
-            onClick={() => setTab(t.key)}
+            onClick={() => setTab(key)}
             className={`label min-h-[44px] flex-1 border-[2.5px] border-ink text-[16px] ${
-              tab === t.key ? 'bg-ink text-ground' : 'bg-panel text-ink'
+              tab === key ? 'bg-ink text-ground' : 'bg-panel text-ink'
             }`}
           >
-            {t.label}
+            {t(`mine.tab.${key}`)}
             {/* The count is why you would pick a tab at all — without it,
                 finding a closed listing means clicking through to look. */}
-            <span className="ml-1.5 text-[13px] opacity-70">{countFor(t.key)}</span>
+            <span className="ml-1.5 text-[13px] opacity-70">{countFor(key)}</span>
           </button>
         ))}
       </div>
@@ -110,13 +107,13 @@ export function MyListings({ listings }: { listings: Row[] }) {
       ) : null}
 
       {visible.length === 0 ? (
-        <EmptyState title="Nothing here yet">
+        <EmptyState title={t('mine.empty')}>
           {tab === 'ACTIVE' ? (
             <>
-              Post something and it shows up here. <Link href="/post">Post a listing</Link>.
+              {t('mine.emptyActive')} <Link href="/post">{t('mine.emptyLink')}</Link>.
             </>
           ) : (
-            'Nothing in this tab.'
+            t('mine.emptyOther')
           )}
         </EmptyState>
       ) : (
@@ -129,7 +126,7 @@ export function MyListings({ listings }: { listings: Row[] }) {
                     {row.title}
                   </Link>
                   <p className="font-display m-0 mt-1 text-[22px] leading-none text-red">
-                    {formatPrice(row.price, row.priceUnit)}
+                    {formatPrice(row.price, row.priceUnit, t)}
                   </p>
                 </div>
                 <span
@@ -141,15 +138,15 @@ export function MyListings({ listings }: { listings: Row[] }) {
                         : 'bg-dim text-muted'
                   }`}
                 >
-                  {row.status}
+                  {t(`mine.status.${row.status}`)}
                 </span>
               </div>
 
               <div className="flex flex-wrap gap-x-4 gap-y-1">
-                <Stat label="Views" value={row.viewCount} />
-                <Stat label="Contacts" value={row.contactCount} />
+                <Stat label={t('mine.views')} value={row.viewCount} />
+                <Stat label={t('mine.contacts')} value={row.contactCount} />
                 <span className="label text-[15px] font-semibold text-muted">
-                  Posted {timeAgo(row.postedAt)}
+                  {t('mine.posted', { when: timeAgo(row.postedAt, t) })}
                 </span>
               </div>
 
@@ -160,34 +157,34 @@ export function MyListings({ listings }: { listings: Row[] }) {
                   href={`${row.href}/edit`}
                   className="label flex min-h-[44px] items-center justify-center border-[2.5px] border-ink bg-yellow px-3 text-[16px] text-ink hover:text-ink"
                 >
-                  Edit
+                  {t('mine.edit')}
                 </Link>
                 {row.status === 'ACTIVE' ? (
                   <>
                     <Action busy={busy === row.id} onClick={() => act(row.id, { status: 'RESERVED' })}>
-                      Mark reserved
+                      {t('mine.markReserved')}
                     </Action>
                     <Action busy={busy === row.id} onClick={() => act(row.id, { status: 'CLOSED' })}>
-                      Mark sold
+                      {t('mine.markSold')}
                     </Action>
                     <Action busy={busy === row.id} onClick={() => act(row.id, { bump: true })}>
-                      Bump
+                      {t('mine.bump')}
                     </Action>
                   </>
                 ) : null}
                 {row.status === 'RESERVED' ? (
                   <>
                     <Action busy={busy === row.id} onClick={() => act(row.id, { status: 'ACTIVE' })}>
-                      Back to active
+                      {t('mine.backToActive')}
                     </Action>
                     <Action busy={busy === row.id} onClick={() => act(row.id, { status: 'CLOSED' })}>
-                      Mark sold
+                      {t('mine.markSold')}
                     </Action>
                   </>
                 ) : null}
                 {row.status === 'CLOSED' || row.status === 'EXPIRED' ? (
                   <Action busy={busy === row.id} onClick={() => act(row.id, { status: 'ACTIVE' })}>
-                    Re-open
+                    {t('mine.reopen')}
                   </Action>
                 ) : null}
               </div>

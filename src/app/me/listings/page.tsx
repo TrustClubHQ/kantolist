@@ -1,11 +1,12 @@
 import { redirect } from 'next/navigation'
+import { translatedTitle } from '@/lib/page-title'
 import { prisma } from '@/lib/prisma'
 import { getCurrentAccount } from '@/lib/auth'
 import { SiteHeader } from '@/components/SiteHeader'
 import { MyListings } from '@/components/MyListings'
 
 export const dynamic = 'force-dynamic'
-export const metadata = { title: 'My listings' }
+export const generateMetadata = translatedTitle('title.mine')
 
 export default async function MyListingsPage() {
   const account = await getCurrentAccount()

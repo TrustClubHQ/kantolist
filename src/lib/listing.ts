@@ -1,4 +1,5 @@
 import type { ListingType, PriceUnit } from '@prisma/client'
+import type { T } from './i18n'
 
 /** A bump resets postedAt, at most this often. */
 export const BUMP_COOLDOWN_DAYS = 7
@@ -84,32 +85,29 @@ export const PRICE_UNITS_FOR_TYPE: Record<ListingType, PriceUnit[]> = {
   SERVICE: ['PER_HOUR', 'PER_JOB', 'QUOTE'],
 }
 
-export const PRICE_UNIT_LABEL: Record<PriceUnit, string> = {
-  TOTAL: '',
-  // Non-breaking after the slash: a narrow card must not break "₱450 / day"
-  // into "₱450 /" and "day", which reads as a flat ₱450.
-  PER_HOUR: '/\u00A0hour',
-  PER_DAY: '/\u00A0day',
-  PER_WEEK: '/\u00A0week',
-  PER_MONTH: '/\u00A0month',
-  PER_JOB: '/\u00A0job',
-  QUOTE: 'ask for a quote',
+/**
+ * The unit suffix, in the reader's language.
+ *
+ * Non-breaking after the slash: a narrow card must not break "₱450 / day" into
+ * "₱450 /" and "day", which reads as a flat ₱450.
+ */
+export function priceUnitLabel(unit: PriceUnit, t: T): string {
+  if (unit === 'TOTAL') return ''
+  return t(`price.${unit}`).replace(/^\/ /, '/\u00A0')
 }
 
-export const LISTING_TYPE_LABEL: Record<ListingType, string> = {
-  SELL: 'For sale',
-  RENT: 'For rent',
-  SERVICE: 'Service',
+export function listingTypeLabel(type: ListingType, t: T): string {
+  return t(`type.${type}`)
 }
 
 /**
  * Peso formatting. A null price is "Ask" — never ₱0, which would read as free.
  */
-export function formatPrice(price: number | null | undefined, unit: PriceUnit | null): string {
-  if (unit === 'QUOTE') return 'Ask for a quote'
-  if (price === null || price === undefined) return 'Ask'
+export function formatPrice(price: number | null | undefined, unit: PriceUnit | null, t: T): string {
+  if (unit === 'QUOTE') return t('price.quote')
+  if (price === null || price === undefined) return t('price.ask')
   const amount = '₱' + Number(price).toLocaleString('en-PH', { maximumFractionDigits: 0 })
-  const suffix = unit ? PRICE_UNIT_LABEL[unit] : ''
+  const suffix = unit ? priceUnitLabel(unit, t) : ''
   return suffix ? `${amount}\u00A0${suffix}` : amount
 }
 

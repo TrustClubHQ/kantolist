@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import type { ContactChannel } from '@prisma/client'
 import { prisma } from '@/lib/prisma'
+import { requestT } from '@/lib/i18n-server'
 import { getAccountFromRequest } from '@/lib/auth'
 import { withApiHandler, badRequest, notFound, forbidden } from '@/lib/api'
 import { isAllowedMutatingRequest } from '@/lib/http'
@@ -26,14 +27,15 @@ export const POST = withApiHandler(async (request: NextRequest, ctx: Ctx) => {
 
   const body: { channel?: ContactChannel } = await request.json().catch(() => ({}))
   const channel = body.channel
-  if (!channel || !CHANNELS.includes(channel)) return badRequest('Unknown contact channel')
+  const t = requestT(request)
+  if (!channel || !CHANNELS.includes(channel)) return badRequest(t('api.unknownChannel'))
 
   const listing = await prisma.listing.findUnique({
     where: { id },
     include: { account: { select: { trustclubId: true, phone: true, messengerHandle: true, facebookUrl: true, viberNumber: true } } },
   })
-  if (!listing) return notFound('Listing not found')
-  if (listing.status === 'REMOVED') return notFound('Listing not found')
+  if (!listing) return notFound(t('api.listingNotFound'))
+  if (listing.status === 'REMOVED') return notFound(t('api.listingNotFound'))
 
   const viewer = await getAccountFromRequest(request)
   const needsAuth = channel === 'PHONE' || channel === 'SMS'
@@ -65,6 +67,6 @@ export const POST = withApiHandler(async (request: NextRequest, ctx: Ctx) => {
     }
   })()
 
-  if (!target) return badRequest('The seller has not set up that channel')
+  if (!target) return badRequest(t('api.channelNotSetUp'))
   return NextResponse.json({ target })
 })

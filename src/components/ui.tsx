@@ -107,6 +107,23 @@ export function Chip({
   )
 }
 
+/**
+ * A button that is working.
+ *
+ * Publishing a listing is not instant on a province connection: the listing
+ * itself, then each photo, resized and sent one at a time. A button that only
+ * greys out looks like a button that did nothing, and the second tap is the
+ * one that makes someone think the site is broken.
+ */
+export function Spinner({ className = '' }: { className?: string }) {
+  return (
+    <span
+      aria-hidden
+      className={`inline-block h-[18px] w-[18px] shrink-0 animate-spin border-[3px] border-current border-r-transparent ${className}`}
+    />
+  )
+}
+
 /** Primary action. Red by default; yellow for a secondary emphasis. */
 export function Button({
   children,

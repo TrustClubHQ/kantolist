@@ -12,10 +12,12 @@ import { ContactSheet } from '@/components/ContactSheet'
 import { ReportLink } from '@/components/ReportLink'
 import { CategoryMark } from '@/components/CategoryMark'
 import { PhotoGallery } from '@/components/PhotoGallery'
-import { codeFromParam, formatPrice, listingPath, videoHostName, LISTING_TYPE_LABEL } from '@/lib/listing'
+import { codeFromParam, formatPrice, listingPath, videoHostName, listingTypeLabel } from '@/lib/listing'
 import { parseSchema } from '@/lib/attributes'
 import { timeAgo } from '@/lib/format'
 import { getSellerContact, usableChannels } from '@/lib/seller'
+import { getT } from '@/lib/i18n-server'
+import { categoryName } from '@/lib/i18n'
 
 export const dynamic = 'force-dynamic'
 
@@ -59,7 +61,7 @@ export default async function ListingPage({ params }: Params) {
   const listing = await load(code)
   if (!listing || listing.status === 'REMOVED') notFound()
 
-  const account = await getCurrentAccount()
+  const [account, t] = await Promise.all([getCurrentAccount(), getT()])
   const isOwner = account?.id === listing.account.id
 
   // Two directed lookups, not one: trust from you toward them is a different
@@ -114,15 +116,16 @@ export default async function ListingPage({ params }: Params) {
         <div className="flex flex-col gap-2.5">
           <div className="flex flex-wrap items-center gap-2">
             <Badge tone={listing.status === 'RESERVED' ? 'ink' : 'yellow'}>
-              {listing.status === 'RESERVED' ? 'Reserved' : LISTING_TYPE_LABEL[listing.type]}
+              {listing.status === 'RESERVED' ? t('card.reserved') : listingTypeLabel(listing.type, t)}
             </Badge>
-            {closed ? <Badge tone="dim">No longer available</Badge> : null}
+            {closed ? <Badge tone="dim">{t('listing.notAvailable')}</Badge> : null}
             {listing.category.parent ? (
               <Link
                 href={`/browse?category=${listing.category.slug}`}
                 className="label flex min-h-[44px] items-center text-[15px] text-muted"
               >
-                {listing.category.parent.name} › {listing.category.name}
+                {categoryName(t, listing.category.parent.slug, listing.category.parent.name)} ›{' '}
+                {categoryName(t, listing.category.slug, listing.category.name)}
               </Link>
             ) : null}
           </div>
@@ -130,8 +133,12 @@ export default async function ListingPage({ params }: Params) {
           <h1 className="font-display m-0 text-[27px] uppercase leading-none sm:text-[31px]">{listing.title}</h1>
 
           <div className="flex flex-wrap items-baseline gap-2.5">
-            <Price size="lg">{formatPrice(listing.price === null ? null : Number(listing.price), listing.priceUnit)}</Price>
-            {listing.negotiable ? <span className="label text-[18px] text-muted-2">negotiable</span> : null}
+            <Price size="lg">
+              {formatPrice(listing.price === null ? null : Number(listing.price), listing.priceUnit, t)}
+            </Price>
+            {listing.negotiable ? (
+              <span className="label text-[18px] text-muted-2">{t('card.negotiable')}</span>
+            ) : null}
           </div>
 
           <p className="label m-0 text-[17px]">
@@ -139,7 +146,7 @@ export default async function ListingPage({ params }: Params) {
             {listing.municipality.name}, {listing.municipality.province}
           </p>
           <p className="label m-0 text-[15px] font-semibold text-muted">
-            Posted {timeAgo(listing.postedAt)} · #{listing.code}
+            {t('listing.postedAt', { when: timeAgo(listing.postedAt, t), code: listing.code })}
           </p>
         </div>
 
@@ -151,7 +158,7 @@ export default async function ListingPage({ params }: Params) {
             className="font-display hard mt-4 flex min-h-[54px] items-center justify-center gap-2 border-[3px] border-ink bg-panel text-[19px] uppercase text-ink hover:text-ink"
           >
             <PlayMark />
-            Watch on {videoHost}
+            {t('listing.watchOn', { host: videoHost })}
           </a>
         ) : null}
 
@@ -166,7 +173,7 @@ export default async function ListingPage({ params }: Params) {
                 <div className="mt-0.5 flex flex-wrap items-center gap-2">
                   <TrustClubLink trustclubId={listing.account.trustclubId} />
                   <span className="label text-[15px] font-semibold text-muted">
-                    {listing.account._count.listings} listings
+                    {t('listing.listingCount', { count: listing.account._count.listings })}
                   </span>
                 </div>
               </div>
@@ -184,7 +191,7 @@ export default async function ListingPage({ params }: Params) {
                 href={`/signin?redirect=${encodeURIComponent(listingPath(listing.code, listing.slug))}`}
                 className="label hard-sm flex min-h-[48px] items-center justify-center border-[3px] border-ink bg-yellow px-3 text-center text-[16px] leading-tight text-ink"
               >
-                Connect with TrustClub to see the Trust Points of this member
+                {t('signin.trustPrompt')}
               </Link>
             )}
           </Plate>
@@ -193,7 +200,7 @@ export default async function ListingPage({ params }: Params) {
         {rows.length > 0 ? (
           <section className="mt-4">
             <Plate>
-              <PlateHeader>Details</PlateHeader>
+              <PlateHeader>{t('listing.details')}</PlateHeader>
               <dl className="m-0 px-3.5">
                 {rows.map(({ def, value }, i) => (
                   <div
@@ -204,7 +211,11 @@ export default async function ListingPage({ params }: Params) {
                   >
                     <dt className="label text-[16px] font-semibold text-muted">{def.label}</dt>
                     <dd className="label m-0 text-right text-[17px]">
-                      {typeof value === 'boolean' ? (value ? 'Yes' : 'No') : String(value)}
+                      {typeof value === 'boolean'
+                        ? value
+                          ? t('listing.yes')
+                          : t('listing.no')
+                        : String(value)}
                       {def.unit && typeof value === 'number' ? ` ${def.unit}` : ''}
                     </dd>
                   </div>
@@ -217,7 +228,7 @@ export default async function ListingPage({ params }: Params) {
         {listing.description ? (
           <section className="mt-4">
             <Plate className="p-3.5">
-              <h2 className="font-display m-0 text-[19px] uppercase">Description</h2>
+              <h2 className="font-display m-0 text-[19px] uppercase">{t('listing.description')}</h2>
               <p className="mt-1.5 whitespace-pre-line text-[14px] leading-relaxed text-body">
                 {listing.description}
               </p>
@@ -228,7 +239,7 @@ export default async function ListingPage({ params }: Params) {
         {listing.serviceAreas.length > 0 ? (
           <section className="mt-4">
             <Plate className="p-3.5">
-              <h2 className="font-display m-0 text-[19px] uppercase">Serves</h2>
+              <h2 className="font-display m-0 text-[19px] uppercase">{t('listing.serves')}</h2>
               <p className="label m-0 mt-1.5 text-[16px] text-muted-2">
                 {listing.serviceAreas.map((a) => a.municipality.name).join(' · ')}
               </p>

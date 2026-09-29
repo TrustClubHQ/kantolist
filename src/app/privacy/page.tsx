@@ -1,13 +1,25 @@
 import { SiteHeader } from '@/components/SiteHeader'
 import { SiteFooter } from '@/components/SiteFooter'
+import { getT, getLanguage } from '@/lib/i18n-server'
+import { translatedTitle } from '@/lib/page-title'
 
-export const metadata = { title: 'Privacy' }
+export const generateMetadata = translatedTitle('title.privacy')
 
-export default function PrivacyPage() {
+/* The legal text itself stays in English: a translated version would be a
+   second set of terms, and which one governs is not a question a listings
+   board should be asking. The page says so in the reader's language. */
+export default async function PrivacyPage() {
+  const [t, language] = await Promise.all([getT(), getLanguage()])
+
   return (
     <div className="flex min-h-screen flex-col">
       <SiteHeader />
       <main className="mx-auto w-full max-w-2xl px-4 py-6">
+        {language === 'en' ? null : (
+          <p className="label m-0 mb-3 border-[2.5px] border-dim-edge bg-dim px-3 py-2 text-[15px] text-muted">
+            {t('legal.englishOnly')}
+          </p>
+        )}
         <h1 className="font-display m-0 text-[34px] uppercase leading-none">Privacy</h1>
         <div className="mt-4 flex flex-col gap-4 text-[14px] leading-relaxed text-body">
           <Section title="What we hold">

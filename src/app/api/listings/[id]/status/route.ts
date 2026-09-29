@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import type { ListingStatus } from '@prisma/client'
 import { prisma } from '@/lib/prisma'
+import { requestT } from '@/lib/i18n-server'
 import { getAccountFromRequest } from '@/lib/auth'
 import { withApiHandler, badRequest, unauthorized, forbidden, notFound } from '@/lib/api'
 import { isAllowedMutatingRequest } from '@/lib/http'
@@ -19,12 +20,13 @@ const OWNER_TRANSITIONS: Record<string, ListingStatus[]> = {
 export const POST = withApiHandler(async (request: NextRequest, ctx: Ctx) => {
   if (!isAllowedMutatingRequest(request)) return forbidden()
   const { id } = await ctx.params
+  const t = requestT(request)
   const account = await getAccountFromRequest(request)
   if (!account) return unauthorized()
 
   const listing = await prisma.listing.findUnique({ where: { id } })
-  if (!listing) return notFound('Listing not found')
-  if (listing.accountId !== account.id) return forbidden('This is not your listing')
+  if (!listing) return notFound(t('api.listingNotFound'))
+  if (listing.accountId !== account.id) return forbidden(t('api.notYourListing'))
 
   const body: { status?: ListingStatus; bump?: boolean } = await request.json().catch(() => ({}))
 
@@ -32,7 +34,9 @@ export const POST = withApiHandler(async (request: NextRequest, ctx: Ctx) => {
     const last = listing.bumpedAt ?? listing.postedAt
     const nextAllowed = last.getTime() + BUMP_COOLDOWN_DAYS * 86400_000
     if (Date.now() < nextAllowed) {
-      return badRequest(`You can bump this again in ${Math.ceil((nextAllowed - Date.now()) / 86400_000)} days`)
+      return badRequest(
+        t('api.bumpTooSoon', { days: Math.ceil((nextAllowed - Date.now()) / 86400_000) }),
+      )
     }
     const bumped = await prisma.listing.update({
       where: { id: listing.id },
@@ -42,10 +46,12 @@ export const POST = withApiHandler(async (request: NextRequest, ctx: Ctx) => {
   }
 
   const next = body.status
-  if (!next) return badRequest('No change requested')
+  if (!next) return badRequest(t('api.noChange'))
   const allowed = OWNER_TRANSITIONS[listing.status] ?? []
   if (!allowed.includes(next)) {
-    return badRequest(`A ${listing.status.toLowerCase()} listing cannot become ${next.toLowerCase()}`)
+    return badRequest(
+      t('api.badTransition', { from: listing.status.toLowerCase(), to: next.toLowerCase() }),
+    )
   }
 
   const updated = await prisma.listing.update({
