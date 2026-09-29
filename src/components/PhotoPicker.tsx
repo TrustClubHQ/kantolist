@@ -20,6 +20,34 @@ export interface ListingPhoto {
  * file picker that cannot keep the file is the same mistake as the QR on a
  * deployment that could not finish a sign-in.
  */
+/**
+ * The photo's own pixel size, sent with the upload so the listing page can size
+ * its stage to the photo's shape instead of cropping it into a fixed band. Only
+ * ever a layout hint — the server clamps it — so reading it in the browser is
+ * cheaper than decoding the file again on the way in.
+ */
+async function readDimensions(file: File): Promise<{ width: number; height: number } | null> {
+  try {
+    const bitmap = await createImageBitmap(file)
+    const size = { width: bitmap.width, height: bitmap.height }
+    bitmap.close()
+    return size.width > 0 && size.height > 0 ? size : null
+  } catch {
+    return null
+  }
+}
+
+async function photoForm(file: File): Promise<FormData> {
+  const body = new FormData()
+  body.append('photo', file)
+  const size = await readDimensions(file)
+  if (size) {
+    body.append('width', String(size.width))
+    body.append('height', String(size.height))
+  }
+  return body
+}
+
 export function PhotoPicker({
   listingId,
   initial = [],
@@ -70,9 +98,10 @@ export function PhotoPicker({
     setBusy(true)
     try {
       for (const file of chosen) {
-        const body = new FormData()
-        body.append('photo', file)
-        const res = await fetch(`/api/listings/${listingId}/photos`, { method: 'POST', body })
+        const res = await fetch(`/api/listings/${listingId}/photos`, {
+          method: 'POST',
+          body: await photoForm(file),
+        })
         const data: { id?: string; url?: string; error?: string } = await res.json()
         if (!res.ok || !data.id || !data.url) {
           setError(data.error ?? 'Could not add that photo')
@@ -186,9 +215,10 @@ export async function uploadPendingPhotos(
   let error: string | undefined
   for (const file of files) {
     try {
-      const body = new FormData()
-      body.append('photo', file)
-      const res = await fetch(`/api/listings/${listingId}/photos`, { method: 'POST', body })
+      const res = await fetch(`/api/listings/${listingId}/photos`, {
+        method: 'POST',
+        body: await photoForm(file),
+      })
       if (!res.ok) {
         failed += 1
         const data: { error?: string } = await res.json().catch(() => ({}))

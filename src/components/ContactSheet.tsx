@@ -31,7 +31,6 @@ export function ContactSheet({
   maskedPhone,
   signedIn,
   isOwner,
-  listingStatus,
   signInHref,
   editHref,
 }: {
@@ -44,7 +43,6 @@ export function ContactSheet({
   signedIn: boolean
   isOwner: boolean
   /** So "Manage this listing" lands on the tab that actually holds it. */
-  listingStatus: string
   /** Sign in and come back to this listing, not to the home page. */
   signInHref: string
   /** The owner's edit screen for this listing. */
@@ -83,20 +81,15 @@ export function ContactSheet({
     return (
       <div className="sticky bottom-0 border-t-4 border-ink bg-ground px-4 py-3">
         <div className="mx-auto flex max-w-3xl gap-2.5">
-          {/* Edit is the direct action; Manage is the list with the status
-              buttons. Sending an owner to the list to find the listing they
-              are already looking at was a detour. */}
+          {/* Edit is the only action worth a sticky bar here. The list with the
+              status buttons is one tap away in the header, and sending an owner
+              to it to find the listing they are already looking at was a
+              detour. */}
           <Link
             href={`${editHref}`}
             className="font-display hard flex min-h-[54px] flex-1 items-center justify-center border-[3px] border-ink bg-yellow text-[21px] uppercase text-ink hover:text-ink"
           >
             Edit listing
-          </Link>
-          <Link
-            href={`/me/listings?tab=${listingStatus}`}
-            className="label flex min-h-[54px] w-[110px] items-center justify-center border-[3px] border-ink bg-panel text-[17px] text-ink hover:text-ink"
-          >
-            All mine
           </Link>
         </div>
       </div>

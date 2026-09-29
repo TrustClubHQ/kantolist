@@ -10,6 +10,17 @@ type Ctx = { params: Promise<{ id: string }> }
 /** A listing page stays readable; this is about how many a seller can attach. */
 const MAX_PHOTOS = 8
 
+/**
+ * Pixel dimensions, used only to size the listing page's photo stage. The
+ * browser measures them; this clamps them, because a layout hint from a client
+ * should not be able to claim a 90,000px-tall photo.
+ */
+function dimension(value: FormDataEntryValue | null | undefined): number | null {
+  if (typeof value !== 'string') return null
+  const n = Number(value)
+  return Number.isInteger(n) && n > 0 && n <= 20000 ? n : null
+}
+
 async function loadOwned(request: NextRequest, id: string) {
   const account = await getAccountFromRequest(request)
   if (!account) return { error: unauthorized() }
@@ -47,6 +58,8 @@ export const POST = withApiHandler(async (request: NextRequest, ctx: Ctx) => {
       listingId: listing.id,
       url: stored.url,
       bytes: stored.bytes,
+      width: dimension(form?.get('width')),
+      height: dimension(form?.get('height')),
       sortOrder: listing._count.images,
     },
     select: { id: true, url: true, sortOrder: true },

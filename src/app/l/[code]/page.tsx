@@ -12,6 +12,7 @@ import { TrustPointsPair, TrustClubLink } from '@/components/TrustPoints'
 import { ContactSheet } from '@/components/ContactSheet'
 import { ReportLink } from '@/components/ReportLink'
 import { CategoryMark } from '@/components/CategoryMark'
+import { PhotoGallery } from '@/components/PhotoGallery'
 import { codeFromParam, formatPrice, listingPath, LISTING_TYPE_LABEL } from '@/lib/listing'
 import { parseSchema } from '@/lib/attributes'
 import { timeAgo } from '@/lib/format'
@@ -94,35 +95,18 @@ export default async function ListingPage({ params }: Params) {
     <div className="flex min-h-screen flex-col">
       <SiteHeader />
 
-      {/* A real photo earns the height; a category glyph on grey does not, and
-          at 262px it pushed the price and location below the fold on a phone. */}
-      <div
-        className={`relative border-b-4 border-ink bg-dim ${
-          listing.images[0] ? 'h-[262px]' : 'h-[124px]'
-        }`}
-      >
-        {listing.images[0] ? (
-          <Image
-            src={listing.images[0].url}
-            alt={listing.title}
-            fill
-            sizes="(max-width: 900px) 100vw, 900px"
-            className="object-cover"
-            priority
-          />
-        ) : (
+      {listing.images.length > 0 ? (
+        <PhotoGallery images={listing.images} title={listing.title} />
+      ) : (
+        /* A category glyph on grey does not earn a photo's height. */
+        <div className="relative flex h-[124px] items-center justify-center border-b-4 border-ink bg-dim">
           <CategoryMark
             categorySlug={listing.category.slug}
             parentSlug={listing.category.parent?.slug ?? null}
             size={72}
           />
-        )}
-        {listing.images.length > 1 ? (
-          <span className="label absolute bottom-3 right-3 bg-ink px-2.5 py-0.5 text-[14px] text-ground">
-            1 / {listing.images.length}
-          </span>
-        ) : null}
-      </div>
+        </div>
+      )}
 
       <main className="mx-auto w-full max-w-3xl px-3 pb-28 pt-4 sm:px-4">
         <div className="flex flex-col gap-2.5">
@@ -153,7 +137,7 @@ export default async function ListingPage({ params }: Params) {
             {listing.municipality.name}, {listing.municipality.province}
           </p>
           <p className="label m-0 text-[15px] font-semibold text-muted">
-            Posted {timeAgo(listing.postedAt)} · {listing.viewCount} views · #{listing.code}
+            Posted {timeAgo(listing.postedAt)} · #{listing.code}
           </p>
         </div>
 
@@ -253,7 +237,6 @@ export default async function ListingPage({ params }: Params) {
           maskedPhone={seller.maskedPhone}
           signedIn={!!account}
           isOwner={isOwner}
-          listingStatus={listing.status}
           signInHref={`/signin?redirect=${encodeURIComponent(listingPath(listing.code, listing.slug))}`}
           editHref={`${listingPath(listing.code, listing.slug)}/edit`}
         />
