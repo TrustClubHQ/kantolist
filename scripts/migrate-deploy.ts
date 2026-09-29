@@ -1,64 +1,72 @@
 /**
- * Run migrations on a direct connection.
+ * Run migrations, retrying while the advisory lock is held.
  *
- * `prisma migrate deploy` takes a session-level advisory lock
- * (`SELECT pg_advisory_lock(...)`). Neon's `-pooler` endpoint is transaction
- * pooling, so consecutive statements can land on different backends: the lock
- * is taken on one connection and never seen by the next, and the deploy fails
- * with P1002 "Timed out trying to acquire a postgres advisory lock". It is
- * intermittent, which is worse than broken — it fails a build now and then for
- * no reason anyone can see at the time.
+ * `prisma migrate deploy` takes a session-level advisory lock so two of them
+ * cannot run at once. Vercel builds every push, so a run of pushes a minute or
+ * two apart has builds overlapping — the second reaches the lock while the
+ * first still holds it, waits 10s, and fails the whole build with:
  *
- * Neon's direct host is the pooled host without `-pooler`, so the fix needs no
- * extra configuration. `DIRECT_URL` overrides it if one is ever set, and a URL
- * with no pooler in it (local Postgres) passes through untouched.
+ *   Error: P1002 — Timed out trying to acquire a postgres advisory lock
+ *   (SELECT pg_advisory_lock(72707369)). Timeout: 10000ms
  *
- * Only migrations need this. The app keeps using the pooled URL at runtime,
- * which is what pooling is actually for.
+ * It is worth being precise about what this is NOT, because a previous version
+ * of this file guessed wrong: it is not the connection pooler. The build log
+ * for the failure says "The database server was reached but timed out" while
+ * connected to the DIRECT endpoint, so transaction pooling never came into it.
+ * Pointing migrations at an unpooled host fixed nothing and risked a host that
+ * may not exist.
+ *
+ * Waiting is the whole fix. The holder is another build that finishes in a
+ * minute, or a killed one whose session the database reaps shortly after.
+ * Anything that is not a lock timeout fails immediately — a bad credential or
+ * a broken migration should not be retried for four minutes.
  */
 import { spawnSync } from 'node:child_process'
 
-function directUrl(): string | undefined {
-  const explicit = process.env.DIRECT_URL
-  if (explicit) return explicit
+/** ~4 minutes in total, which covers both a concurrent build and a reaped session. */
+const BACKOFF_SECONDS = [10, 20, 30, 45, 60, 75]
 
-  const url = process.env.DATABASE_URL
-  if (!url || !url.includes('-pooler.')) return url
-
-  // pgbouncer=true disables the prepared-statement cache; on a direct
-  // connection it is meaningless and Prisma warns about it.
-  return url.replace('-pooler.', '.').replace(/([?&])pgbouncer=true&?/, '$1').replace(/[?&]$/, '')
+function isLockContention(output: string): boolean {
+  return /advisory lock/i.test(output) || /\bP1002\b/.test(output)
 }
 
-function migrate(url: string | undefined): number {
+function attempt(): { ok: boolean; output: string } {
   const result = spawnSync('npx', ['prisma', 'migrate', 'deploy'], {
-    stdio: 'inherit',
-    env: url ? { ...process.env, DATABASE_URL: url } : process.env,
+    encoding: 'utf8',
+    env: process.env,
   })
-  return result.status ?? 1
+  const output = (result.stdout ?? '') + (result.stderr ?? '')
+  process.stdout.write(output)
+  return { ok: result.status === 0, output }
 }
 
-const pooled = process.env.DATABASE_URL
-const direct = directUrl()
-const rewritten = Boolean(direct && direct !== pooled)
+function sleep(seconds: number): void {
+  // Synchronous on purpose: this is a build step, there is nothing else to do,
+  // and a busy Atomics wait keeps it to one obvious mechanism.
+  Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, seconds * 1000)
+}
 
-if (rewritten) process.stdout.write('[migrate] trying the direct (unpooled) endpoint\n')
+for (let i = 0; ; i++) {
+  const { ok, output } = attempt()
+  if (ok) process.exit(0)
 
-let status = migrate(direct)
+  if (!isLockContention(output)) {
+    process.stderr.write('[migrate] failed for a reason that retrying cannot fix\n')
+    process.exit(1)
+  }
 
-// Fall back rather than fail the build. Deriving the direct host by dropping
-// "-pooler" is a convention, not a guarantee: a project that does not expose
-// that endpoint would otherwise turn an intermittent advisory-lock failure
-// into a deploy that never succeeds at all — trading a bad day for a worse
-// one. If the direct attempt fails, take the pooled connection and its known
-// flakiness, and say which one ran.
-if (status !== 0 && rewritten) {
+  if (i >= BACKOFF_SECONDS.length) {
+    process.stderr.write(
+      '[migrate] the advisory lock stayed held for about four minutes. ' +
+        'Another deploy is probably still migrating — re-run this build.\n',
+    )
+    process.exit(1)
+  }
+
+  const wait = BACKOFF_SECONDS[i]
   process.stdout.write(
-    '[migrate] the direct endpoint did not work; retrying on the pooled one. ' +
-      'If this line keeps appearing, migrations are running through the pooler ' +
-      'and P1002 advisory-lock timeouts can come back.\n',
+    `[migrate] another migration holds the advisory lock; waiting ${wait}s ` +
+      `(attempt ${i + 2} of ${BACKOFF_SECONDS.length + 1})\n`,
   )
-  status = migrate(pooled)
+  sleep(wait)
 }
-
-process.exit(status)
