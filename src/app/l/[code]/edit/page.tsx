@@ -1,6 +1,7 @@
 import { notFound, redirect } from 'next/navigation'
 import { translatedTitle } from '@/lib/page-title'
 import { prisma } from '@/lib/prisma'
+import { getCategories, getMunicipalities } from '@/lib/reference'
 import { getCurrentAccount } from '@/lib/auth'
 import { SiteHeader } from '@/components/SiteHeader'
 import { PostForm } from '@/components/PostForm'
@@ -36,12 +37,8 @@ export default async function EditListingPage({ params }: { params: Promise<{ co
   if (listing.accountId !== account.id) notFound()
 
   const [categories, municipalities] = await Promise.all([
-    prisma.category.findMany({
-      where: { isActive: true },
-      orderBy: [{ sortOrder: 'asc' }],
-      select: { id: true, slug: true, name: true, parentId: true, attributeSchema: true },
-    }),
-    prisma.municipality.findMany({ orderBy: { name: 'asc' }, select: { id: true, name: true, province: true } }),
+    getCategories(),
+    getMunicipalities(),
   ])
 
   const parents = categories.filter((c) => !c.parentId)

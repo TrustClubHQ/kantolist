@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import type { ListingType } from '@prisma/client'
 import { prisma } from '@/lib/prisma'
+import { getCategories, getMunicipalities } from '@/lib/reference'
 import { getCurrentAccount } from '@/lib/auth'
 import { SiteHeader } from '@/components/SiteHeader'
 import { SiteFooter } from '@/components/SiteFooter'
@@ -45,12 +46,8 @@ export default async function BrowsePage({ searchParams }: { searchParams: Promi
           select: { name: true, slug: true, attributeSchema: true, parent: { select: { name: true, slug: true } } },
         })
       : null,
-    prisma.municipality.findMany({ orderBy: { name: 'asc' }, select: { id: true, name: true, province: true } }),
-    prisma.category.findMany({
-      where: { isActive: true },
-      orderBy: [{ sortOrder: 'asc' }],
-      select: { slug: true, name: true, parentId: true, id: true },
-    }),
+    getMunicipalities(),
+    getCategories(),
   ])
 
   const result = await searchListings(

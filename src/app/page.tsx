@@ -7,6 +7,7 @@ import { ListingCard } from '@/components/ListingCard'
 import { SearchBar } from '@/components/SearchBar'
 import { Plate } from '@/components/ui'
 import { searchListings } from '@/lib/search'
+import { getCategories } from '@/lib/reference'
 import { getT } from '@/lib/i18n-server'
 import { categoryName } from '@/lib/i18n'
 import { listingPath } from '@/lib/listing'
@@ -17,11 +18,7 @@ export default async function HomePage() {
   const [account, t] = await Promise.all([getCurrentAccount(), getT()])
 
   const [categories, result, counts] = await Promise.all([
-    prisma.category.findMany({
-      where: { isActive: true },
-      orderBy: { sortOrder: 'asc' },
-      select: { id: true, slug: true, name: true, icon: true, parentId: true },
-    }),
+    getCategories(),
     searchListings({ page: 1 }, account?.trustclubId ?? null),
     // One grouped count rather than a query per tile. A category with nothing
     // in it looks exactly like a full one otherwise, which is how a new
