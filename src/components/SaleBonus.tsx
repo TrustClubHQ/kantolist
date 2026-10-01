@@ -60,7 +60,7 @@ export async function SaleBonus({ asOf = new Date() }: { asOf?: Date }) {
         </ol>
 
         <ul className="m-0 mt-2.5 flex list-none flex-col gap-1 p-0 border-t-2 border-ink pt-2.5">
-          {['bonus.rule1', 'bonus.rule2', 'bonus.rule3'].map((key) => (
+          {['bonus.rule1', 'bonus.rule2'].map((key) => (
             <li key={key} className="m-0 text-[13px] font-semibold leading-snug text-ink">
               · {t(key)}
             </li>

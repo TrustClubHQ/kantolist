@@ -564,7 +564,6 @@ const en: Record<string, string> = {
   'bonus.step3': '₱50 for you and ₱50 for your buyer, claimable next Friday.',
   'bonus.rule1': 'Each buyer counts once — selling to the same person again earns neither of you a bonus.',
   'bonus.rule2': 'We check every sale. No Trust Transaction, or a fake sale, means no bonus.',
-  'bonus.rule3': 'Paid only if your group is in good standing.',
   'bonus.cap': 'Up to ₱1,000 per member per week, buying and selling combined, for sales made until 31 October 2026.',
 
   // — Example titles ——————————————————————————————————————————————
@@ -1203,7 +1202,6 @@ const tl: Record<string, string> = {
   'bonus.step3': "₱50 sa'yo at ₱50 sa buyer mo, i-claim sa susunod na Biyernes.",
   'bonus.rule1': 'Isang beses lang kada buyer — walang bonus sa inyong dalawa kung paulit-ulit.',
   'bonus.rule2': 'Chine-check namin bawat benta. Peke o walang Trust Transaction? Walang bonus.',
-  'bonus.rule3': 'Babayaran lang kung in good standing ang group mo.',
   'bonus.cap': 'Hanggang ₱1,000 kada member kada linggo, bili at benta pinagsama, para sa benta hanggang 31 October 2026.',
 
   'example.bicycle': 'Mountain bike, 26 inch, maganda ang gulong',
