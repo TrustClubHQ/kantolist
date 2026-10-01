@@ -431,8 +431,17 @@ const en: Record<string, string> = {
   'post.contact.viber': 'Viber {number}',
   'post.contact.required': 'You need a number or a Messenger handle to post.',
   'post.contact.requiredHelp':
-    'Buyers reach you directly — KantoList does not pass messages on. Add one to your profile and come back; what you have typed here is kept.',
-  'post.contact.addNow': 'Add one to my profile ↗',
+    'Buyers reach you directly — KantoList does not pass messages on. Fill one in below and carry on; nothing else you have typed is lost.',
+  'post.contact.editHelp':
+    'Either one is enough. This is saved to your profile, so every listing you post uses it.',
+  'post.contact.save': 'Save contact',
+  'post.contact.saving': 'Saving…',
+  'post.contact.saved': 'Saved to your profile.',
+  'post.contact.cancel': 'Cancel',
+  'post.contact.change': 'Add or change',
+  'post.contact.oneNeeded': 'Fill in a mobile number or a Messenger handle — either one is enough.',
+  'post.contact.saveFailed': 'Could not save that. Check the number and try again.',
+  'post.contact.saveOffline': 'Could not reach KantoList. Check your connection and try again.',
   'post.trustNote':
     'Your listing ranks higher for people whose TrustClub network reaches you. Ask the people you have dealt with to trust you on TrustClub.',
   'post.photos.add': 'Add photos',
@@ -1075,8 +1084,17 @@ const tl: Record<string, string> = {
   'post.contact.viber': 'Viber {number}',
   'post.contact.required': 'Kailangan mo ng numero o Messenger handle para makapag-post.',
   'post.contact.requiredHelp':
-    'Direkta kang kokontakin ng buyer — hindi nagpapasa ng mensahe ang KantoList. Maglagay sa profile mo at bumalik dito; nananatili ang na-type mo na.',
-  'post.contact.addNow': 'Maglagay sa profile ko ↗',
+    'Direkta kang kokontakin ng buyer — hindi nagpapasa ng mensahe ang KantoList. Ilagay mo na lang dito sa baba at ituloy mo; walang mawawala sa na-type mo.',
+  'post.contact.editHelp':
+    'Kahit isa lang, sapat na. Nase-save ito sa profile mo, kaya gagamitin ito ng lahat ng listing mo.',
+  'post.contact.save': 'I-save ang contact',
+  'post.contact.saving': 'Sine-save…',
+  'post.contact.saved': 'Na-save sa profile mo.',
+  'post.contact.cancel': 'Cancel',
+  'post.contact.change': 'Dagdagan o palitan',
+  'post.contact.oneNeeded': 'Maglagay ng numero ng cellphone o Messenger handle — kahit isa lang.',
+  'post.contact.saveFailed': 'Hindi na-save. Tingnan ang numero at subukan ulit.',
+  'post.contact.saveOffline': 'Hindi maabot ang KantoList. Tingnan ang koneksyon mo at subukan ulit.',
   'post.trustNote':
     'Mas mataas ang ranggo ng listing mo sa mga taong naaabot ka ng TrustClub network nila. Hilingin sa mga nakatransaksyon mo na bigyan ka ng tiwala sa TrustClub.',
   'post.photos.add': 'Magdagdag ng litrato',

@@ -103,13 +103,29 @@ export function PostForm({
   // toggle: which apps someone is reachable on is a fact about them, not about
   // a bench they are selling, and the listing page drops anything that has
   // since been cleared from the profile anyway.
+  /**
+   * The seller's contact details, as this form currently understands them.
+   *
+   * Local state rather than the prop, because the prop is a server render from
+   * when the page loaded. Sending someone to their profile in another tab and
+   * telling them to come back left this stale: they filled the number in, came
+   * back, and the publish button went on refusing with no way to clear it
+   * short of reloading and losing the form. They are editable here now, and
+   * this is what the save writes back to.
+   */
+  const [reach, setReach] = useState({
+    phone: contact.phone,
+    messenger: contact.messenger,
+    viber: contact.viber,
+  })
+
   const channels = useMemo(() => {
     const on: string[] = []
-    if (contact.phone) on.push('PHONE', 'SMS')
-    if (contact.messenger) on.push('MESSENGER')
-    if (contact.viber) on.push('VIBER')
+    if (reach.phone) on.push('PHONE', 'SMS')
+    if (reach.messenger) on.push('MESSENGER')
+    if (reach.viber) on.push('VIBER')
     return on
-  }, [contact.phone, contact.messenger, contact.viber])
+  }, [reach])
 
   /**
    * A listing nobody can answer is worse than no listing, so a number or a
@@ -121,15 +137,98 @@ export function PostForm({
    * The API enforces the same rule — this only saves the round trip and says
    * where to fix it.
    */
-  const canBeReached = !!contact.phone || !!contact.messenger
+  const canBeReached = !!reach.phone || !!reach.messenger
+
+  const [phoneDraft, setPhoneDraft] = useState(contact.phone ?? '')
+  const [messengerDraft, setMessengerDraft] = useState(contact.messenger ?? '')
+  const [contactOpen, setContactOpen] = useState(false)
+  const [savingContact, setSavingContact] = useState(false)
+  const [contactError, setContactError] = useState<string | null>(null)
+  const [contactSaved, setContactSaved] = useState(false)
+  // Open on its own when there is nothing to reach this seller on: that is the
+  // one case where the form cannot be finished without it.
+  const contactEditing = contactOpen || !canBeReached
+
+  /**
+   * Pick up contact details changed somewhere else.
+   *
+   * The section header still links to the full profile — Viber, display name,
+   * town — and that opens in another tab, which is how this form went stale in
+   * the first place. Re-reading when the tab is looked at again means coming
+   * back from any of those routes just works, instead of a publish button that
+   * refuses for a reason that is no longer true.
+   */
+  useEffect(() => {
+    function refresh() {
+      if (document.visibilityState !== 'visible') return
+      fetch('/api/me')
+        .then((r) => (r.ok ? r.json() : null))
+        .then((data: { account?: { phone: string | null; messengerHandle: string | null; viberNumber: string | null } } | null) => {
+          const a = data?.account
+          if (!a) return
+          setReach((r) =>
+            r.phone === a.phone && r.messenger === a.messengerHandle && r.viber === a.viberNumber
+              ? r
+              : { phone: a.phone, messenger: a.messengerHandle, viber: a.viberNumber },
+          )
+        })
+        .catch(() => {
+          // Offline, or signed out in the other tab. The form keeps what it
+          // has; publishing is still checked by the API either way.
+        })
+    }
+    document.addEventListener('visibilitychange', refresh)
+    window.addEventListener('focus', refresh)
+    return () => {
+      document.removeEventListener('visibilitychange', refresh)
+      window.removeEventListener('focus', refresh)
+    }
+  }, [])
+
+  async function saveContact() {
+    const phone = phoneDraft.trim()
+    const messenger = messengerDraft.trim()
+    if (!phone && !messenger) {
+      setContactError(t('post.contact.oneNeeded'))
+      return
+    }
+    setSavingContact(true)
+    setContactError(null)
+    setContactSaved(false)
+    try {
+      const res = await fetch('/api/me', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ phone: phone || null, messengerHandle: messenger || null }),
+      })
+      const data: { error?: string; account?: { phone: string | null; messengerHandle: string | null } } =
+        await res.json().catch(() => ({}))
+      if (!res.ok) {
+        setContactError(data.error ?? t('post.contact.saveFailed'))
+        return
+      }
+      // What the server stored, not what was typed: the number comes back
+      // normalised and the handle without its @.
+      const saved = data.account
+      setReach((r) => ({ ...r, phone: saved?.phone ?? phone, messenger: saved?.messengerHandle ?? messenger }))
+      setPhoneDraft(saved?.phone ?? phone)
+      setMessengerDraft(saved?.messengerHandle ?? messenger)
+      setContactSaved(true)
+      setContactOpen(false)
+    } catch {
+      setContactError(t('post.contact.saveOffline'))
+    } finally {
+      setSavingContact(false)
+    }
+  }
 
   const reachableSummary = useMemo(() => {
     const parts: string[] = []
-    if (contact.phone) parts.push(t('post.contact.call', { phone: contact.phone }))
-    if (contact.messenger) parts.push(t('post.contact.messenger', { handle: contact.messenger }))
-    if (contact.viber) parts.push(t('post.contact.viber', { number: contact.viber }))
+    if (reach.phone) parts.push(t('post.contact.call', { phone: reach.phone }))
+    if (reach.messenger) parts.push(t('post.contact.messenger', { handle: reach.messenger }))
+    if (reach.viber) parts.push(t('post.contact.viber', { number: reach.viber }))
     return parts
-  }, [contact.phone, contact.messenger, contact.viber, t])
+  }, [reach, t])
   const [error, setError] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
   // What the button says while it works. Publishing is several round trips —
@@ -607,26 +706,95 @@ export function PostForm({
           </PlateHeader>
           <div className="flex flex-col gap-2 p-3.5" data-invalid={!!fieldErrors.contact}>
             {canBeReached ? (
-              <p className="label m-0 text-[17px]">{reachableSummary.join(' · ')}</p>
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <p className="label m-0 text-[17px]">{reachableSummary.join(' · ')}</p>
+                {!contactEditing ? (
+                  <button
+                    type="button"
+                    onClick={() => setContactOpen(true)}
+                    className="label min-h-[44px] border-[2.5px] border-ink bg-ground px-3 text-[15px]"
+                  >
+                    {t('post.contact.change')}
+                  </button>
+                ) : null}
+              </div>
             ) : (
               /* Not a warning tucked under a summary: with nothing here the
-                 listing cannot be published at all, so it says so, and the
-                 link is the fix rather than a suggestion. */
+                 listing cannot be published at all, so it says so. */
               <>
                 <p className="label m-0 text-[17px] text-red">{t('post.contact.required')}</p>
                 <p className="m-0 text-[13px] font-semibold leading-snug text-muted-2">
                   {t('post.contact.requiredHelp')}
                 </p>
-                <a
-                  href="/me/profile"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="label hard-sm mt-1 inline-flex min-h-[44px] items-center justify-center border-[3px] border-ink bg-yellow px-3.5 text-[17px] text-ink hover:text-ink"
-                >
-                  {t('post.contact.addNow')}
-                </a>
               </>
             )}
+
+            {/* Filled in here rather than on the profile screen. Sending
+                someone away mid-form meant coming back to a page that had
+                not noticed, and a publish button that still refused. */}
+            {contactEditing ? (
+              <div className="mt-1 flex flex-col gap-3 border-[2.5px] border-ink bg-panel p-3">
+                <label className="flex flex-col gap-1.5">
+                  <span className="label text-[15px] text-muted">{t('profile.phone')}</span>
+                  <input
+                    type="tel"
+                    inputMode="tel"
+                    autoComplete="tel"
+                    value={phoneDraft}
+                    onChange={(e) => setPhoneDraft(e.target.value)}
+                    placeholder={t('profile.phonePlaceholder')}
+                  />
+                </label>
+                <label className="flex flex-col gap-1.5">
+                  <span className="label text-[15px] text-muted">{t('profile.messenger')}</span>
+                  <input
+                    value={messengerDraft}
+                    onChange={(e) => setMessengerDraft(e.target.value)}
+                    placeholder={t('profile.messengerPlaceholder')}
+                  />
+                </label>
+                <p className="m-0 text-[13px] font-semibold leading-snug text-muted-2">
+                  {t('post.contact.editHelp')}
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  <button
+                    type="button"
+                    disabled={savingContact}
+                    onClick={saveContact}
+                    className="label hard-sm flex min-h-[46px] flex-1 items-center justify-center gap-2 border-[3px] border-ink bg-yellow px-3.5 text-[17px] text-ink disabled:opacity-70"
+                  >
+                    {savingContact ? <Spinner /> : null}
+                    {savingContact ? t('post.contact.saving') : t('post.contact.save')}
+                  </button>
+                  {canBeReached ? (
+                    <button
+                      type="button"
+                      disabled={savingContact}
+                      onClick={() => {
+                        setContactOpen(false)
+                        setContactError(null)
+                        setPhoneDraft(reach.phone ?? '')
+                        setMessengerDraft(reach.messenger ?? '')
+                      }}
+                      className="label min-h-[46px] border-[2.5px] border-ink bg-ground px-3.5 text-[15px]"
+                    >
+                      {t('post.contact.cancel')}
+                    </button>
+                  ) : null}
+                </div>
+                {contactError ? (
+                  <p role="alert" className="m-0 text-[13px] font-semibold leading-snug text-red">
+                    {contactError}
+                  </p>
+                ) : null}
+              </div>
+            ) : null}
+
+            {contactSaved && !contactEditing ? (
+              <p className="m-0 text-[13px] font-semibold leading-snug text-green">
+                {t('post.contact.saved')}
+              </p>
+            ) : null}
             {/* No FieldError here: this section states the requirement in red
                 whether or not publishing has been tried, so repeating it on
                 submit only says the same sentence twice. `data-invalid` still

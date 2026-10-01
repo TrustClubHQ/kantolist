@@ -98,6 +98,18 @@ export const PATCH = withApiHandler(async (request: NextRequest) => {
     data.municipalityId = body.municipalityId || null
   }
 
-  await prisma.account.update({ where: { id: account.id }, data })
-  return NextResponse.json({ ok: true })
+  const updated = await prisma.account.update({ where: { id: account.id }, data })
+  // The stored values come back, because they are not always what was sent:
+  // a number is normalised to +63 form and a Messenger handle loses its @.
+  // The posting form saves contact details inline and then has to show what
+  // the seller will actually be reached on, not what they typed.
+  return NextResponse.json({
+    ok: true,
+    account: {
+      phone: updated.phone,
+      phoneVerified: !!updated.phoneVerifiedAt,
+      messengerHandle: updated.messengerHandle,
+      viberNumber: updated.viberNumber,
+    },
+  })
 })
