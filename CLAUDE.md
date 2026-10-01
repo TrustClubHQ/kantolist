@@ -65,6 +65,22 @@ A full number is only ever returned to a signed-in member, and only through
 `POST /api/listings/[id]/contact`. Never embed one in server-rendered HTML —
 that is what stops a scraper harvesting numbers by walking every listing.
 
+### Fonts are ours, and versioned by filename
+
+Anton, Barlow and Barlow Condensed live in `public/fonts/` with the
+`@font-face` rules at the top of `globals.css`. They are deliberately **not**
+loaded from fonts.googleapis.com: that cost first paint two extra DNS+TLS
+handshakes on a render-blocking path, which a provincial mobile connection
+feels.
+
+Two things to keep right:
+
+- Keep the **latin-ext** subsets. The peso sign ₱ is U+20B1, which lives in
+  latin-ext, so dropping it would render every price in a fallback face.
+- There is no content hash in those filenames — `next.config.ts` grants
+  `/fonts/:file*` a year of immutable caching by hand. To change a face,
+  change the filename too, or browsers will keep the old bytes.
+
 ### Adding a filter
 
 Edit the category's `attributeSchema` in `scripts/seed.ts` (or the row). Do not

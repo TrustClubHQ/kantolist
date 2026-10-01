@@ -29,18 +29,27 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   return (
     <html lang={language === 'tl' ? 'tl' : 'en'}>
       <head>
-        {/* Google Fonts is loaded by link rather than next/font so a build
-            without network access still succeeds — the fallback stacks in
-            globals.css are metric-compatible enough to ship on. */}
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="" />
-        {/* eslint-disable-next-line @next/next/no-page-custom-font -- this is
-            the App Router root layout, so the stylesheet is global; the rule
-            targets the pages router's per-page <Head>. */}
-        <link
-          rel="stylesheet"
-          href="https://fonts.googleapis.com/css2?family=Anton&family=Barlow+Condensed:wght@600;700&family=Barlow:wght@400;600;700&display=swap"
-        />
+        {/* The faces above the fold: the Anton wordmark and headline, the
+            Barlow Condensed labels, the Barlow body copy. @font-face in the
+            app stylesheet is only discovered after that sheet parses, and a
+            font request started then lands too late to beat first paint — so
+            these three are asked for in the markup instead. The latin-ext
+            slices (and the weights further down a page) stay lazy: the
+            browser fetches them when a glyph actually needs them. */}
+        {[
+          'barlow-400-latin',
+          'barlow-condensed-700-latin',
+          'anton-400-latin',
+        ].map((face) => (
+          <link
+            key={face}
+            rel="preload"
+            as="font"
+            type="font/woff2"
+            href={`/fonts/${face}.woff2`}
+            crossOrigin="anonymous"
+          />
+        ))}
       </head>
       <body>
         <LanguageProvider language={language}>{children}</LanguageProvider>
