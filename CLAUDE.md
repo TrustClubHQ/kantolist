@@ -129,5 +129,9 @@ the tab; let the code expire; clear the cookie mid-poll.
 ## Memories
 
 - When you learn something about this repo's dev process, add it here.
+- Print flyers live in `marketing/flyers/` and are maintained in English and
+  Taglish together: one HTML per flyer with a `COPY` table per language.
+  Edit both languages in the same change and run
+  `node marketing/flyers/render.mjs`, which fails on a page overflowing A4.
 - The dev database can be wiped and re-seeded freely. Never clear production
   data without explicit permission.

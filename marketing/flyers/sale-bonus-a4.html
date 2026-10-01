@@ -90,22 +90,22 @@
       </svg>
       <div>
         <span class="display">Kanto<span>List</span></span>
-        <div class="powered"><span>Powered by</span><img src="TCLogo-IconOnly-StealthBlack-minpadding.png" alt=""><b>TrustClub</b></div>
+        <div class="powered"><span data-t="powered">Powered by</span><img src="TCLogo-IconOnly-StealthBlack-minpadding.png" alt=""><b>TrustClub</b></div>
       </div>
     </div>
-    <span class="tag label">Promo<br><small>until 31 Oct</small></span>
+    <span class="tag label" data-t="tag">Promo<br><small>until 31 Oct</small></span>
   </header>
 
   <section class="hero">
-    <div class="kicker label">We pay you</div>
+    <div class="kicker label" data-t="kicker">We pay you</div>
     <div class="amount display">₱50</div>
-    <div class="per display">for every new buyer</div>
+    <div class="per display" data-t="per">for every new buyer</div>
   </section>
 
   <div class="cap-row">
     <section class="cap">
-      <div class="label">Up to <em>₱1,000</em> a week</div>
-      <p>per TrustClub member · <b>until 31 October</b></p>
+      <div class="label" data-t="cap">Up to <em>₱1,000</em> a week</div>
+      <p data-t="capSub">per TrustClub member · <b>until 31 October</b></p>
     </section>
     <a class="qr" href="https://kantolist.ph">
       <img src="qr-kantolist.svg" alt="QR code for kantolist.ph">
@@ -113,55 +113,120 @@
     </a>
   </div>
 
-  <h2>How it works</h2>
+  <h2 data-t="how">How it works</h2>
   <ol>
     <li>
       <div class="head">
         <span class="num">1</span>
-        <span class="step display">List</span>
+        <span class="step display" data-t="s1">List</span>
       </div>
       <div>
-        <p>Post your item on KantoList.</p>
+        <p data-t="s1Body">Post your item on KantoList.</p>
       </div>
     </li>
     <li>
       <div class="head">
         <span class="num">2</span>
-        <span class="step display">Sell</span>
+        <span class="step display" data-t="s2">Sell</span>
       </div>
       <div>
-        <p>Sell to a TrustClub member <b>you haven't sold to before</b> and book a Trust Transaction in the TrustClub app.</p>
+        <p data-t="s2Body">Sell to a TrustClub member <b>you haven't sold to before</b> and book a Trust Transaction in the TrustClub app.</p>
       </div>
     </li>
     <li>
       <div class="head">
         <span class="num">3</span>
-        <span class="step display">Claim</span>
+        <span class="step display" data-t="s3">Claim</span>
       </div>
       <div>
-        <p>Get ₱50 per new buyer, claimable <b>next Friday</b>.</p>
+        <p data-t="s3Body">Get ₱50 per new buyer, claimable <b>next Friday</b>.</p>
       </div>
     </li>
   </ol>
 
   <section class="rules">
     <div>
-      <div class="label">Once per buyer</div>
-      <p>Each buyer counts once. Selling to the same person again earns no bonus.</p>
+      <div class="label" data-t="r1">Once per buyer</div>
+      <p data-t="r1Body">Each buyer counts once. Selling to the same person again earns no bonus.</p>
     </div>
     <div>
-      <div class="label">Real sales only</div>
-      <p>We check every sale. No Trust Transaction, or a fake sale, means no bonus.</p>
+      <div class="label" data-t="r2">Real sales only</div>
+      <p data-t="r2Body">We check every sale. No Trust Transaction, or a fake sale, means no bonus.</p>
     </div>
     <div>
-      <div class="label">Group in good standing</div>
-      <p>Paid only if your group is in good standing.</p>
+      <div class="label" data-t="r3">Group in good standing</div>
+      <p data-t="r3Body">Paid only if your group is in good standing.</p>
     </div>
   </section>
 
   <footer>
-    <span>Promo covers sales made until 31 October 2026. Max ₱1,000 per member per week.</span>
+    <span data-t="footer">Promo covers sales made until 31 October 2026. Max ₱1,000 per member per week.</span>
   </footer>
 </div>
+<script>
+/* Every line of copy lives here, once per language, so the English and
+   Taglish flyers cannot drift apart. The markup above carries the English
+   text as a fallback; data-t keys are filled from this table.
+   Open with #tl (or ?lang=tl) for Taglish. render.mjs builds both PDFs. */
+const COPY = {
+  en: {
+    title: 'KantoList Sale Bonus',
+    powered: 'Powered by',
+    tag: 'Promo<br><small>until 31 Oct</small>',
+    kicker: 'We pay you',
+    per: 'for every new buyer',
+    cap: 'Up to <em>₱1,000</em> a week',
+    capSub: 'per TrustClub member · <b>until 31 October</b>',
+    how: 'How it works',
+    s1: 'List',
+    s1Body: 'Post your item on KantoList.',
+    s2: 'Sell',
+    s2Body: "Sell to a TrustClub member <b>you haven't sold to before</b> and book a Trust Transaction in the TrustClub app.",
+    s3: 'Claim',
+    s3Body: 'Get ₱50 per new buyer, claimable <b>next Friday</b>.',
+    r1: 'Once per buyer',
+    r1Body: 'Each buyer counts once. Selling to the same person again earns no bonus.',
+    r2: 'Real sales only',
+    r2Body: 'We check every sale. No Trust Transaction, or a fake sale, means no bonus.',
+    r3: 'Group in good standing',
+    r3Body: 'Paid only if your group is in good standing.',
+    footer: 'Promo covers sales made until 31 October 2026. Max ₱1,000 per member per week.',
+  },
+  tl: {
+    title: 'KantoList Sale Bonus (Taglish)',
+    powered: 'Powered by',
+    tag: 'Promo<br><small>hanggang 31 Oct</small>',
+    kicker: 'Babayaran ka namin',
+    per: 'sa bawat bagong buyer',
+    cap: 'Hanggang <em>₱1,000</em> kada linggo',
+    capSub: 'bawat TrustClub member · <b>hanggang 31 October</b>',
+    how: 'Ganito lang',
+    s1: 'I-list',
+    s1Body: 'I-post ang item mo sa KantoList.',
+    s2: 'Ibenta',
+    s2Body: 'Ibenta sa TrustClub member na <b>first time mong buyer</b>, tapos i-book ang Trust Transaction sa app.',
+    s3: 'I-claim',
+    s3Body: '₱50 kada bagong buyer, puwedeng i-claim sa <b>susunod na Biyernes</b>.',
+    r1: 'Isang beses kada buyer',
+    r1Body: 'Isang bonus lang kada buyer. Walang bonus kung paulit-ulit sa parehong tao.',
+    r2: 'Totoong benta lang',
+    r2Body: 'Chine-check namin bawat benta. Peke o walang Trust Transaction? Walang bonus.',
+    r3: 'Group in good standing',
+    r3Body: 'Babayaran lang kung in good standing ang group mo.',
+    footer: 'Kasama ang mga benta hanggang 31 October 2026. Max ₱1,000 kada member kada linggo.',
+  },
+};
+(function () {
+  const q = new URLSearchParams(location.search).get('lang');
+  const lang = (q || location.hash.slice(1) || 'en').toLowerCase();
+  const t = COPY[lang] || COPY.en;
+  document.documentElement.lang = lang === 'tl' ? 'fil' : 'en';
+  document.title = t.title;
+  for (const el of document.querySelectorAll('[data-t]')) {
+    if (!(el.dataset.t in t)) throw new Error('missing copy: ' + lang + '.' + el.dataset.t);
+    el.innerHTML = t[el.dataset.t];
+  }
+})();
+</script>
 </body>
 </html>
