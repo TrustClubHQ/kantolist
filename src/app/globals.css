@@ -98,3 +98,17 @@
 @media print {
   .hard, .hard-sm { box-shadow: none; }
 }
+
+/* A spinner that cannot stop spinning is a problem for anyone who asked their
+   device to stop animating things. The shape stays — it still reads as busy —
+   and the button's label is already saying what is happening. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

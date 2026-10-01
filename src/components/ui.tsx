@@ -124,6 +124,17 @@ export function Spinner({ className = '' }: { className?: string }) {
   )
 }
 
+/**
+ * A plate that is still loading.
+ *
+ * Shaped like the thing it stands in for rather than a grey rectangle, so the
+ * page does not jump when the real content lands. It pulses, which is the
+ * difference between "still coming" and "broken" on a slow connection.
+ */
+export function Skeleton({ className = '' }: { className?: string }) {
+  return <span aria-hidden className={`block animate-pulse bg-dim ${className}`} />
+}
+
 /** Primary action. Red by default; yellow for a secondary emphasis. */
 export function Button({
   children,

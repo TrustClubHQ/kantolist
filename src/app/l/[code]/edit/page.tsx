@@ -4,6 +4,7 @@ import { prisma } from '@/lib/prisma'
 import { getCurrentAccount } from '@/lib/auth'
 import { SiteHeader } from '@/components/SiteHeader'
 import { PostForm } from '@/components/PostForm'
+import { ListingOwnerActions } from '@/components/ListingOwnerActions'
 import { parseSchema } from '@/lib/attributes'
 import { codeFromParam, listingPath } from '@/lib/listing'
 import { photosEnabled } from '@/lib/photo-store'
@@ -96,6 +97,11 @@ export default async function EditListingPage({ params }: { params: Promise<{ co
         cancelHref={listingPath(listing.code, listing.slug)}
         photosEnabled={photosEnabled()}
         photos={listing.images}
+      />
+      <ListingOwnerActions
+        listingId={listing.id}
+        status={listing.status}
+        listingsHref="/me/listings"
       />
     </div>
   )

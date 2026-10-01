@@ -37,6 +37,9 @@ export function MyListings({ listings }: { listings: Row[] }) {
   const [rows, setRows] = useState(listings)
   const [busy, setBusy] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
+  // Delete asks first, in place rather than through a browser confirm(), which
+  // on a phone is a system dialog with none of this page's words in it.
+  const [confirming, setConfirming] = useState<string | null>(null)
 
   const visible = tab === 'ALL' ? rows : rows.filter((r) => r.status === tab)
   const countFor = (key: ListingStatus | 'ALL') =>
@@ -63,6 +66,25 @@ export function MyListings({ listings }: { listings: Row[] }) {
             : r,
         ),
       )
+    } catch {
+      setError(t('mine.offline'))
+    } finally {
+      setBusy(null)
+    }
+  }
+
+  async function remove(id: string) {
+    setBusy(id)
+    setError(null)
+    try {
+      const res = await fetch(`/api/listings/${id}`, { method: 'DELETE' })
+      if (!res.ok) {
+        const data: { error?: string } = await res.json().catch(() => ({}))
+        setError(data.error ?? t('mine.deleteFailed'))
+        return
+      }
+      setRows((current) => current.filter((r) => r.id !== id))
+      setConfirming(null)
     } catch {
       setError(t('mine.offline'))
     } finally {
@@ -187,7 +209,36 @@ export function MyListings({ listings }: { listings: Row[] }) {
                     {t('mine.reopen')}
                   </Action>
                 ) : null}
+                <Action busy={busy === row.id} onClick={() => setConfirming(row.id)}>
+                  {t('mine.delete')}
+                </Action>
               </div>
+
+              {confirming === row.id ? (
+                <div className="flex flex-col gap-2 border-[3px] border-ink bg-yellow px-3 py-2.5">
+                  <p className="label m-0 text-[17px] text-ink">{t('mine.deleteConfirm')}</p>
+                  <p className="m-0 text-[13px] font-semibold leading-snug text-ink">
+                    {t('mine.deleteHelp')}
+                  </p>
+                  <div className="flex gap-2">
+                    <button
+                      type="button"
+                      disabled={busy === row.id}
+                      onClick={() => remove(row.id)}
+                      className="label min-h-[44px] flex-1 border-[2.5px] border-ink bg-red text-[16px] text-ground disabled:opacity-60"
+                    >
+                      {t('mine.deleteYes')}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setConfirming(null)}
+                      className="label min-h-[44px] flex-1 border-[2.5px] border-ink bg-ground text-[16px]"
+                    >
+                      {t('mine.deleteNo')}
+                    </button>
+                  </div>
+                </div>
+              ) : null}
             </Plate>
           ))}
         </div>

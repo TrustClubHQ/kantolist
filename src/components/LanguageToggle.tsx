@@ -34,7 +34,10 @@ export function LanguageToggle() {
       aria-label={t('header.languageSwitch', { language: LANGUAGE_LABEL[next] })}
       className="label flex min-h-[44px] min-w-[44px] items-center justify-center border-2 border-ground px-2 text-[15px] text-ground hover:bg-ground hover:text-red disabled:opacity-60"
     >
-      {LANGUAGE_SHORT[language]}
+      {/* The target, not the current one: the button's job is the switch, and
+          a chip reading "TL" while the page is already Taglish reads as a
+          state rather than an action. */}
+      {LANGUAGE_SHORT[next]}
     </button>
   )
 }

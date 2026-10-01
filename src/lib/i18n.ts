@@ -299,7 +299,7 @@ const en: Record<string, string> = {
   'contact.close': 'Close',
   'contact.opening': 'Opening…',
   'contact.phoneHidden': 'Phone hidden',
-  'contact.logInToSee': '{phone} — log in to see',
+  'contact.logInToSee': '{phone} — log in to call or text',
   'contact.channel.PHONE': 'Call',
   'contact.channel.SMS': 'Send SMS',
   'contact.channel.MESSENGER': 'Message on Messenger',
@@ -410,6 +410,12 @@ const en: Record<string, string> = {
   'mine.markSold': 'Mark sold',
   'mine.backToActive': 'Back to active',
   'mine.reopen': 'Re-open',
+  'mine.delete': 'Delete',
+  'mine.deleteConfirm': 'Delete for good?',
+  'mine.deleteYes': 'Yes, delete',
+  'mine.deleteNo': 'Keep it',
+  'mine.deleteHelp': 'This removes the listing, its photos and its contact records. It cannot be undone.',
+  'mine.deleteFailed': 'Could not delete that listing',
   'mine.bump': 'Bump',
   'mine.empty': 'Nothing here yet',
   'mine.emptyActive': 'Post something and it shows up here.',
@@ -444,12 +450,24 @@ const en: Record<string, string> = {
   'profile.logOut': 'Log out',
 
   // — Reporting ——————————————————————————————————————————————————
-  'report.link': 'Report this listing',
+  'report.link': 'Report to staff',
   'report.heading': 'Report this listing',
-  'report.reason': 'What is wrong?',
+  'report.about': 'About “{title}”',
+  'report.reason': 'What is wrong with it?',
+  'report.reason.SCAM': 'Looks like a scam',
+  'report.reason.PROHIBITED': 'Prohibited item',
+  'report.reason.DUPLICATE': 'Duplicate listing',
+  'report.reason.WRONG_CATEGORY': 'Wrong category',
+  'report.reason.SOLD_ALREADY': 'Already sold',
+  'report.reason.OTHER': 'Something else',
+  'report.note': 'Anything else staff should know? (optional)',
   'report.send': 'Send report',
-  'report.sent': 'Thanks — we will look at it.',
+  'report.sending': 'Sending…',
+  'report.sent': 'Thanks — staff will look at it.',
   'report.failed': 'Could not send that report',
+  'report.offline': 'Could not reach the server. Try again.',
+  'report.cancel': 'Cancel',
+  'report.signIn': 'Log in to report this listing',
 
   // — Attribute labels ————————————————————————————————————————————
   // Keyed by the attribute key from the category schema; an attribute with no
@@ -601,7 +619,7 @@ const en: Record<string, string> = {
     'KantoList does not carry your messages. Agreements made by call or chat are between you and the other person.',
   'safety.tip6.title': 'Report what looks wrong',
   'safety.tip6.body':
-    'Every listing has a report link. Staff read the queue and can remove a listing.',
+    'Every listing has a report link: staff read the queue and can take a listing down. The stronger move is to deduct trust points from the poster in TrustClub, which lowers them for everyone who trusts you, not just here.',
   'safety.note':
     'KantoList never asks for your password, your PIN, or an OTP. Nobody from KantoList will message you asking to move a deal off the platform or to send money.',
   'title.safety': 'Safety tips',
@@ -617,9 +635,17 @@ const en: Record<string, string> = {
   'title.signin': 'Log in',
 
   // — Errors and empty states ————————————————————————————————————
+  'error.title': 'Something went wrong on our side',
+  'error.help': 'That is on us, not on your connection. Try again — the page is usually fine on the second go.',
+  'error.retry': 'Try again',
   'error.notFound': 'That listing is gone',
   'error.notFoundHelp': 'It may have been sold, closed, or taken down.',
   'error.browse': 'Browse listings',
+  'error.pageNotFound': 'That page is not here',
+  'error.pageNotFoundHelp': 'The link may be wrong, or the page may have moved.',
+  'error.home': 'Back to the front page',
+  'loading.listings': 'Loading listings…',
+  'loading.listing': 'Loading…',
 }
 
 /**
@@ -832,7 +858,7 @@ const tl: Record<string, string> = {
   'contact.close': 'Isara',
   'contact.opening': 'Binubuksan…',
   'contact.phoneHidden': 'Nakatago ang numero',
-  'contact.logInToSee': '{phone} — mag-log in para makita',
+  'contact.logInToSee': '{phone} — mag-log in para tumawag o mag-text',
   'contact.channel.PHONE': 'Tawagan',
   'contact.channel.SMS': 'Mag-text',
   'contact.channel.MESSENGER': 'I-message sa Messenger',
@@ -941,6 +967,12 @@ const tl: Record<string, string> = {
   'mine.markSold': 'Nabenta na',
   'mine.backToActive': 'Ibalik sa active',
   'mine.reopen': 'Buksan ulit',
+  'mine.delete': 'Burahin',
+  'mine.deleteConfirm': 'Burahin nang tuluyan?',
+  'mine.deleteYes': 'Oo, burahin',
+  'mine.deleteNo': 'Huwag na',
+  'mine.deleteHelp': 'Maaalis ang listing, ang mga litrato nito at ang contact records. Hindi na ito maibabalik.',
+  'mine.deleteFailed': 'Hindi nabura ang listing na iyon',
   'mine.bump': 'I-bump',
   'mine.empty': 'Wala pa dito',
   'mine.emptyActive': 'Mag-post ka at lalabas ito dito.',
@@ -973,12 +1005,24 @@ const tl: Record<string, string> = {
   'profile.offline': 'Hindi maabot ang server. Subukan ulit.',
   'profile.logOut': 'Mag-log out',
 
-  'report.link': 'I-report ang listing na ito',
+  'report.link': 'I-report sa staff',
   'report.heading': 'I-report ang listing na ito',
-  'report.reason': 'Ano ang mali?',
+  'report.about': 'Tungkol sa “{title}”',
+  'report.reason': 'Ano ang mali dito?',
+  'report.reason.SCAM': 'Mukhang scam',
+  'report.reason.PROHIBITED': 'Bawal na item',
+  'report.reason.DUPLICATE': 'Doble ang listing',
+  'report.reason.WRONG_CATEGORY': 'Maling kategorya',
+  'report.reason.SOLD_ALREADY': 'Nabenta na',
+  'report.reason.OTHER': 'Iba pa',
+  'report.note': 'May dapat pang malaman ang staff? (optional)',
   'report.send': 'Ipadala ang report',
-  'report.sent': 'Salamat — titingnan namin ito.',
+  'report.sending': 'Ipinapadala…',
+  'report.sent': 'Salamat — titingnan ito ng staff.',
   'report.failed': 'Hindi naipadala ang report',
+  'report.offline': 'Hindi maabot ang server. Subukan ulit.',
+  'report.cancel': 'Kanselahin',
+  'report.signIn': 'Mag-log in para i-report ang listing na ito',
 
   // Attribute labels. The option values themselves are stored on the category
   // schema and stay as entered — "Like new", "Automatic" — which is how they
@@ -1123,7 +1167,7 @@ const tl: Record<string, string> = {
     'Hindi dinadala ng KantoList ang mga mensahe ninyo. Ang napagkasunduan sa tawag o chat ay sa inyong dalawa lang.',
   'safety.tip6.title': 'I-report ang mukhang mali',
   'safety.tip6.body':
-    'May report link ang bawat listing. Binabasa ng staff ang queue at pwede nilang alisin ang listing.',
+    'May report link ang bawat listing: binabasa ito ng staff at pwede nilang alisin ang listing. Mas malakas pa: bawasan ang trust points ng nag-post sa TrustClub, na magpapababa sa kanila para sa lahat ng nagtitiwala sa iyo, hindi lang dito.',
   'safety.note':
     'Hindi kailanman hihingin ng KantoList ang password, PIN o OTP mo. Walang taga-KantoList na mag-me-message sa iyo para ilipat ang deal sa labas ng site o magpapadala ng pera.',
   'title.safety': 'Pag-iingat',
@@ -1137,9 +1181,17 @@ const tl: Record<string, string> = {
   'title.mine': 'Mga listing ko',
   'title.signin': 'Mag-log in',
 
+  'error.title': 'May nasira sa panig namin',
+  'error.help': 'Sa amin ito, hindi sa connection mo. Subukan ulit — madalas ayos na sa pangalawang beses.',
+  'error.retry': 'Subukan ulit',
   'error.notFound': 'Wala na ang listing na iyon',
   'error.notFoundHelp': 'Baka nabenta na, sarado na, o tinanggal na.',
   'error.browse': 'Maghanap ng listing',
+  'error.pageNotFound': 'Wala dito ang page na iyon',
+  'error.pageNotFoundHelp': 'Baka mali ang link, o nailipat na ang page.',
+  'error.home': 'Balik sa unang page',
+  'loading.listings': 'Kinukuha ang mga listing…',
+  'loading.listing': 'Sandali lang…',
 }
 
 export const dictionaries: Record<Language, Record<string, string>> = { en, tl }

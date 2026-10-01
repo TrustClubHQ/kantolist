@@ -1,11 +1,16 @@
 import { SiteHeader } from '@/components/SiteHeader'
 import { SiteFooter } from '@/components/SiteFooter'
 import { getT, getLanguage } from '@/lib/i18n-server'
+import { SUPPORT_EMAIL } from '@/lib/contact'
 import { translatedTitle } from '@/lib/page-title'
 
 export const generateMetadata = translatedTitle('title.terms')
 
-/* The legal text itself stays in English: a translated version would be a
+/* NOTE FOR THE TEAM: this page still needs review by counsel before launch —
+   governing law, liability limits and the dispute process. That note used to
+   be printed on the page itself, where visitors read it as part of the terms.
+
+   The legal text itself stays in English: a translated version would be a
    second set of terms, and which one governs is not a question a listings
    board should be asking. The page says so in the reader's language. */
 export default async function TermsPage() {
@@ -45,10 +50,10 @@ export default async function TermsPage() {
             Your account is your TrustClub identity. Keep it to yourself — anything posted through
             it is treated as yours.
           </Section>
-          <p className="m-0 text-muted">
-            [PLACEHOLDER — this page needs review by counsel before launch, including governing law,
-            liability limits and the dispute process.]
-          </p>
+          <Section title="Reaching us">
+            Anything you need to tell us about these terms goes to{' '}
+            <a href={`mailto:${SUPPORT_EMAIL}`}>{SUPPORT_EMAIL}</a>.
+          </Section>
         </div>
       </main>
       <SiteFooter />

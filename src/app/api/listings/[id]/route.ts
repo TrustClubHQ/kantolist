@@ -8,6 +8,7 @@ import { isAllowedMutatingRequest } from '@/lib/http'
 import { parseSchema, validateAttributes } from '@/lib/attributes'
 import type { ListingType, PriceUnit } from '@prisma/client'
 import { slugify, parseVideoUrl, PRICE_UNITS_FOR_TYPE } from '@/lib/listing'
+import { forgetPhoto } from '@/lib/photo-store'
 
 const TYPES: ListingType[] = ['SELL', 'RENT', 'SERVICE']
 
@@ -137,11 +138,24 @@ export const PATCH = withApiHandler(async (request: NextRequest, ctx: Ctx) => {
   return NextResponse.json({ code: updated.code, slug: updated.slug })
 })
 
+/**
+ * Delete, as the privacy page promises it: the listing and everything hanging
+ * off it. The rows cascade; the stored photos do not, so they are forgotten
+ * here or they stay in the blob store forever with nothing pointing at them.
+ */
 export const DELETE = withApiHandler(async (request: NextRequest, ctx: Ctx) => {
   if (!isAllowedMutatingRequest(request)) return forbidden()
   const { id } = await ctx.params
   const owned = await loadOwned(request, id)
   if (owned.error) return owned.error
+
+  const images = await prisma.listingImage.findMany({
+    where: { listingId: owned.listing.id },
+    select: { url: true },
+  })
   await prisma.listing.delete({ where: { id: owned.listing.id } })
+  // After the row is gone: a failed delete in the blob store must not leave a
+  // listing the owner has already been told is deleted.
+  await Promise.all(images.map((image) => forgetPhoto(image.url)))
   return NextResponse.json({ ok: true })
 })

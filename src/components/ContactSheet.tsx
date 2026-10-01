@@ -46,7 +46,12 @@ export function ContactSheet({
   const [busy, setBusy] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
 
-  const ordered = CHANNEL_ORDER.filter((c) => channels.includes(c))
+  // Signed out, Call and Text are the same locked row twice — the same masked
+  // number, the same link, nothing to tell them apart. One row says it once.
+  const available = CHANNEL_ORDER.filter((c) => channels.includes(c))
+  const ordered = signedIn
+    ? available
+    : available.filter((c) => c !== 'SMS' || !available.includes('PHONE'))
   const firstName = sellerName.split(' ')[0]
 
   async function openChannel(channel: string) {

@@ -1,11 +1,17 @@
 import { SiteHeader } from '@/components/SiteHeader'
 import { SiteFooter } from '@/components/SiteFooter'
 import { getT, getLanguage } from '@/lib/i18n-server'
+import { SUPPORT_EMAIL } from '@/lib/contact'
 import { translatedTitle } from '@/lib/page-title'
 
 export const generateMetadata = translatedTitle('title.privacy')
 
-/* The legal text itself stays in English: a translated version would be a
+/* NOTE FOR THE TEAM: this page still needs review against the Data Privacy Act
+   before launch — retention periods and the data protection officer's details
+   in particular. That note used to be printed on the page itself, where
+   visitors read it as part of the policy.
+
+   The legal text itself stays in English: a translated version would be a
    second set of terms, and which one governs is not a question a listings
    board should be asking. The page says so in the reader's language. */
 export default async function PrivacyPage() {
@@ -40,13 +46,13 @@ export default async function PrivacyPage() {
             cache the answer briefly. We send the two ids and nothing about what you were browsing.
           </Section>
           <Section title="Deleting things">
-            Deleting a listing removes it and its contact records. To remove your account, contact
-            staff.
+            Deleting a listing removes it, its photos and its contact records, and it cannot be
+            undone. To remove your account, email {SUPPORT_EMAIL}.
           </Section>
-          <p className="m-0 text-muted">
-            [PLACEHOLDER — this page needs review against the Data Privacy Act before launch,
-            including retention periods and the contact details of the data protection officer.]
-          </p>
+          <Section title="Reaching us">
+            Questions about any of this, or a request to remove your account, go to{' '}
+            <a href={`mailto:${SUPPORT_EMAIL}`}>{SUPPORT_EMAIL}</a>.
+          </Section>
         </div>
       </main>
       <SiteFooter />
