@@ -40,9 +40,15 @@
 
   .hero { text-align: center; padding: 8mm 0 8mm; }
   .hero .kicker { font-size: 8mm; letter-spacing: .06em; }
-  .hero .amount { color: var(--red); font-size: 58mm; letter-spacing: -.01em; margin: 2mm 0 0; }
+  .hero .amount { color: var(--red); font-size: 53mm; letter-spacing: -.01em; margin: 2mm 0 0; }
   .hero .per { font-size: 17mm; margin-top: 1mm; }
 
+  .cap-row { display: grid; grid-template-columns: 1fr auto; gap: 6mm; align-items: stretch; }
+  .cap-row .cap { display: flex; flex-direction: column; justify-content: center; }
+  .qr { display: flex; flex-direction: column; align-items: center; gap: 1.5mm;
+        text-decoration: none; color: var(--ink); }
+  .qr img { width: 30mm; height: 30mm; display: block; }
+  .qr .label { font-size: 4.6mm; letter-spacing: .02em; }
   .cap { border: 1mm solid var(--ink); box-shadow: 1.6mm 1.6mm 0 var(--yellow); text-align: center; padding: 4mm 6mm; }
   .cap .label { font-size: 9.5mm; }
   .tag { text-align: center; }
@@ -52,7 +58,7 @@
   .cap p { margin: 1.5mm 0 0; font-size: 4.6mm; color: var(--muted); }
 
   h2 { font-family: var(--cond); font-weight: 700; text-transform: uppercase;
-       font-size: 8mm; margin: 11mm 0 4mm; letter-spacing: .03em; }
+       font-size: 8mm; margin: 8mm 0 4mm; letter-spacing: .03em; }
   ol { list-style: none; margin: 0; padding: 0; display: grid;
        grid-template-columns: repeat(3, 1fr); gap: 6mm; counter-reset: none; }
   li { border-top: 1mm solid var(--ink); padding-top: 4mm; }
@@ -96,10 +102,16 @@
     <div class="per display">for every new buyer</div>
   </section>
 
-  <section class="cap">
-    <div class="label">Up to <em>₱1,000</em> a week</div>
-    <p>per TrustClub member · <b>until 31 October</b></p>
-  </section>
+  <div class="cap-row">
+    <section class="cap">
+      <div class="label">Up to <em>₱1,000</em> a week</div>
+      <p>per TrustClub member · <b>until 31 October</b></p>
+    </section>
+    <a class="qr" href="https://kantolist.ph">
+      <img src="qr-kantolist.svg" alt="QR code for kantolist.ph">
+      <span class="label">kantolist.ph</span>
+    </a>
+  </div>
 
   <h2>How it works</h2>
   <ol>
