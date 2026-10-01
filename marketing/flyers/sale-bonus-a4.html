@@ -61,7 +61,7 @@
   li b { color: var(--ink); font-weight: 600; }
 
   .rules { margin-top: auto; border-top: .8mm solid var(--red); padding-top: 5mm;
-           display: grid; grid-template-columns: 1fr 1fr; gap: 6mm; }
+           display: grid; grid-template-columns: repeat(3, 1fr); gap: 6mm; }
   .rules .label { font-size: 5.4mm; color: var(--red); }
   .rules p { margin: 1mm 0 0; font-size: 4.1mm; line-height: 1.35; color: var(--muted); }
 
@@ -90,7 +90,7 @@
   <section class="hero">
     <div class="kicker label">We pay you</div>
     <div class="amount display">₱50</div>
-    <div class="per display">for every sale</div>
+    <div class="per display">for every new buyer</div>
   </section>
 
   <section class="cap">
@@ -115,7 +115,7 @@
         <span class="step display">Sell</span>
       </div>
       <div>
-        <p>Sell to another TrustClub member and <b>book a Trust Transaction</b> in the TrustClub app.</p>
+        <p>Sell to a TrustClub member <b>you haven't sold to before</b> and book a Trust Transaction in the TrustClub app.</p>
       </div>
     </li>
     <li>
@@ -124,19 +124,23 @@
         <span class="step display">Claim</span>
       </div>
       <div>
-        <p>Get ₱50 per sale, claimable <b>next Friday</b>.</p>
+        <p>Get ₱50 per new buyer, claimable <b>next Friday</b>.</p>
       </div>
     </li>
   </ol>
 
   <section class="rules">
     <div>
+      <div class="label">Once per buyer</div>
+      <p>Each buyer counts once. Selling to the same person again earns no bonus.</p>
+    </div>
+    <div>
       <div class="label">Real sales only</div>
-      <p>We check every transaction. No Trust Transaction, or a fake or staged sale, means no bonus.</p>
+      <p>We check every sale. No Trust Transaction, or a fake sale, means no bonus.</p>
     </div>
     <div>
       <div class="label">Group in good standing</div>
-      <p>The bonus is paid only if your group is in good standing.</p>
+      <p>Paid only if your group is in good standing.</p>
     </div>
   </section>
 
