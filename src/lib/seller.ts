@@ -22,28 +22,36 @@ export interface SellerContact {
 }
 
 /**
- * The channels a listing offers that the seller can actually be reached on.
+ * The channels a buyer can actually reach this seller on.
  *
- * A listing stores the channels chosen when it was posted. If the seller later
- * clears their number or Messenger handle, that choice goes stale — the sheet
- * kept offering the channel and the API answered "the seller has not set up
- * that channel", which is a dead end presented as an option. Anything without
- * a destination is dropped before it is ever shown.
+ * Read from the seller's profile, not from the listing. A listing still
+ * snapshots the channels it was posted with, and that snapshot used to decide
+ * this — which was wrong in both directions once the per-listing toggle went
+ * away and channels became a fact about the person rather than about the bench
+ * they are selling:
+ *
+ *   - a channel removed from the profile kept being offered, and the API then
+ *     answered "the seller has not set up that channel" — a dead end presented
+ *     as an option;
+ *   - a channel ADDED to the profile afterwards never appeared, because it was
+ *     not in the snapshot. A seller whose old listings predate their phone
+ *     number had to edit and re-save every one of them to become reachable,
+ *     with nothing on screen saying so. That is the trap that matters now that
+ *     posting requires a number or a Messenger handle: listings posted before
+ *     the rule would otherwise stay unanswerable for good.
+ *
+ * TrustClub and Facebook are absent on purpose. A TrustClub profile is an
+ * identity, not an inbox, and a Facebook page is a detour that leaves a buyer
+ * no way to say "I want this". Listings posted while those were on the menu
+ * carry them in their snapshot; ignoring the snapshot is what retires them,
+ * which is why removing them needed no migration.
  */
-export function usableChannels(chosen: string[], contact: SellerContact): string[] {
-  const reachable: Record<string, boolean> = {
-    PHONE: contact.hasPhone,
-    SMS: contact.hasPhone,
-    MESSENGER: contact.hasMessenger,
-    VIBER: contact.hasViber,
-    // FACEBOOK and TRUSTCLUB are deliberately absent, so neither resolves and
-    // both drop out here. A TrustClub profile is an identity, not an inbox,
-    // and a Facebook page is a detour that leaves no way to say "I want this".
-    // Listings posted while those were on the menu still carry them in their
-    // snapshot; this is where they stop being offered, which is why dropping
-    // them needed no migration.
-  }
-  return chosen.filter((c) => reachable[c])
+export function usableChannels(contact: SellerContact): string[] {
+  const channels: string[] = []
+  if (contact.hasPhone) channels.push('PHONE', 'SMS')
+  if (contact.hasMessenger) channels.push('MESSENGER')
+  if (contact.hasViber) channels.push('VIBER')
+  return channels
 }
 
 export async function getSellerContact(accountId: string): Promise<SellerContact> {

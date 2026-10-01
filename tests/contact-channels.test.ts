@@ -1,16 +1,16 @@
 import { usableChannels, type SellerContact } from '../src/lib/seller'
 
 /**
- * A listing stores the channels chosen at posting time. usableChannels is the
- * one place that decides what is still offered, so the rules that matter live
- * or die here:
+ * usableChannels is the one place that decides what a listing page offers, so
+ * the rules that matter live or die here:
  *
  *   - a TrustClub profile is an identity, not an inbox
  *   - a Facebook page is a detour with no way to say "I want this"
+ *   - what it reads is the seller's profile today, never the listing's
+ *     posting-time snapshot
  *
- * Both were offered before and are snapshotted on listings posted then, so
- * dropping them needed no migration — but it does need a test, or the next
- * person to add a channel map will quietly put them back.
+ * The last one is what keeps a listing posted before its seller had a phone
+ * number from staying unanswerable for good.
  */
 function seller(over: Partial<SellerContact> = {}): SellerContact {
   return {
@@ -24,28 +24,32 @@ function seller(over: Partial<SellerContact> = {}): SellerContact {
 }
 
 describe('usableChannels', () => {
-  it('never offers TrustClub, even on a listing that stored it', () => {
-    expect(usableChannels(['TRUSTCLUB'], seller({ hasPhone: true }))).toEqual([])
+  it('never offers TrustClub', () => {
+    expect(usableChannels(seller({ hasPhone: true }))).not.toContain('TRUSTCLUB')
   })
 
   it('never offers Facebook, even when the seller still has a page', () => {
-    expect(usableChannels(['FACEBOOK'], seller({ hasFacebook: true }))).toEqual([])
+    expect(usableChannels(seller({ hasFacebook: true }))).toEqual([])
   })
 
-  it('keeps the reachable ones from an old snapshot and drops the rest', () => {
-    const chosen = ['PHONE', 'SMS', 'MESSENGER', 'VIBER', 'FACEBOOK', 'TRUSTCLUB']
-    expect(usableChannels(chosen, seller({ hasPhone: true, hasViber: true }))).toEqual([
-      'PHONE',
-      'SMS',
-      'VIBER',
-    ])
+  it('offers a number as both call and text', () => {
+    expect(usableChannels(seller({ hasPhone: true }))).toEqual(['PHONE', 'SMS'])
+  })
+
+  it('picks up a channel added after the listing was posted', () => {
+    // The listing's snapshot is not consulted at all, which is the point: a
+    // seller who adds a number becomes reachable on every listing they have,
+    // without editing any of them.
+    expect(usableChannels(seller({ hasMessenger: true }))).toEqual(['MESSENGER'])
   })
 
   it('drops a channel the seller has since cleared from their profile', () => {
-    expect(usableChannels(['MESSENGER'], seller({ hasPhone: true }))).toEqual([])
+    expect(usableChannels(seller({ hasViber: true }))).toEqual(['VIBER'])
+    expect(usableChannels(seller())).toEqual([])
   })
 
-  it('leaves a listing with nothing when its seller can no longer be reached', () => {
-    expect(usableChannels(['PHONE', 'TRUSTCLUB'], seller())).toEqual([])
+  it('orders them call, text, Messenger, Viber', () => {
+    const all = seller({ hasPhone: true, hasMessenger: true, hasViber: true })
+    expect(usableChannels(all)).toEqual(['PHONE', 'SMS', 'MESSENGER', 'VIBER'])
   })
 })

@@ -97,9 +97,9 @@ export default async function ListingPage({ params }: Params) {
     .map((def) => ({ def, value: values[def.key] }))
     .filter((r) => r.value !== undefined && r.value !== null && r.value !== '')
 
-  // Only channels the seller can actually be reached on — a stale choice from
-  // posting time is dropped here rather than offered and then refused.
-  const channels = usableChannels((listing.contactChannels ?? []) as string[], seller)
+  // What the seller can be reached on today, read from their profile rather
+  // than from the listing's posting-time snapshot — see usableChannels.
+  const channels = usableChannels(seller)
   const sellerName = listing.account.displayName ?? listing.account.trustclubId
   // Named, so the button says where it is about to take someone. A stored link
   // whose host is no longer one we allow is simply not offered.
