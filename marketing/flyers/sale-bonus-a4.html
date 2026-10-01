@@ -32,9 +32,13 @@
   .brand { display: flex; align-items: center; gap: 3mm; }
   .brand .display { font-size: 15mm; color: var(--ink); }
   .brand .display span { color: var(--red); }
+  .powered { display: flex; align-items: center; gap: 1.6mm; margin-top: 1.5mm;
+             font-size: 4.2mm; color: var(--muted); }
+  .powered img { height: 5.5mm; }
+  .powered b { font-weight: 600; color: var(--ink); }
   .tag { border: .8mm solid var(--ink); background: var(--yellow); box-shadow: 1mm 1mm 0 var(--ink); padding: 1.5mm 4mm; font-size: 6mm; letter-spacing: .04em; }
 
-  .hero { text-align: center; padding: 10mm 0 9mm; }
+  .hero { text-align: center; padding: 8mm 0 8mm; }
   .hero .kicker { font-size: 8mm; letter-spacing: .06em; }
   .hero .amount { color: var(--red); font-size: 58mm; letter-spacing: -.01em; margin: 2mm 0 0; }
   .hero .per { font-size: 17mm; margin-top: 1mm; }
@@ -61,9 +65,8 @@
   .rules .label { font-size: 5.4mm; color: var(--red); }
   .rules p { margin: 1mm 0 0; font-size: 4.1mm; line-height: 1.35; color: var(--muted); }
 
-  footer { margin-top: 5mm; display: flex; align-items: center; justify-content: space-between;
+  footer { margin-top: 5mm; display: flex; align-items: center; justify-content: flex-end;
            font-size: 4mm; color: var(--muted); }
-  footer img { height: 8mm; vertical-align: middle; margin-right: 2mm; }
 </style>
 </head>
 <body>
@@ -76,7 +79,10 @@
         <circle cx="19" cy="24" r="3.5" fill="#fff" stroke="#17130E" stroke-width="2.5"/>
         <path d="M23 12h5l1 6" stroke="#17130E" stroke-width="2.5" stroke-linecap="round"/>
       </svg>
-      <span class="display">Kanto<span>List</span></span>
+      <div>
+        <span class="display">Kanto<span>List</span></span>
+        <div class="powered"><span>Powered by</span><img src="TCLogo-IconOnly-StealthBlack-minpadding.png" alt=""><b>TrustClub</b></div>
+      </div>
     </div>
     <span class="tag label">Promo</span>
   </header>
@@ -135,7 +141,6 @@
   </section>
 
   <footer>
-    <span><img src="TCLogo-IconOnly-StealthBlack-minpadding.png" alt="">KantoList — built on TrustClub</span>
     <span>Max ₱1,000 per member per week</span>
   </footer>
 </div>
