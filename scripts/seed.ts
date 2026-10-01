@@ -149,49 +149,6 @@ const DEMO_ACCOUNTS = [
 
 const DEMO_LISTINGS: DemoListing[] = [
   {
-    owner: 'ruben.dlc', category: 'motorcycle', type: 'RENT',
-    title: 'Honda Click 125i — daily rental', price: 450, unit: 'PER_DAY', negotiable: true,
-    municipality: 'San Ildefonso', barangay: 'Matimbubong', daysAgo: 5,
-    description:
-      'Well-maintained Click 125i, change oil every month, good tires. Helmet included, second one available on request. Pick-up at Parian or delivery within San Ildefonso for ₱150. Weekly and monthly rates negotiable for long-term renters.',
-    attributes: { brand: 'Honda', model: 'Click 125i', year: 2021, displacement_cc: 125, condition: 'Used', with_or_cr: true },
-  },
-  {
-    owner: 'juan.santos', category: 'motorcycle', type: 'SELL',
-    title: 'Honda Click 125i 2021, complete papers', price: 52000, unit: 'TOTAL', negotiable: true,
-    municipality: 'San Ildefonso', daysAgo: 2,
-    description: 'Second owner, all papers complete and updated. No hidden damage, always parked in a garage.',
-    attributes: { brand: 'Honda', model: 'Click 125i', year: 2021, displacement_cc: 125, condition: 'Used', mileage_km: 12400, with_or_cr: true },
-  },
-  {
-    owner: 'marites.g', category: 'motorcycle', type: 'RENT',
-    title: 'Yamaha Mio Soul 115, weekly rate available', price: 2600, unit: 'PER_WEEK',
-    municipality: 'San Ildefonso', daysAgo: 5,
-    description: 'Good for delivery riders. Weekly and monthly terms, deposit and valid ID required.',
-    attributes: { brand: 'Yamaha', model: 'Mio Soul 115', year: 2019, displacement_cc: 115, condition: 'Used', with_or_cr: true },
-  },
-  {
-    owner: 'ana.cruz', category: 'motorcycle', type: 'SELL',
-    title: 'Honda Click 160 ABS 2022, under warranty', price: 68000, unit: 'TOTAL',
-    municipality: 'San Ildefonso', daysAgo: 7,
-    description: 'Still under casa warranty until next year. Complete service records.',
-    attributes: { brand: 'Honda', model: 'Click 160 ABS', year: 2022, displacement_cc: 160, condition: 'Used', mileage_km: 6100, with_or_cr: true },
-  },
-  {
-    owner: 'lito.reyes', category: 'motorcycle', type: 'SELL',
-    title: 'Yamaha NMAX 155 2022, all stock', price: 61500, unit: 'TOTAL',
-    municipality: 'San Ildefonso', daysAgo: 3, status: 'RESERVED',
-    description: 'All stock, nothing replaced. Reserved pending pick-up this week.',
-    attributes: { brand: 'Yamaha', model: 'NMAX 155', year: 2022, displacement_cc: 155, condition: 'Used', with_or_cr: true },
-  },
-  {
-    owner: 'lito.reyes', category: 'tricycle', type: 'SELL',
-    title: 'Tricycle with franchise, Bajaj 150', price: 95000, unit: 'TOTAL', negotiable: true,
-    municipality: 'San Ildefonso', daysAgo: 4,
-    description: 'Franchise included and transferable. Sidecar recently repainted, body in good shape.',
-    attributes: { trike_type: 'Motorcycle + sidecar', year: 2018, with_franchise: true, condition: 'Used' },
-  },
-  {
     owner: 'boyet.motors', category: 'repair', type: 'SERVICE',
     title: 'Motorcycle repair and tune-up, home service', price: 300, unit: 'PER_JOB',
     municipality: 'San Ildefonso', daysAgo: 6,
@@ -204,20 +161,6 @@ const DEMO_LISTINGS: DemoListing[] = [
     municipality: 'San Ildefonso', daysAgo: 9,
     description: 'Working condition, brakes recently serviced. Small scratches on the frame.',
     attributes: { bike_type: 'Mountain', frame_size: 'M', wheel_size_in: 26, condition: 'Used' },
-  },
-  {
-    owner: 'marites.g', category: 'sound-lights', type: 'RENT',
-    title: 'Videoke and sound system for fiestas', price: 1500, unit: 'PER_DAY', negotiable: true,
-    municipality: 'San Ildefonso', daysAgo: 12,
-    description: 'Two speakers, amplifier, two mics and basic lights. Delivery and set-up included within San Ildefonso.',
-    attributes: { gear_type: 'Full set', wattage: 1200, condition: 'Used' },
-  },
-  {
-    owner: 'juan.santos', category: 'transport-hauling', type: 'SERVICE',
-    title: 'Hauling and lipat-bahay, closed van', price: null, unit: 'QUOTE',
-    municipality: 'San Ildefonso', daysAgo: 14,
-    description: 'Closed van for moving house or delivering goods anywhere in Bulacan. Message for a quote — price depends on distance and volume.',
-    attributes: { vehicle: 'Van', capacity_kg: 1500 },
   },
 ]
 

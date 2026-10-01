@@ -41,28 +41,8 @@ export interface SeedCategory {
 
 export const CATEGORIES: SeedCategory[] = [
   {
-    slug: 'vehicles', name: 'Vehicles', icon: 'motorcycle',
+    slug: 'vehicles', name: 'Vehicles', icon: 'bicycle',
     children: [
-      {
-        slug: 'motorcycle', name: 'Motorcycle',
-        attributes: [
-          { key: 'brand', label: 'Brand', type: 'enum', filter: 'exact', required: true,
-            options: ['Honda', 'Yamaha', 'Suzuki', 'Kawasaki', 'Rusi', 'Kymco', 'Other'] },
-          { key: 'model', label: 'Model', type: 'text', filterable: false },
-          { key: 'year', label: 'Year', type: 'int', min: 1970, max: 2100, filter: 'range' },
-          { key: 'displacement_cc', label: 'Engine size', type: 'int', unit: 'cc', min: 25, max: 2000,
-            filter: 'range', required: true,
-            buckets: [
-              { label: 'Under 125', max: 124 },
-              { label: '125–155', min: 125, max: 155 },
-              { label: '156–250', min: 156, max: 250 },
-              { label: '250 and up', min: 251 },
-            ] },
-          CONDITION,
-          { key: 'mileage_km', label: 'Mileage', type: 'int', unit: 'km', min: 0, max: 500000, filter: 'range' },
-          { key: 'with_or_cr', label: 'With OR/CR', type: 'bool', filter: 'exact' },
-        ],
-      },
       {
         slug: 'bicycle', name: 'Bicycle',
         attributes: [
@@ -71,27 +51,6 @@ export const CATEGORIES: SeedCategory[] = [
           { key: 'frame_size', label: 'Frame size', type: 'enum', filter: 'exact',
             options: ['XS', 'S', 'M', 'L', 'XL'] },
           { key: 'wheel_size_in', label: 'Wheel size', type: 'int', unit: 'in', min: 12, max: 29, filter: 'exact' },
-          CONDITION,
-        ],
-      },
-      {
-        slug: 'tricycle', name: 'Tricycle / E-trike',
-        attributes: [
-          { key: 'trike_type', label: 'Type', type: 'enum', filter: 'exact',
-            options: ['Motorcycle + sidecar', 'E-trike'] },
-          { key: 'year', label: 'Year', type: 'int', min: 1970, max: 2100, filter: 'range' },
-          { key: 'with_franchise', label: 'With franchise', type: 'bool', filter: 'exact' },
-          CONDITION,
-        ],
-      },
-      {
-        slug: 'car-van-truck', name: 'Car / Van / Truck',
-        attributes: [
-          { key: 'brand', label: 'Brand', type: 'text', filterable: false },
-          { key: 'year', label: 'Year', type: 'int', min: 1960, max: 2100, filter: 'range' },
-          { key: 'transmission', label: 'Transmission', type: 'enum', filter: 'exact',
-            options: ['Manual', 'Automatic'] },
-          { key: 'seats', label: 'Seats', type: 'int', min: 2, max: 60, filter: 'min' },
           CONDITION,
         ],
       },
@@ -109,24 +68,6 @@ export const CATEGORIES: SeedCategory[] = [
           { key: 'storage_gb', label: 'Storage', type: 'int', unit: 'GB', min: 4, max: 2048, filter: 'min' },
           CONDITION,
           { key: 'with_box', label: 'With box and charger', type: 'bool', filter: 'exact' },
-        ],
-      },
-      {
-        slug: 'laptop-computer', name: 'Laptop / Computer',
-        attributes: [
-          { key: 'brand', label: 'Brand', type: 'text', filterable: false },
-          { key: 'ram_gb', label: 'RAM', type: 'int', unit: 'GB', min: 1, max: 256, filter: 'min' },
-          { key: 'storage_gb', label: 'Storage', type: 'int', unit: 'GB', min: 8, max: 8192, filter: 'min' },
-          CONDITION,
-        ],
-      },
-      {
-        slug: 'sound-lights', name: 'Sound / Lights',
-        attributes: [
-          { key: 'gear_type', label: 'Type', type: 'enum', filter: 'exact', required: true,
-            options: ['Speaker', 'Amplifier', 'Lights', 'Full set'] },
-          { key: 'wattage', label: 'Power', type: 'int', unit: 'W', min: 10, max: 20000, filter: 'min' },
-          CONDITION,
         ],
       },
       {
@@ -188,14 +129,6 @@ export const CATEGORIES: SeedCategory[] = [
         ],
       },
       {
-        slug: 'transport-hauling', name: 'Transport & hauling',
-        attributes: [
-          { key: 'vehicle', label: 'Vehicle', type: 'enum', filter: 'exact', required: true,
-            options: ['Tricycle', 'Van', 'Truck', 'Habal-habal', 'Multicab'] },
-          { key: 'capacity_kg', label: 'Capacity', type: 'int', unit: 'kg', min: 10, max: 40000, filter: 'min' },
-        ],
-      },
-      {
         slug: 'beauty-wellness', name: 'Beauty & wellness',
         attributes: [
           { key: 'beauty_service', label: 'Service', type: 'enum', filter: 'exact', required: true,
@@ -204,30 +137,11 @@ export const CATEGORIES: SeedCategory[] = [
         ],
       },
       {
-        slug: 'laundry', name: 'Laundry',
-        attributes: [
-          { key: 'laundry_service', label: 'Service', type: 'enum', filter: 'exact', required: true,
-            options: ['Wash & fold', 'Wash, dry & press', 'Press only', 'Dry cleaning', 'Comforter & curtains'] },
-          { key: 'pickup', label: 'Free pick-up and delivery', type: 'bool', filter: 'exact' },
-          { key: 'min_kg', label: 'Minimum load', type: 'int', unit: 'kg', min: 1, max: 50, filter: 'min' },
-        ],
-      },
-      {
         slug: 'printing', name: 'Printing & signage',
         attributes: [
           { key: 'print_type', label: 'Type', type: 'enum', filter: 'exact', required: true,
             options: ['Tarpaulin', 'T-shirt printing', 'Invitations & giveaways', 'Sticker & decal', 'Layout only', 'Photocopy & documents'] },
           { key: 'rush', label: 'Rush orders accepted', type: 'bool', filter: 'exact' },
-        ],
-      },
-      {
-        slug: 'tutoring', name: 'Tutoring & lessons',
-        attributes: [
-          { key: 'subject', label: 'Subject', type: 'enum', filter: 'exact', required: true,
-            options: ['Math', 'Science', 'English', 'Reading', 'Filipino', 'Computer', 'Music', 'Driving'] },
-          { key: 'level', label: 'Level', type: 'enum', filter: 'exact',
-            options: ['Preschool', 'Grade school', 'High school', 'College', 'Adult'] },
-          { key: 'online', label: 'Online available', type: 'bool', filter: 'exact' },
         ],
       },
       {

@@ -19,44 +19,15 @@ const stroke = {
 }
 
 const MARKS: Record<string, Mark> = {
-  motorcycle: ({ size }) => (
-    <svg width={size} height={size} viewBox="0 0 32 32" {...stroke} aria-hidden="true">
-      <circle cx="7" cy="22" r="5" /><circle cx="25" cy="22" r="5" />
-      <path d="M7 22l6-11h6l4 7M19 11h4M11 11h5" />
-    </svg>
-  ),
   bicycle: ({ size }) => (
     <svg width={size} height={size} viewBox="0 0 32 32" {...stroke} aria-hidden="true">
       <circle cx="7" cy="22" r="5.5" /><circle cx="25" cy="22" r="5.5" />
       <path d="M7 22l5-11h7l6 11M12 11h-3M19 11l2.5 5" />
     </svg>
   ),
-  tricycle: ({ size }) => (
-    <svg width={size} height={size} viewBox="0 0 32 32" {...stroke} aria-hidden="true">
-      <circle cx="8" cy="23" r="4" /><circle cx="24" cy="23" r="4" />
-      <path d="M4 15h13v8M17 15l4-5h4l2 6v7" />
-    </svg>
-  ),
-  'car-van-truck': ({ size }) => (
-    <svg width={size} height={size} viewBox="0 0 32 32" {...stroke} aria-hidden="true">
-      <path d="M3 20v-6l3-5h12v11" /><path d="M18 12h6l4 5v3h-4" />
-      <circle cx="9" cy="21" r="2.5" /><circle cx="23" cy="21" r="2.5" />
-    </svg>
-  ),
   'phone-tablet': ({ size }) => (
     <svg width={size} height={size} viewBox="0 0 32 32" {...stroke} aria-hidden="true">
       <rect x="10" y="3" width="12" height="26" rx="2" /><path d="M14 25h4" />
-    </svg>
-  ),
-  'laptop-computer': ({ size }) => (
-    <svg width={size} height={size} viewBox="0 0 32 32" {...stroke} aria-hidden="true">
-      <rect x="6" y="7" width="20" height="13" rx="1" /><path d="M3 24h26l-2-4H5z" />
-    </svg>
-  ),
-  'sound-lights': ({ size }) => (
-    <svg width={size} height={size} viewBox="0 0 32 32" {...stroke} aria-hidden="true">
-      <rect x="8" y="3" width="16" height="26" rx="2" />
-      <circle cx="16" cy="20" r="5" /><circle cx="16" cy="9" r="2.5" />
     </svg>
   ),
   appliances: ({ size }) => (
@@ -86,12 +57,6 @@ const MARKS: Record<string, Mark> = {
       <path d="M4 20h24v5H4zM7 20V9l9-4 9 4v11" /><path d="M12 20v-6h8v6" />
     </svg>
   ),
-  'transport-hauling': ({ size }) => (
-    <svg width={size} height={size} viewBox="0 0 32 32" {...stroke} aria-hidden="true">
-      <rect x="3" y="9" width="16" height="12" rx="1" /><path d="M19 13h5l4 5v3h-9z" />
-      <circle cx="9" cy="23" r="2.5" /><circle cx="23" cy="23" r="2.5" />
-    </svg>
-  ),
   'events-food': ({ size }) => (
     <svg width={size} height={size} viewBox="0 0 32 32" {...stroke} aria-hidden="true">
       <path d="M4 20a12 12 0 0 1 24 0zM2 23h28" /><path d="M16 8V4" />
@@ -103,21 +68,10 @@ const MARKS: Record<string, Mark> = {
       <path d="M16 9V4M11 6l2 3M21 6l-2 3" />
     </svg>
   ),
-  laundry: ({ size }) => (
-    <svg width={size} height={size} viewBox="0 0 32 32" {...stroke} aria-hidden="true">
-      <rect x="5" y="3" width="22" height="26" rx="2" /><circle cx="16" cy="18" r="7" />
-      <path d="M9 8h3M22 8h1" />
-    </svg>
-  ),
   printing: ({ size }) => (
     <svg width={size} height={size} viewBox="0 0 32 32" {...stroke} aria-hidden="true">
       <path d="M9 12V4h14v8" /><rect x="4" y="12" width="24" height="10" rx="2" />
       <path d="M9 20h14v8H9z" />
-    </svg>
-  ),
-  tutoring: ({ size }) => (
-    <svg width={size} height={size} viewBox="0 0 32 32" {...stroke} aria-hidden="true">
-      <path d="M3 11l13-6 13 6-13 6z" /><path d="M9 14v7c0 2 3.5 4 7 4s7-2 7-4v-7" />
     </svg>
   ),
   'water-lpg': ({ size }) => (
@@ -180,7 +134,7 @@ const MARKS: Record<string, Mark> = {
 
 /** Parent-category fallbacks, so a new leaf still gets something sensible. */
 const PARENT_FALLBACK: Record<string, string> = {
-  vehicles: 'motorcycle',
+  vehicles: 'bicycle',
   electronics: 'phone-tablet',
   'tools-equipment': 'power-tools',
   'home-furniture': 'furniture',

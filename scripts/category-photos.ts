@@ -8,15 +8,10 @@
  */
 export const CATEGORY_PHOTOS: Record<string, string[]> = {
   // Vehicles
-  motorcycle: ['click.jpg', 'mio-soul.jpg', 'click160.jpg', 'nmax.jpg', 'click-hero.jpg'],
   bicycle: ['bike.jpg'],
-  tricycle: ['tricycle.jpg', 'tricycle2.jpg'],
-  'car-van-truck': ['car.jpg', 'van.jpg'],
 
   // Electronics
   'phone-tablet': ['phone.jpg'],
-  'laptop-computer': ['laptop.jpg', 'printer.jpg'],
-  'sound-lights': ['speaker.jpg', 'videoke.jpg'],
   appliances: ['fridge.jpg', 'fan.jpg', 'aircon.jpg'],
 
   // Tools, home
@@ -26,12 +21,9 @@ export const CATEGORY_PHOTOS: Record<string, string[]> = {
   // Services
   repair: ['repair.jpg', 'aircon.jpg', 'tools.jpg'],
   construction: ['construction.jpg', 'welding.jpg'],
-  'transport-hauling': ['van.jpg'],
   'events-food': ['catering.jpg'],
   'beauty-wellness': ['nails.jpg', 'barber.jpg', 'massage.jpg'],
-  laundry: ['laundry.jpg'],
   printing: ['printing.jpg', 'printer.jpg'],
-  tutoring: ['tutor.jpg'],
   'water-lpg': ['water.jpg', 'lpg.jpg'],
 
   // Farm
