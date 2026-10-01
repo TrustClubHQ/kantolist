@@ -6,11 +6,7 @@ import { translatedTitle } from '@/lib/page-title'
 
 export const generateMetadata = translatedTitle('title.terms')
 
-/* NOTE FOR THE TEAM: this page still needs review by counsel before launch —
-   governing law, liability limits and the dispute process. That note used to
-   be printed on the page itself, where visitors read it as part of the terms.
-
-   The legal text itself stays in English: a translated version would be a
+/* The legal text itself stays in English: a translated version would be a
    second set of terms, and which one governs is not a question a listings
    board should be asking. The page says so in the reader's language. */
 export default async function TermsPage() {

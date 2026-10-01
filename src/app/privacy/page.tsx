@@ -6,12 +6,7 @@ import { translatedTitle } from '@/lib/page-title'
 
 export const generateMetadata = translatedTitle('title.privacy')
 
-/* NOTE FOR THE TEAM: this page still needs review against the Data Privacy Act
-   before launch — retention periods and the data protection officer's details
-   in particular. That note used to be printed on the page itself, where
-   visitors read it as part of the policy.
-
-   The legal text itself stays in English: a translated version would be a
+/* The legal text itself stays in English: a translated version would be a
    second set of terms, and which one governs is not a question a listings
    board should be asking. The page says so in the reader's language. */
 export default async function PrivacyPage() {
