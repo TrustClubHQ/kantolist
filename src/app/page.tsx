@@ -16,14 +16,29 @@ export const dynamic = 'force-dynamic'
 export default async function HomePage() {
   const [account, t] = await Promise.all([getCurrentAccount(), getT()])
 
-  const [categories, result] = await Promise.all([
+  const [categories, result, counts] = await Promise.all([
     prisma.category.findMany({
-      where: { isActive: true, parentId: null },
+      where: { isActive: true },
       orderBy: { sortOrder: 'asc' },
-      select: { slug: true, name: true, icon: true },
+      select: { id: true, slug: true, name: true, icon: true, parentId: true },
     }),
     searchListings({ page: 1 }, account?.trustclubId ?? null),
+    // One grouped count rather than a query per tile. A category with nothing
+    // in it looks exactly like a full one otherwise, which is how a new
+    // marketplace reads as empty even when it is not.
+    prisma.listing.groupBy({
+      by: ['categoryId'],
+      where: { status: { in: ['ACTIVE', 'RESERVED'] } },
+      _count: { _all: true },
+    }),
   ])
+
+  const countByCategory = new Map(counts.map((row) => [row.categoryId, row._count._all]))
+  const parents = categories.filter((c) => !c.parentId)
+  const countFor = (parentId: string) =>
+    categories
+      .filter((c) => c.id === parentId || c.parentId === parentId)
+      .reduce((sum, c) => sum + (countByCategory.get(c.id) ?? 0), 0)
 
   const home = account?.municipalityId
     ? await prisma.municipality.findUnique({ where: { id: account.municipalityId } })
@@ -56,15 +71,25 @@ export default async function HomePage() {
       <section className="mx-auto w-full max-w-6xl px-3 py-5 sm:px-4 sm:py-6">
         <h2 className="label m-0 mb-3 text-[20px]">{t('home.categories')}</h2>
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
-          {categories.map((c) => (
-            <Link
-              key={c.slug}
-              href={`/browse?category=${c.slug}`}
-              className="hard-sm flex min-h-[74px] items-center justify-center border-[3px] border-ink bg-panel px-3 py-3 text-center text-ink hover:bg-yellow hover:text-ink"
-            >
-              <span className="label text-[17px]">{categoryName(t, c.slug, c.name)}</span>
-            </Link>
-          ))}
+          {parents.map((c) => {
+            const count = countFor(c.id)
+            return (
+              <Link
+                key={c.slug}
+                href={`/browse?category=${c.slug}`}
+                className="hard-sm flex min-h-[74px] flex-col items-center justify-center gap-1 border-[3px] border-ink bg-panel px-3 py-3 text-center text-ink hover:bg-yellow hover:text-ink"
+              >
+                <span className="label text-[17px]">{categoryName(t, c.slug, c.name)}</span>
+                <span className="label text-[13px] font-semibold text-muted">
+                  {count === 0
+                    ? t('home.categoryEmpty')
+                    : count === 1
+                      ? t('home.categoryCountOne')
+                      : t('home.categoryCount', { count })}
+                </span>
+              </Link>
+            )
+          })}
         </div>
       </section>
 
@@ -78,7 +103,7 @@ export default async function HomePage() {
           </Link>
         </div>
 
-        {categories.length === 0 ? (
+        {parents.length === 0 ? (
           <Plate className="p-6">
             <p className="label m-0 text-[20px]">{t('home.noData')}</p>
             <p className="mt-2 text-sm text-muted-2">{t('home.noDataHelp')}</p>

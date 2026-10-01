@@ -2,6 +2,7 @@ import type { Listing, ListingStatus, ListingType, Prisma } from '@prisma/client
 import { prisma } from '@/lib/prisma'
 import { getTrustPointsBatch, TRUST_LOOKUP_BUDGET } from '@/lib/trustclub'
 import { parseSchema, parseAttributeFilters, attributeWhereClauses } from '@/lib/attributes'
+import { categorySlugsMatching } from '@/lib/i18n'
 
 /**
  * Search and ranking.
@@ -117,9 +118,25 @@ async function buildWhere(params: SearchParams): Promise<Prisma.ListingWhereInpu
   if (params.q) {
     const q = params.q.trim().slice(0, 80)
     if (q) {
+      // A word can be a category rather than something in the text: "gulay",
+      // "appliances", "sasakyan". Matching the category as well is the
+      // difference between a search that works in Taglish and one that only
+      // works when the seller happened to use your word in their title.
+      const matched = await prisma.category.findMany({
+        where: {
+          OR: [
+            { name: { contains: q, mode: 'insensitive' } },
+            { slug: { in: categorySlugsMatching(q) } },
+          ],
+        },
+        select: { id: true, children: { select: { id: true } } },
+      })
+      const categoryIds = matched.flatMap((c) => [c.id, ...c.children.map((child) => child.id)])
+
       where.OR = [
         { title: { contains: q, mode: 'insensitive' } },
         { description: { contains: q, mode: 'insensitive' } },
+        ...(categoryIds.length > 0 ? [{ categoryId: { in: categoryIds } }] : []),
       ]
     }
   }
@@ -207,7 +224,9 @@ export async function searchListings(
 
   return {
     items: ranked.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE),
-    total,
+    // Only the window can be ranked, so only the window can be paged through.
+    // Reporting the full count here offered pages that were always empty.
+    total: Math.min(total, candidates.length),
     page,
     pageSize: PAGE_SIZE,
     trustRanked: true,

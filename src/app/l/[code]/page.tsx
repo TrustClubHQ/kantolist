@@ -10,6 +10,7 @@ import { Badge, Plate, PlateHeader, Price } from '@/components/ui'
 import { TrustPointsPair, TrustClubLink } from '@/components/TrustPoints'
 import { ContactSheet } from '@/components/ContactSheet'
 import { ReportLink } from '@/components/ReportLink'
+import { ShareButton } from '@/components/ShareButton'
 import { CategoryMark } from '@/components/CategoryMark'
 import { PhotoGallery } from '@/components/PhotoGallery'
 import { codeFromParam, formatPrice, listingPath, videoHostName, listingTypeLabel } from '@/lib/listing'
@@ -172,9 +173,18 @@ export default async function ListingPage({ params }: Params) {
                 <p className="label m-0 text-[20px] leading-tight">{sellerName}</p>
                 <div className="mt-0.5 flex flex-wrap items-center gap-2">
                   <TrustClubLink trustclubId={listing.account.trustclubId} />
-                  <span className="label text-[15px] font-semibold text-muted">
-                    {t('listing.listingCount', { count: listing.account._count.listings })}
-                  </span>
+                  {listing.account._count.listings > 1 ? (
+                    <Link
+                      href={`/u/${listing.account.trustclubId}`}
+                      className="label text-[15px] font-semibold text-muted underline hover:text-red"
+                    >
+                      {t('listing.seeSeller', { count: listing.account._count.listings })}
+                    </Link>
+                  ) : (
+                    <span className="label text-[15px] font-semibold text-muted">
+                      {t('listing.listingCount', { count: listing.account._count.listings })}
+                    </span>
+                  )}
                 </div>
               </div>
             </div>
@@ -248,6 +258,10 @@ export default async function ListingPage({ params }: Params) {
         ) : null}
 
         <div className="mt-4 flex justify-center">
+          <ShareButton title={listing.title} />
+        </div>
+
+        <div className="mt-3 flex justify-center">
           <ReportLink
             listingId={listing.id}
             listingTitle={listing.title}

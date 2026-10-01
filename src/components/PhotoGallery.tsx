@@ -44,6 +44,10 @@ function stageRatio(first: GalleryImage | undefined): number | null {
 export function PhotoGallery({ images, title }: { images: GalleryImage[]; title: string }) {
   const t = useT()
   const [index, setIndex] = useState(0)
+  // Full size, on top of everything. For a used item the photo is the whole
+  // decision, and the stage is sized to keep the price above the fold — which
+  // is the right trade until someone wants to look closely.
+  const [zoomed, setZoomed] = useState<number | null>(null)
   const strip = useRef<HTMLDivElement>(null)
   // Photos uploaded before the size was recorded have none stored, so the first
   // one reports its own on load rather than being letterboxed into the default.
@@ -97,7 +101,13 @@ export function PhotoGallery({ images, title }: { images: GalleryImage[]; title:
           aria-label={many ? t('listing.photoCount', { count: images.length, title }) : undefined}
         >
           {images.map((image, i) => (
-            <div key={image.id} className="relative h-full w-full shrink-0 snap-center">
+            <button
+              key={image.id}
+              type="button"
+              onClick={() => setZoomed(i)}
+              aria-label={t('photo.open', { number: i + 1 })}
+              className="relative h-full w-full shrink-0 snap-center"
+            >
               <Image
                 src={image.url}
                 alt={i === 0 ? title : t('listing.photoOf', { title, number: i + 1 })}
@@ -116,7 +126,7 @@ export function PhotoGallery({ images, title }: { images: GalleryImage[]; title:
                     : undefined
                 }
               />
-            </div>
+            </button>
           ))}
         </div>
 
@@ -143,6 +153,37 @@ export function PhotoGallery({ images, title }: { images: GalleryImage[]; title:
           </>
         ) : null}
       </div>
+
+      {zoomed !== null ? (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-[rgba(23,19,14,0.92)] p-3"
+          role="dialog"
+          aria-modal="true"
+          aria-label={t('photo.open', { number: zoomed + 1 })}
+          onClick={() => setZoomed(null)}
+        >
+          <Image
+            src={images[zoomed].url}
+            alt={t('listing.photoOf', { title, number: zoomed + 1 })}
+            fill
+            sizes="100vw"
+            className="object-contain p-3"
+          />
+          <button
+            type="button"
+            onClick={() => setZoomed(null)}
+            aria-label={t('photo.close')}
+            className="label absolute right-3 top-3 z-10 flex h-[44px] w-[44px] items-center justify-center border-[3px] border-ground bg-ink text-[20px] text-ground"
+          >
+            ✕
+          </button>
+          {many ? (
+            <span className="label absolute bottom-4 left-1/2 z-10 -translate-x-1/2 bg-ink px-2.5 py-0.5 text-[15px] text-ground">
+              {zoomed + 1} / {images.length}
+            </span>
+          ) : null}
+        </div>
+      ) : null}
 
       {many ? (
         <div className="mx-auto w-full max-w-3xl border-t-4 border-ink bg-panel">

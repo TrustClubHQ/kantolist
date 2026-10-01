@@ -74,6 +74,27 @@ export function attributeLabel(t: T, key: string, stored: string): string {
   return orStored(t, `attr.${key}`, stored)
 }
 
+/**
+ * Category slugs whose name matches a search word, in either language.
+ *
+ * Someone searching in Taglish types "sasakyan", not "vehicles" — and even in
+ * English, "appliances" only ever matched listings that happened to use the
+ * word in their title. The names are in the dictionary rather than the
+ * database, so the match has to start here.
+ */
+export function categorySlugsMatching(query: string): string[] {
+  const needle = query.trim().toLowerCase()
+  if (needle.length < 2) return []
+  const slugs = new Set<string>()
+  for (const dictionary of Object.values(dictionaries)) {
+    for (const [key, value] of Object.entries(dictionary)) {
+      if (!key.startsWith('category.')) continue
+      if (value.toLowerCase().includes(needle)) slugs.add(key.slice('category.'.length))
+    }
+  }
+  return [...slugs]
+}
+
 function orStored(t: T, key: string, stored: string): string {
   const translated = t(key)
   return translated === key ? stored : translated
@@ -138,6 +159,9 @@ const en: Record<string, string> = {
   'home.hero.signedOut':
     'Log in with TrustClub and listings from people your own network vouches for come first.',
   'home.categories': 'Browse by category',
+  'home.categoryCount': '{count} listings',
+  'home.categoryCountOne': '1 listing',
+  'home.categoryEmpty': 'nothing yet',
   'home.trusted': 'Trusted by your network',
   'home.newest': 'Newest in your area',
   'home.seeAll': 'See all',
@@ -257,6 +281,20 @@ const en: Record<string, string> = {
   'listing.photoNext': 'Next photo',
   'listing.photoShow': 'Show photo {number}',
   'listing.report': 'Report this listing',
+  'listing.seeSeller': 'See all {count} listings',
+  'share.action': 'Share',
+  'share.copied': 'Link copied',
+  'share.failed': 'Could not copy that link',
+  'photo.open': 'Open photo {number} full size',
+  'photo.close': 'Close photo',
+  'seller.title': 'Listings by {name}',
+  'seller.memberSince': 'On KantoList since {when}',
+  'seller.count': '{count} listings',
+  'seller.countOne': '1 listing',
+  'seller.empty': 'Nothing listed right now',
+  'seller.emptyHelp': 'This member has no active listings at the moment.',
+  'seller.notFound': 'No such member',
+  'seller.back': 'Browse listings',
   'listing.reportHelp':
     'Something wrong with this listing? Deduct trust points from the poster on TrustClub — that is what lowers them for everyone who trusts you.',
   'listing.reportAction': 'Review @{id} on TrustClub',
@@ -706,6 +744,9 @@ const tl: Record<string, string> = {
   'home.hero.signedOut':
     'Mag-log in sa TrustClub at mauuna ang mga listing ng taong pinagkakatiwalaan ng sarili mong network.',
   'home.categories': 'Hanapin ayon sa kategorya',
+  'home.categoryCount': '{count} listing',
+  'home.categoryCountOne': '1 listing',
+  'home.categoryEmpty': 'wala pa',
   'home.trusted': 'Pinagkakatiwalaan ng network mo',
   'home.newest': 'Pinakabago sa lugar mo',
   'home.seeAll': 'Lahat',
@@ -817,6 +858,20 @@ const tl: Record<string, string> = {
   'listing.photoNext': 'Susunod na litrato',
   'listing.photoShow': 'Ipakita ang litrato {number}',
   'listing.report': 'I-report ang listing na ito',
+  'listing.seeSeller': 'Tingnan ang lahat ng {count} listing',
+  'share.action': 'I-share',
+  'share.copied': 'Nakopya ang link',
+  'share.failed': 'Hindi nakopya ang link',
+  'photo.open': 'Buksan ang litrato {number} nang buo',
+  'photo.close': 'Isara ang litrato',
+  'seller.title': 'Mga listing ni {name}',
+  'seller.memberSince': 'Nasa KantoList simula {when}',
+  'seller.count': '{count} listing',
+  'seller.countOne': '1 listing',
+  'seller.empty': 'Wala pang nakalista ngayon',
+  'seller.emptyHelp': 'Walang active na listing ang member na ito sa ngayon.',
+  'seller.notFound': 'Walang ganitong member',
+  'seller.back': 'Maghanap ng listing',
   'listing.reportHelp':
     'May mali sa listing na ito? Bawasan ang trust points ng nag-post sa TrustClub — iyon ang magpapababa sa kanila para sa lahat ng nagtitiwala sa iyo.',
   'listing.reportAction': 'I-review si @{id} sa TrustClub',

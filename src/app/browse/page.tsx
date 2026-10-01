@@ -115,18 +115,24 @@ export default async function BrowsePage({ searchParams }: { searchParams: Promi
                 {result.trustRanked ? t('browse.ranked') : ''}
               </p>
             </div>
-            <div className="-mx-3 flex gap-2 overflow-x-auto px-3 pb-1 sm:mx-0 sm:flex-wrap sm:overflow-visible sm:px-0">
+            {/* Wrapping, not scrolling: the fourth chip used to sit off the
+                right edge of a 390px screen with nothing to say it was there. */}
+            <div className="flex flex-wrap gap-2">
               {SORTS.map((key) => {
                 const active = (sort ?? (account ? 'trust' : 'newest')) === key
                 const disabled = key === 'trust' && !account
                 return disabled ? (
-                  <span
+                  // A dead chip explained only by a hover title is explained to
+                  // nobody on a phone. It is a link to the thing that unlocks it.
+                  <Link
                     key={key}
+                    href={`/signin?redirect=${encodeURIComponent(`/browse?${params.toString()}`)}`}
                     title={t('browse.sort.trustLocked')}
-                    className="label flex min-h-[40px] shrink-0 items-center whitespace-nowrap border-[2.5px] border-dim-edge bg-dim px-3 text-[16px] text-muted"
+                    className="label flex min-h-[40px] shrink-0 items-center gap-1.5 whitespace-nowrap border-[2.5px] border-dim-edge bg-dim px-3 text-[16px] text-muted hover:border-ink hover:text-ink"
                   >
+                    <LockMark />
                     {t(`browse.sort.${key}`)}
-                  </span>
+                  </Link>
                 ) : (
                   <Link
                     key={key}
@@ -214,5 +220,15 @@ export default async function BrowsePage({ searchParams }: { searchParams: Promi
 
       <SiteFooter />
     </div>
+  )
+}
+
+/** The one chip you cannot use yet. */
+function LockMark() {
+  return (
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" aria-hidden="true">
+      <rect x="4" y="10" width="16" height="11" rx="1" />
+      <path d="M8 10V7a4 4 0 0 1 8 0v3" />
+    </svg>
   )
 }
