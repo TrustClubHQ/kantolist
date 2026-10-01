@@ -3,6 +3,7 @@ import { prisma } from '@/lib/prisma'
 import { getCurrentAccount } from '@/lib/auth'
 import { SiteHeader } from '@/components/SiteHeader'
 import { SiteFooter } from '@/components/SiteFooter'
+import { SaleBonus } from '@/components/SaleBonus'
 import { ListingCard } from '@/components/ListingCard'
 import { SearchBar } from '@/components/SearchBar'
 import { Plate } from '@/components/ui'
@@ -46,6 +47,7 @@ export default async function HomePage() {
   return (
     <div className="flex min-h-screen flex-col">
       <SiteHeader location={home ? `${home.name}, ${home.province}` : undefined} />
+      <SaleBonus />
 
       <section className="border-b-4 border-ink bg-ground px-3 py-5 sm:px-4 sm:py-6">
         <div className="mx-auto max-w-6xl">

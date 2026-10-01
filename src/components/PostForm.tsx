@@ -6,7 +6,7 @@ import Link from 'next/link'
 import type { AttributeDef } from '@/lib/attributes'
 import { Plate, PlateHeader, Spinner } from '@/components/ui'
 import { useT } from '@/components/LanguageProvider'
-import { attributeLabel, categoryName } from '@/lib/i18n'
+import { attributeLabel, categoryExample, categoryName } from '@/lib/i18n'
 import { listingPath } from '@/lib/listing'
 import { PhotoPicker, uploadPendingPhotos, type ListingPhoto } from '@/components/PhotoPicker'
 
@@ -351,7 +351,7 @@ export function PostForm({
                 onChange={(e) => setTitle(e.target.value)}
                 maxLength={70}
                 required
-                placeholder={t('post.field.titlePlaceholder')}
+                placeholder={categoryExample(t, leaf?.slug)}
               />
               <span className="text-xs font-semibold text-muted">
                 {t('post.field.charsLeft', { count: 70 - title.length })}

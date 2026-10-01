@@ -70,6 +70,18 @@ export function categoryName(t: T, slug: string, stored: string): string {
 }
 
 /** The same, for an attribute's label on a category schema. */
+/**
+ * The example to show in the title box for a category.
+ *
+ * Falls back to the generic prompt rather than another category's example: a
+ * category added later should ask "what is it?", not suggest tilapia.
+ */
+export function categoryExample(t: T, slug: string | undefined): string {
+  if (!slug) return t('example.default')
+  const example = t(`example.${slug}`)
+  return example === `example.${slug}` ? t('example.default') : example
+}
+
 export function attributeLabel(t: T, key: string, stored: string): string {
   return orStored(t, `attr.${key}`, stored)
 }
@@ -385,7 +397,6 @@ const en: Record<string, string> = {
   'post.field.category': 'Category',
   'post.field.categoryPlaceholder': 'Choose a category…',
   'post.field.title': 'Title',
-  'post.field.titlePlaceholder': 'Honda Click 125i, daily rental',
   'post.field.charsLeft': '{count} characters left',
   'post.field.noCategory': 'Choose a category to see its questions.',
   'post.field.description': 'Description',
@@ -521,6 +532,47 @@ const en: Record<string, string> = {
   'report.offline': 'Could not reach the server. Try again.',
   'report.cancel': 'Cancel',
   'report.signIn': 'Log in to report this listing',
+
+  // — Sale bonus promo ————————————————————————————————————————————
+  // The flyer says it all on paper; most people arrive already knowing. So the
+  // strip states the offer in one line and keeps the rules one tap away.
+  'bonus.headline': '₱50 for you, ₱50 for your buyer',
+  'bonus.sub': 'Every first-time buyer, up to ₱1,000 a week · until 31 Oct',
+  'bonus.details': 'How it works',
+  'bonus.step1': 'Post your item on KantoList.',
+  'bonus.step2':
+    'Sell to a TrustClub member you have not sold to before, and book the Trust Transaction in the TrustClub app.',
+  'bonus.step3': '₱50 for you and ₱50 for your buyer, claimable next Friday.',
+  'bonus.rule1': 'Each buyer counts once — selling to the same person again earns neither of you a bonus.',
+  'bonus.rule2': 'We check every sale. No Trust Transaction, or a fake sale, means no bonus.',
+  'bonus.rule3': 'Paid only if your group is in good standing.',
+  'bonus.cap': 'Up to ₱1,000 per member per week, buying and selling combined, for sales made until 31 October 2026.',
+
+  // — Example titles ——————————————————————————————————————————————
+  // The placeholder in the title box, per category. One example for every
+  // category beats one good example: a motorcycle in the box while someone
+  // posts tilapia reads as a form built for somebody else.
+  'example.bicycle': 'Mountain bike, 26 inch, good tires',
+  'example.phone-tablet': 'Samsung A14, 128GB, complete with box',
+  'example.appliances': 'Two-door refrigerator, 7 cu ft',
+  'example.power-tools': 'Bosch drill with bits, barely used',
+  'example.furniture': 'Narra dining table, 6 seater',
+  'example.repair': 'Aircon cleaning and repair, same day',
+  'example.construction': 'Mason and helper, by the day',
+  'example.beauty-wellness': 'Gel manicure and pedicure, home service',
+  'example.printing': 'Tarpaulin printing, per square foot',
+  'example.water-lpg': 'Gasul delivery, 11kg, within the poblacion',
+  'example.events-food': 'Lechon for a party, 30 to 40 people',
+  'example.livestock': 'Native pigs, 3 months old',
+  'example.farm-supplies': 'Rice seedlings, per tray',
+  'example.rice-grains': 'Dinorado rice, per sack',
+  'example.vegetables-fruits': 'Fresh pechay and kamatis, per kilo',
+  'example.homemade-food': 'Homemade leche flan, orders taken',
+  'example.fish-meat': 'Fresh tilapia from the lake, per kilo',
+  'example.clothes': 'Ukay-ukay jackets, all sizes',
+  'example.shoes-bags': "Men's running shoes, size 9",
+  'example.baby-items': 'Baby crib with mattress, like new',
+  'example.default': 'What is it? Keep it short.',
 
   // — Attribute labels ————————————————————————————————————————————
   // Keyed by the attribute key from the category schema; an attribute with no
@@ -976,7 +1028,6 @@ const tl: Record<string, string> = {
   'post.field.category': 'Kategorya',
   'post.field.categoryPlaceholder': 'Pumili ng kategorya…',
   'post.field.title': 'Pamagat',
-  'post.field.titlePlaceholder': 'Honda Click 125i, arawang rental',
   'post.field.charsLeft': '{count} character pa',
   'post.field.noCategory': 'Pumili ng kategorya para makita ang mga tanong nito.',
   'post.field.description': 'Deskripsyon',
@@ -1109,6 +1160,40 @@ const tl: Record<string, string> = {
   'report.offline': 'Hindi maabot ang server. Subukan ulit.',
   'report.cancel': 'Kanselahin',
   'report.signIn': 'Mag-log in para i-report ang listing na ito',
+
+  'bonus.headline': "₱50 sa'yo, ₱50 sa buyer mo",
+  'bonus.sub': 'Bawat first-time buyer, hanggang ₱1,000 kada linggo · hanggang 31 Oct',
+  'bonus.details': 'Ganito lang',
+  'bonus.step1': 'I-post ang item mo sa KantoList.',
+  'bonus.step2':
+    'Ibenta sa TrustClub member na first time mong buyer, tapos i-book ang Trust Transaction sa app.',
+  'bonus.step3': "₱50 sa'yo at ₱50 sa buyer mo, i-claim sa susunod na Biyernes.",
+  'bonus.rule1': 'Isang beses lang kada buyer — walang bonus sa inyong dalawa kung paulit-ulit.',
+  'bonus.rule2': 'Chine-check namin bawat benta. Peke o walang Trust Transaction? Walang bonus.',
+  'bonus.rule3': 'Babayaran lang kung in good standing ang group mo.',
+  'bonus.cap': 'Hanggang ₱1,000 kada member kada linggo, bili at benta pinagsama, para sa benta hanggang 31 October 2026.',
+
+  'example.bicycle': 'Mountain bike, 26 inch, maganda ang gulong',
+  'example.phone-tablet': 'Samsung A14, 128GB, kumpleto sa box',
+  'example.appliances': 'Two-door refrigerator, 7 cu ft',
+  'example.power-tools': 'Bosch drill na may bits, bihirang gamitin',
+  'example.furniture': 'Narra dining table, 6 na upuan',
+  'example.repair': 'Aircon cleaning at repair, same day',
+  'example.construction': 'Mason at helper, kada araw',
+  'example.beauty-wellness': 'Gel manicure at pedicure, home service',
+  'example.printing': 'Tarpaulin printing, kada square foot',
+  'example.water-lpg': 'Gasul delivery, 11kg, sa loob ng poblacion',
+  'example.events-food': 'Lechon para sa handaan, 30 hanggang 40 tao',
+  'example.livestock': 'Native na baboy, 3 buwan',
+  'example.farm-supplies': 'Punla ng palay, kada tray',
+  'example.rice-grains': 'Dinorado na bigas, kada sako',
+  'example.vegetables-fruits': 'Sariwang pechay at kamatis, kada kilo',
+  'example.homemade-food': 'Lutong bahay na leche flan, tumatanggap ng order',
+  'example.fish-meat': 'Sariwang tilapia galing sa lawa, kada kilo',
+  'example.clothes': 'Ukay-ukay na jacket, lahat ng size',
+  'example.shoes-bags': 'Running shoes panglalaki, size 9',
+  'example.baby-items': 'Baby crib na may kutson, parang bago',
+  'example.default': 'Ano ito? Gawing maikli.',
 
   // Attribute labels. The option values themselves are stored on the category
   // schema and stay as entered — "Like new", "Automatic" — which is how they
