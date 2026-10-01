@@ -141,7 +141,7 @@ const PARENT_FALLBACK: Record<string, string> = {
   services: 'repair',
   'farm-animals': 'livestock',
   'food-produce': 'rice-grains',
-  'fashion-baby': 'clothes',
+  clothing: 'clothes',
 }
 
 /** Four tints, picked from the category slug so a grid does not look striped. */

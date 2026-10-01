@@ -224,7 +224,7 @@ export const CATEGORIES: SeedCategory[] = [
     ],
   },
   {
-    slug: 'fashion-baby', name: 'Fashion & Baby', icon: 'clothes',
+    slug: 'clothing', name: 'Clothing', icon: 'clothes',
     children: [
       {
         slug: 'clothes', name: 'Clothes & ukay-ukay',
