@@ -1,6 +1,7 @@
 'use client'
 
 import { useCallback, useEffect, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
 import Image from 'next/image'
 
 import { useT } from '@/components/LanguageProvider'
@@ -48,6 +49,11 @@ export function PhotoGallery({ images, title }: { images: GalleryImage[]; title:
   // decision, and the stage is sized to keep the price above the fold — which
   // is the right trade until someone wants to look closely.
   const [zoomed, setZoomed] = useState<number | null>(null)
+  // The overlay is portalled to <body>, and this is what says the body is
+  // there to portal into: on the server, and on the first client render, it
+  // is not.
+  const [mounted, setMounted] = useState(false)
+  useEffect(() => setMounted(true), [])
   const strip = useRef<HTMLDivElement>(null)
   // Photos uploaded before the size was recorded have none stored, so the first
   // one reports its own on load rather than being letterboxed into the default.
@@ -84,6 +90,22 @@ export function PhotoGallery({ images, title }: { images: GalleryImage[]; title:
       cancelAnimationFrame(frame)
     }
   }, [])
+
+  useEffect(() => {
+    if (zoomed === null) return
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setZoomed(null)
+      if (e.key === 'ArrowRight') setZoomed((z) => (z === null ? z : Math.min(images.length - 1, z + 1)))
+      if (e.key === 'ArrowLeft') setZoomed((z) => (z === null ? z : Math.max(0, z - 1)))
+    }
+    const previousOverflow = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    window.addEventListener('keydown', onKey)
+    return () => {
+      window.removeEventListener('keydown', onKey)
+      document.body.style.overflow = previousOverflow
+    }
+  }, [zoomed, images.length])
 
   return (
     <div className="border-b-4 border-ink bg-dim lg:border-b-0">
@@ -154,36 +176,49 @@ export function PhotoGallery({ images, title }: { images: GalleryImage[]; title:
         ) : null}
       </div>
 
-      {zoomed !== null ? (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-[rgba(23,19,14,0.92)] p-3"
-          role="dialog"
-          aria-modal="true"
-          aria-label={t('photo.open', { number: zoomed + 1 })}
-          onClick={() => setZoomed(null)}
-        >
-          <Image
-            src={images[zoomed].url}
-            alt={t('listing.photoOf', { title, number: zoomed + 1 })}
-            fill
-            sizes="100vw"
-            className="object-contain p-3"
-          />
-          <button
-            type="button"
-            onClick={() => setZoomed(null)}
-            aria-label={t('photo.close')}
-            className="label absolute right-3 top-3 z-10 flex h-[44px] w-[44px] items-center justify-center border-[3px] border-ground bg-ink text-[20px] text-ground"
-          >
-            ✕
-          </button>
-          {many ? (
-            <span className="label absolute bottom-4 left-1/2 z-10 -translate-x-1/2 bg-ink px-2.5 py-0.5 text-[15px] text-ground">
-              {zoomed + 1} / {images.length}
-            </span>
-          ) : null}
-        </div>
-      ) : null}
+      {/*
+        Portalled to <body> on purpose.
+
+        From lg up this gallery lives inside the listing page's sticky photo
+        column, and `position: sticky` creates a stacking context — so a
+        `fixed` overlay inside it is only ever stacked WITHIN that column, and
+        everything later in the document (the seller card, the contact bar)
+        paints straight over the full-size photo. z-index cannot fix that from
+        in here; leaving the subtree can.
+      */}
+      {mounted && zoomed !== null
+        ? createPortal(
+            <div
+              className="fixed inset-0 z-[100] flex items-center justify-center bg-[rgba(23,19,14,0.92)] p-3"
+              role="dialog"
+              aria-modal="true"
+              aria-label={t('photo.open', { number: zoomed + 1 })}
+              onClick={() => setZoomed(null)}
+            >
+              <Image
+                src={images[zoomed].url}
+                alt={t('listing.photoOf', { title, number: zoomed + 1 })}
+                fill
+                sizes="100vw"
+                className="object-contain p-3"
+              />
+              <button
+                type="button"
+                onClick={() => setZoomed(null)}
+                aria-label={t('photo.close')}
+                className="label absolute right-3 top-3 z-10 flex h-[44px] w-[44px] items-center justify-center border-[3px] border-ground bg-ink text-[20px] text-ground"
+              >
+                ✕
+              </button>
+              {many ? (
+                <span className="label absolute bottom-4 left-1/2 z-10 -translate-x-1/2 bg-ink px-2.5 py-0.5 text-[15px] text-ground">
+                  {zoomed + 1} / {images.length}
+                </span>
+              ) : null}
+            </div>,
+            document.body,
+          )
+        : null}
 
       {many ? (
         <div className="mx-auto w-full max-w-3xl border-t-4 border-ink bg-panel">
