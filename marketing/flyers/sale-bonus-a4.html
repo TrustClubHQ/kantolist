@@ -3,14 +3,17 @@
 <head>
 <meta charset="utf-8">
 <title>KantoList Sale Bonus</title>
-<!-- A4 print flyer. Ink on white only — no filled backgrounds, so it prints
-     cleanly on any office printer and photocopies without going muddy. -->
+<!-- A4 print flyer. White page with KantoList red/yellow as ink and small
+     accents only — no full-bleed fills, so it prints cleanly on an office printer. -->
 <link href="fonts/fonts.css" rel="stylesheet">
 <style>
   @page { size: A4; margin: 0; }
   :root {
     --ink: #17130E;
     --muted: #4A3F32;
+    --red: #C6362B;
+    --yellow: #F2B01E;
+    --green: #1F6B4A;
     --display: Anton, "Arial Black", Impact, sans-serif;
     --cond: "Barlow Condensed", "Arial Narrow", Arial, sans-serif;
     --sans: Barlow, "Helvetica Neue", Arial, sans-serif;
@@ -25,32 +28,37 @@
   .display { font-family: var(--display); font-weight: 400; text-transform: uppercase; line-height: .95; }
 
   header { display: flex; align-items: center; justify-content: space-between;
-           border-bottom: 1.2mm solid var(--ink); padding-bottom: 5mm; }
+           border-bottom: 1.6mm solid var(--red); padding-bottom: 5mm; }
   .brand { display: flex; align-items: center; gap: 3mm; }
-  .brand .display { font-size: 15mm; }
-  .tag { border: .8mm solid var(--ink); padding: 1.5mm 4mm; font-size: 6mm; letter-spacing: .04em; }
+  .brand .display { font-size: 15mm; color: var(--ink); }
+  .brand .display span { color: var(--red); }
+  .tag { border: .8mm solid var(--ink); background: var(--yellow); box-shadow: 1mm 1mm 0 var(--ink); padding: 1.5mm 4mm; font-size: 6mm; letter-spacing: .04em; }
 
-  .hero { text-align: center; padding: 8mm 0 7mm; }
+  .hero { text-align: center; padding: 10mm 0 9mm; }
   .hero .kicker { font-size: 8mm; letter-spacing: .06em; }
-  .hero .amount { font-size: 58mm; letter-spacing: -.01em; margin: 2mm 0 0; }
+  .hero .amount { color: var(--red); font-size: 58mm; letter-spacing: -.01em; margin: 2mm 0 0; }
   .hero .per { font-size: 17mm; margin-top: 1mm; }
 
-  .cap { border: 1mm solid var(--ink); text-align: center; padding: 4mm 6mm; }
+  .cap { border: 1mm solid var(--ink); box-shadow: 1.6mm 1.6mm 0 var(--yellow); text-align: center; padding: 4mm 6mm; }
   .cap .label { font-size: 9.5mm; }
+  .cap .label em { font-style: normal; color: var(--red); }
   .cap p { margin: 1.5mm 0 0; font-size: 4.6mm; color: var(--muted); }
 
   h2 { font-family: var(--cond); font-weight: 700; text-transform: uppercase;
-       font-size: 8mm; margin: 8mm 0 4mm; letter-spacing: .03em; }
-  ol { list-style: none; margin: 0; padding: 0; display: grid; gap: 4mm; }
-  li { display: grid; grid-template-columns: 13mm 1fr; gap: 5mm; align-items: start; }
-  .num { width: 13mm; height: 13mm; border: .8mm solid var(--ink);
-         display: grid; place-items: center; font-family: var(--display); font-size: 8mm; }
-  li .label { font-size: 7mm; padding-top: .5mm; }
-  li p { margin: 1mm 0 0; font-size: 4.6mm; line-height: 1.35; color: var(--muted); }
+       font-size: 8mm; margin: 11mm 0 4mm; letter-spacing: .03em; }
+  ol { list-style: none; margin: 0; padding: 0; display: grid;
+       grid-template-columns: repeat(3, 1fr); gap: 6mm; counter-reset: none; }
+  li { border-top: 1mm solid var(--ink); padding-top: 4mm; }
+  .head { display: flex; align-items: center; gap: 3mm; }
+  .num { width: 11mm; height: 11mm; border: .8mm solid var(--ink); background: var(--yellow);
+         display: grid; place-items: center; font-family: var(--display); font-size: 7mm; flex: none; }
+  li .step { font-size: 12mm; color: var(--red); line-height: 1; }
+  li p { margin: 3mm 0 0; font-size: 4.4mm; line-height: 1.35; color: var(--muted); }
+  li b { color: var(--ink); font-weight: 600; }
 
-  .rules { margin-top: auto; border-top: .5mm solid var(--ink); padding-top: 5mm;
+  .rules { margin-top: auto; border-top: .8mm solid var(--red); padding-top: 5mm;
            display: grid; grid-template-columns: 1fr 1fr; gap: 6mm; }
-  .rules .label { font-size: 5.4mm; }
+  .rules .label { font-size: 5.4mm; color: var(--red); }
   .rules p { margin: 1mm 0 0; font-size: 4.1mm; line-height: 1.35; color: var(--muted); }
 
   footer { margin-top: 5mm; display: flex; align-items: center; justify-content: space-between;
@@ -63,12 +71,12 @@
   <header>
     <div class="brand">
       <svg width="58" height="58" viewBox="0 0 32 32" fill="none" aria-hidden="true">
-        <rect x="3" y="9" width="20" height="12" fill="#fff" stroke="#17130E" stroke-width="2.5"/>
+        <rect x="3" y="9" width="20" height="12" fill="#F2B01E" stroke="#17130E" stroke-width="2.5"/>
         <circle cx="9" cy="24" r="3.5" fill="#fff" stroke="#17130E" stroke-width="2.5"/>
         <circle cx="19" cy="24" r="3.5" fill="#fff" stroke="#17130E" stroke-width="2.5"/>
         <path d="M23 12h5l1 6" stroke="#17130E" stroke-width="2.5" stroke-linecap="round"/>
       </svg>
-      <span class="display">KantoList</span>
+      <span class="display">Kanto<span>List</span></span>
     </div>
     <span class="tag label">Promo</span>
   </header>
@@ -80,31 +88,37 @@
   </section>
 
   <section class="cap">
-    <div class="label">Up to ₱1,000 a week</div>
+    <div class="label">Up to <em>₱1,000</em> a week</div>
     <p>per TrustClub member</p>
   </section>
 
   <h2>How it works</h2>
   <ol>
     <li>
-      <span class="num">1</span>
+      <div class="head">
+        <span class="num">1</span>
+        <span class="step display">List</span>
+      </div>
       <div>
-        <div class="label">Sell to another TrustClub member</div>
-        <p>List your item on KantoList and sell it to a buyer who is also a TrustClub member.</p>
+        <p>Post your item on KantoList.</p>
       </div>
     </li>
     <li>
-      <span class="num">2</span>
+      <div class="head">
+        <span class="num">2</span>
+        <span class="step display">Sell</span>
+      </div>
       <div>
-        <div class="label">Book a Trust Transaction</div>
-        <p>Record the sale as a Trust Transaction in the TrustClub app. No Trust Transaction, no bonus.</p>
+        <p>Sell to another TrustClub member and <b>book a Trust Transaction</b> in the TrustClub app.</p>
       </div>
     </li>
     <li>
-      <span class="num">3</span>
+      <div class="head">
+        <span class="num">3</span>
+        <span class="step display">Claim</span>
+      </div>
       <div>
-        <div class="label">Claim it next Friday</div>
-        <p>Your ₱50 per sale is claimable the following Friday.</p>
+        <p>Get ₱50 per sale, claimable <b>next Friday</b>.</p>
       </div>
     </li>
   </ol>
@@ -112,7 +126,7 @@
   <section class="rules">
     <div>
       <div class="label">Real sales only</div>
-      <p>We check every transaction. Fake or staged sales are not paid.</p>
+      <p>We check every transaction. No Trust Transaction, or a fake or staged sale, means no bonus.</p>
     </div>
     <div>
       <div class="label">Group in good standing</div>
