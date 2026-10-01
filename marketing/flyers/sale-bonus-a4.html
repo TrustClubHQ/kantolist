@@ -1,0 +1,129 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>KantoList Sale Bonus</title>
+<!-- A4 print flyer. Ink on white only — no filled backgrounds, so it prints
+     cleanly on any office printer and photocopies without going muddy. -->
+<link href="fonts/fonts.css" rel="stylesheet">
+<style>
+  @page { size: A4; margin: 0; }
+  :root {
+    --ink: #17130E;
+    --muted: #4A3F32;
+    --display: Anton, "Arial Black", Impact, sans-serif;
+    --cond: "Barlow Condensed", "Arial Narrow", Arial, sans-serif;
+    --sans: Barlow, "Helvetica Neue", Arial, sans-serif;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; background: #fff; color: var(--ink); font-family: var(--sans); }
+  .page {
+    width: 210mm; height: 297mm; padding: 16mm 16mm 14mm;
+    display: flex; flex-direction: column; overflow: hidden;
+  }
+  .label { font-family: var(--cond); font-weight: 700; text-transform: uppercase; line-height: 1.1; }
+  .display { font-family: var(--display); font-weight: 400; text-transform: uppercase; line-height: .95; }
+
+  header { display: flex; align-items: center; justify-content: space-between;
+           border-bottom: 1.2mm solid var(--ink); padding-bottom: 5mm; }
+  .brand { display: flex; align-items: center; gap: 3mm; }
+  .brand .display { font-size: 15mm; }
+  .tag { border: .8mm solid var(--ink); padding: 1.5mm 4mm; font-size: 6mm; letter-spacing: .04em; }
+
+  .hero { text-align: center; padding: 8mm 0 7mm; }
+  .hero .kicker { font-size: 8mm; letter-spacing: .06em; }
+  .hero .amount { font-size: 58mm; letter-spacing: -.01em; margin: 2mm 0 0; }
+  .hero .per { font-size: 17mm; margin-top: 1mm; }
+
+  .cap { border: 1mm solid var(--ink); text-align: center; padding: 4mm 6mm; }
+  .cap .label { font-size: 9.5mm; }
+  .cap p { margin: 1.5mm 0 0; font-size: 4.6mm; color: var(--muted); }
+
+  h2 { font-family: var(--cond); font-weight: 700; text-transform: uppercase;
+       font-size: 8mm; margin: 8mm 0 4mm; letter-spacing: .03em; }
+  ol { list-style: none; margin: 0; padding: 0; display: grid; gap: 4mm; }
+  li { display: grid; grid-template-columns: 13mm 1fr; gap: 5mm; align-items: start; }
+  .num { width: 13mm; height: 13mm; border: .8mm solid var(--ink);
+         display: grid; place-items: center; font-family: var(--display); font-size: 8mm; }
+  li .label { font-size: 7mm; padding-top: .5mm; }
+  li p { margin: 1mm 0 0; font-size: 4.6mm; line-height: 1.35; color: var(--muted); }
+
+  .rules { margin-top: auto; border-top: .5mm solid var(--ink); padding-top: 5mm;
+           display: grid; grid-template-columns: 1fr 1fr; gap: 6mm; }
+  .rules .label { font-size: 5.4mm; }
+  .rules p { margin: 1mm 0 0; font-size: 4.1mm; line-height: 1.35; color: var(--muted); }
+
+  footer { margin-top: 5mm; display: flex; align-items: center; justify-content: space-between;
+           font-size: 4mm; color: var(--muted); }
+  footer img { height: 8mm; vertical-align: middle; margin-right: 2mm; }
+</style>
+</head>
+<body>
+<div class="page">
+  <header>
+    <div class="brand">
+      <svg width="58" height="58" viewBox="0 0 32 32" fill="none" aria-hidden="true">
+        <rect x="3" y="9" width="20" height="12" fill="#fff" stroke="#17130E" stroke-width="2.5"/>
+        <circle cx="9" cy="24" r="3.5" fill="#fff" stroke="#17130E" stroke-width="2.5"/>
+        <circle cx="19" cy="24" r="3.5" fill="#fff" stroke="#17130E" stroke-width="2.5"/>
+        <path d="M23 12h5l1 6" stroke="#17130E" stroke-width="2.5" stroke-linecap="round"/>
+      </svg>
+      <span class="display">KantoList</span>
+    </div>
+    <span class="tag label">Promo</span>
+  </header>
+
+  <section class="hero">
+    <div class="kicker label">We pay you</div>
+    <div class="amount display">₱50</div>
+    <div class="per display">for every sale</div>
+  </section>
+
+  <section class="cap">
+    <div class="label">Up to ₱1,000 a week</div>
+    <p>per TrustClub member</p>
+  </section>
+
+  <h2>How it works</h2>
+  <ol>
+    <li>
+      <span class="num">1</span>
+      <div>
+        <div class="label">Sell to another TrustClub member</div>
+        <p>List your item on KantoList and sell it to a buyer who is also a TrustClub member.</p>
+      </div>
+    </li>
+    <li>
+      <span class="num">2</span>
+      <div>
+        <div class="label">Book a Trust Transaction</div>
+        <p>Record the sale as a Trust Transaction in the TrustClub app. No Trust Transaction, no bonus.</p>
+      </div>
+    </li>
+    <li>
+      <span class="num">3</span>
+      <div>
+        <div class="label">Claim it next Friday</div>
+        <p>Your ₱50 per sale is claimable the following Friday.</p>
+      </div>
+    </li>
+  </ol>
+
+  <section class="rules">
+    <div>
+      <div class="label">Real sales only</div>
+      <p>We check every transaction. Fake or staged sales are not paid.</p>
+    </div>
+    <div>
+      <div class="label">Group in good standing</div>
+      <p>The bonus is paid only if your group is in good standing.</p>
+    </div>
+  </section>
+
+  <footer>
+    <span><img src="TCLogo-IconOnly-StealthBlack-minpadding.png" alt="">KantoList — built on TrustClub</span>
+    <span>Max ₱1,000 per member per week</span>
+  </footer>
+</div>
+</body>
+</html>
