@@ -104,12 +104,24 @@ export function PostForm({
   // a bench they are selling, and the listing page drops anything that has
   // since been cleared from the profile anyway.
   const channels = useMemo(() => {
-    const on = ['TRUSTCLUB']
+    const on: string[] = []
     if (contact.phone) on.push('PHONE', 'SMS')
     if (contact.messenger) on.push('MESSENGER')
     if (contact.viber) on.push('VIBER')
     return on
   }, [contact.phone, contact.messenger, contact.viber])
+
+  /**
+   * A listing nobody can answer is worse than no listing, so a number or a
+   * Messenger handle is the floor for posting at all. A TrustClub profile is
+   * an identity rather than an inbox and a Facebook page is a detour, so
+   * neither counts. Viber does not count on its own either: a buyer without
+   * the app would have nothing to tap.
+   *
+   * The API enforces the same rule — this only saves the round trip and says
+   * where to fix it.
+   */
+  const canBeReached = !!contact.phone || !!contact.messenger
 
   const reachableSummary = useMemo(() => {
     const parts: string[] = []
@@ -217,6 +229,7 @@ export function PostForm({
     if (!title.trim()) found.title = t('post.invalid.title')
     if (priceUnit !== 'QUOTE' && !price.trim()) found.price = t('post.invalid.price')
     if (!municipalityId) found.municipality = t('post.invalid.municipality')
+    if (!canBeReached) found.contact = t('post.invalid.contact')
     for (const def of leaf?.attributes ?? []) {
       if (!def.required) continue
       if (!(attributes[def.key] ?? '').trim()) {
@@ -226,7 +239,7 @@ export function PostForm({
       }
     }
     return found
-  }, [t, categoryId, title, price, priceUnit, municipalityId, leaf, attributes])
+  }, [t, categoryId, title, price, priceUnit, municipalityId, leaf, attributes, canBeReached])
 
   // Once publishing has been attempted, the messages track what is still
   // missing — a box that gets filled in stops complaining without a re-submit.
@@ -592,17 +605,32 @@ export function PostForm({
           >
             {t(existing ? 'post.section.contact' : 'post.step.contact')}
           </PlateHeader>
-          <div className="flex flex-col gap-2 p-3.5">
-            <p className="label m-0 text-[17px]">
-              {reachableSummary.length > 0
-                ? reachableSummary.join(' · ')
-                : t('post.contact.trustclubOnly')}
-            </p>
-            {reachableSummary.length === 0 ? (
-              <p className="m-0 text-[13px] font-semibold leading-snug text-muted-2">
-                {t('post.contact.help')}
-              </p>
-            ) : null}
+          <div className="flex flex-col gap-2 p-3.5" data-invalid={!!fieldErrors.contact}>
+            {canBeReached ? (
+              <p className="label m-0 text-[17px]">{reachableSummary.join(' · ')}</p>
+            ) : (
+              /* Not a warning tucked under a summary: with nothing here the
+                 listing cannot be published at all, so it says so, and the
+                 link is the fix rather than a suggestion. */
+              <>
+                <p className="label m-0 text-[17px] text-red">{t('post.contact.required')}</p>
+                <p className="m-0 text-[13px] font-semibold leading-snug text-muted-2">
+                  {t('post.contact.requiredHelp')}
+                </p>
+                <a
+                  href="/me/profile"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="label hard-sm mt-1 inline-flex min-h-[44px] items-center justify-center border-[3px] border-ink bg-yellow px-3.5 text-[17px] text-ink hover:text-ink"
+                >
+                  {t('post.contact.addNow')}
+                </a>
+              </>
+            )}
+            {/* No FieldError here: this section states the requirement in red
+                whether or not publishing has been tried, so repeating it on
+                submit only says the same sentence twice. `data-invalid` still
+                brings the jump here, and the summary still counts it. */}
           </div>
         </Plate>
 

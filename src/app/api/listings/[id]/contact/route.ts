@@ -8,7 +8,10 @@ import { isAllowedMutatingRequest } from '@/lib/http'
 
 type Ctx = { params: Promise<{ id: string }> }
 
-const CHANNELS: ContactChannel[] = ['PHONE', 'SMS', 'MESSENGER', 'FACEBOOK', 'VIBER', 'TRUSTCLUB']
+// FACEBOOK and TRUSTCLUB are not reachable channels (see usableChannels), so
+// they are not resolvable here either — a hand-made request for one is refused
+// rather than quietly handed a profile link.
+const CHANNELS: ContactChannel[] = ['PHONE', 'SMS', 'MESSENGER', 'VIBER']
 
 /**
  * Records that someone tapped a contact channel, and returns the link to open.
@@ -58,12 +61,10 @@ export const POST = withApiHandler(async (request: NextRequest, ctx: Ctx) => {
           : null
       case 'MESSENGER':
         return seller.messengerHandle ? `https://m.me/${seller.messengerHandle}` : null
-      case 'FACEBOOK':
-        return seller.facebookUrl
       case 'VIBER':
         return seller.viberNumber ? `viber://chat?number=${encodeURIComponent(seller.viberNumber)}` : null
-      case 'TRUSTCLUB':
-        return `https://trustclub.app/profile/${encodeURIComponent(seller.trustclubId)}`
+      default:
+        return null
     }
   })()
 

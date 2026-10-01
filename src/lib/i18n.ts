@@ -375,6 +375,7 @@ const en: Record<string, string> = {
   'contact.channel.FACEBOOK': 'Facebook profile',
   'contact.channel.VIBER': 'Chat on Viber',
   'contact.channel.TRUSTCLUB': 'Check their TrustClub profile',
+  'contact.none': 'This seller has no contact details set right now.',
   'contact.failed': 'Could not open that just now',
   'contact.offline': 'Could not open that just now. Check your connection.',
   'contact.owner.edit': 'Edit listing',
@@ -428,9 +429,10 @@ const en: Record<string, string> = {
   'post.contact.call': 'Call & SMS {phone}',
   'post.contact.messenger': 'Messenger m.me/{handle}',
   'post.contact.viber': 'Viber {number}',
-  'post.contact.trustclubOnly': 'TrustClub profile only',
-  'post.contact.help':
-    'Add a number or a Messenger handle to your profile and buyers can reach you directly. Without one they can only find you through TrustClub.',
+  'post.contact.required': 'You need a number or a Messenger handle to post.',
+  'post.contact.requiredHelp':
+    'Buyers reach you directly — KantoList does not pass messages on. Add one to your profile and come back; what you have typed here is kept.',
+  'post.contact.addNow': 'Add one to my profile ↗',
   'post.trustNote':
     'Your listing ranks higher for people whose TrustClub network reaches you. Ask the people you have dealt with to trust you on TrustClub.',
   'post.photos.add': 'Add photos',
@@ -461,6 +463,7 @@ const en: Record<string, string> = {
   'post.invalid.title': 'Give the listing a title so buyers know what it is.',
   'post.invalid.price': 'Put a price, or switch the unit to "Ask for a quote".',
   'post.invalid.municipality': 'Pick the town.',
+  'post.invalid.contact': 'Add a number or a Messenger handle to your profile first — a listing nobody can answer cannot be published.',
   'post.invalid.attribute': 'Answer "{field}".',
   'post.error.publish': 'Could not publish that listing',
   'post.error.save': 'Could not save those changes',
@@ -700,6 +703,8 @@ const en: Record<string, string> = {
   'api.enterPrice': 'Enter a price',
   'api.priceTooHigh': 'That price looks wrong',
   'api.badChannels': 'Invalid contact channels',
+  'api.contactRequired':
+    'Add a phone number or a Messenger handle to your profile before posting — buyers reach you directly, so a listing needs one.',
   'api.tooManyToday': 'You have posted a lot today. Try again tomorrow.',
   'api.tooManyActive': 'You have reached the maximum number of active listings',
   'api.verifyToPostMore':
@@ -1016,6 +1021,7 @@ const tl: Record<string, string> = {
   'contact.channel.FACEBOOK': 'Facebook profile',
   'contact.channel.VIBER': 'Mag-chat sa Viber',
   'contact.channel.TRUSTCLUB': 'Tingnan ang TrustClub profile nila',
+  'contact.none': 'Walang nakalagay na contact ang seller na ito ngayon.',
   'contact.failed': 'Hindi mabuksan ngayon',
   'contact.offline': 'Hindi mabuksan ngayon. I-check ang connection mo.',
   'contact.owner.edit': 'I-edit ang listing',
@@ -1068,9 +1074,10 @@ const tl: Record<string, string> = {
   'post.contact.call': 'Tawag at SMS {phone}',
   'post.contact.messenger': 'Messenger m.me/{handle}',
   'post.contact.viber': 'Viber {number}',
-  'post.contact.trustclubOnly': 'TrustClub profile lang',
-  'post.contact.help':
-    'Maglagay ng numero o Messenger handle sa profile mo para direktang makontak ka ng buyer. Kung wala, sa TrustClub ka lang nila mahahanap.',
+  'post.contact.required': 'Kailangan mo ng numero o Messenger handle para makapag-post.',
+  'post.contact.requiredHelp':
+    'Direkta kang kokontakin ng buyer — hindi nagpapasa ng mensahe ang KantoList. Maglagay sa profile mo at bumalik dito; nananatili ang na-type mo na.',
+  'post.contact.addNow': 'Maglagay sa profile ko ↗',
   'post.trustNote':
     'Mas mataas ang ranggo ng listing mo sa mga taong naaabot ka ng TrustClub network nila. Hilingin sa mga nakatransaksyon mo na bigyan ka ng tiwala sa TrustClub.',
   'post.photos.add': 'Magdagdag ng litrato',
@@ -1101,6 +1108,7 @@ const tl: Record<string, string> = {
   'post.invalid.title': 'Lagyan ng pamagat para alam ng buyer kung ano ito.',
   'post.invalid.price': 'Maglagay ng presyo, o palitan ang unit ng "Tanungin ang presyo".',
   'post.invalid.municipality': 'Piliin ang bayan.',
+  'post.invalid.contact': 'Maglagay muna ng numero o Messenger handle sa profile mo — hindi puwedeng i-publish ang listing na walang makakasagot.',
   'post.invalid.attribute': 'Sagutan ang "{field}".',
   'post.error.publish': 'Hindi na-publish ang listing na iyon',
   'post.error.save': 'Hindi na-save ang mga pagbabago',
@@ -1324,6 +1332,8 @@ const tl: Record<string, string> = {
   'api.enterPrice': 'Maglagay ng presyo',
   'api.priceTooHigh': 'Mukhang mali ang presyong iyon',
   'api.badChannels': 'Hindi wastong contact channel',
+  'api.contactRequired':
+    'Maglagay muna ng numero o Messenger handle sa profile mo bago mag-post — direkta kang kokontakin ng buyer, kaya kailangan ito ng listing.',
   'api.tooManyToday': 'Marami ka nang na-post ngayong araw. Bukas ka na ulit subok.',
   'api.tooManyActive': 'Umabot ka na sa pinakamaraming active na listing',
   'api.verifyToPostMore':

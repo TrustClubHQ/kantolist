@@ -14,7 +14,7 @@ import { useT } from '@/components/LanguageProvider'
  * scraper cannot harvest numbers by walking every listing.
  */
 
-const CHANNEL_ORDER = ['PHONE', 'SMS', 'MESSENGER', 'VIBER', 'FACEBOOK', 'TRUSTCLUB']
+const CHANNEL_ORDER = ['PHONE', 'SMS', 'MESSENGER', 'VIBER']
 
 export function ContactSheet({
   listingId,
@@ -95,6 +95,24 @@ export function ContactSheet({
     )
   }
 
+  /**
+   * Posting now requires a number or a Messenger handle, but a seller can
+   * still clear their profile afterwards, and listings from before the rule
+   * exist. Rather than a call-to-action that opens an empty sheet, say the
+   * plain thing: there is no way to reach this person right now.
+   */
+  if (ordered.length === 0) {
+    return (
+      <div className="sticky bottom-0 z-10 border-t-4 border-ink bg-ground px-4 py-3">
+        <div className="mx-auto max-w-3xl">
+          <p className="label m-0 flex min-h-[54px] items-center justify-center border-[3px] border-dim-edge bg-dim px-3 text-center text-[17px] text-muted-2">
+            {t('contact.none')}
+          </p>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <>
       <div className="sticky bottom-0 z-10 border-t-4 border-ink bg-ground px-4 py-3">
@@ -159,11 +177,7 @@ export function ContactSheet({
                     disabled={busy !== null}
                     onClick={() => openChannel(channel)}
                     className={`hard flex min-h-[54px] items-center justify-center gap-2.5 border-[3px] border-ink disabled:opacity-60 ${
-                      channel === 'PHONE'
-                        ? 'bg-green text-ground'
-                        : channel === 'TRUSTCLUB'
-                          ? 'bg-yellow text-ink'
-                          : 'bg-panel text-ink'
+                      channel === 'PHONE' ? 'bg-green text-ground' : 'bg-panel text-ink'
                     }`}
                   >
                     <span className={channel === 'PHONE' ? 'font-display text-[20px] uppercase' : 'label text-[20px]'}>

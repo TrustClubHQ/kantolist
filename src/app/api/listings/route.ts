@@ -168,15 +168,23 @@ export const POST = withApiHandler(async (request: NextRequest) => {
     return forbidden(t('api.verifyToPostMore', { count: MAX_ACTIVE_LISTINGS_UNTRUSTED }))
   }
 
+  // A listing nobody can answer is worse than no listing. A TrustClub profile
+  // is an identity rather than an inbox and a Facebook page is a detour, so
+  // neither counts: a phone number or a Messenger handle is the floor. Viber
+  // is a real channel and still shown, but it cannot be the only one — a
+  // buyer without the app would have nothing to tap.
+  if (!account.phone && !account.messengerHandle) {
+    return forbidden(t('api.contactRequired'))
+  }
+
   // Snapshot the channels the poster actually has, so an old listing never
   // advertises a channel they removed from their profile later.
-  const available: string[] = ['TRUSTCLUB']
+  const available: string[] = []
   if (account.phone) available.push('PHONE', 'SMS')
   if (account.messengerHandle) available.push('MESSENGER')
-  if (account.facebookUrl) available.push('FACEBOOK')
   if (account.viberNumber) available.push('VIBER')
   const requested = Array.isArray(body.contactChannels) ? body.contactChannels : available
-  const channels = available.filter((c) => requested.includes(c) || c === 'TRUSTCLUB')
+  const channels = available.filter((c) => requested.includes(c))
 
   const listing = await prisma.listing.create({
     data: {

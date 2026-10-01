@@ -35,10 +35,13 @@ export function usableChannels(chosen: string[], contact: SellerContact): string
     PHONE: contact.hasPhone,
     SMS: contact.hasPhone,
     MESSENGER: contact.hasMessenger,
-    FACEBOOK: contact.hasFacebook,
     VIBER: contact.hasViber,
-    // Every member has a TrustClub profile — that is what they signed in with.
-    TRUSTCLUB: true,
+    // FACEBOOK and TRUSTCLUB are deliberately absent, so neither resolves and
+    // both drop out here. A TrustClub profile is an identity, not an inbox,
+    // and a Facebook page is a detour that leaves no way to say "I want this".
+    // Listings posted while those were on the menu still carry them in their
+    // snapshot; this is where they stop being offered, which is why dropping
+    // them needed no migration.
   }
   return chosen.filter((c) => reachable[c])
 }

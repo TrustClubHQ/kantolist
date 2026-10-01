@@ -6,7 +6,7 @@ import { getAccountFromRequest } from '@/lib/auth'
 import { withApiHandler, badRequest, unauthorized, forbidden, notFound } from '@/lib/api'
 import { isAllowedMutatingRequest } from '@/lib/http'
 import { parseSchema, validateAttributes } from '@/lib/attributes'
-import type { ListingType, PriceUnit } from '@prisma/client'
+import type { Account, ListingType, PriceUnit } from '@prisma/client'
 import { slugify, parseVideoUrl, PRICE_UNITS_FOR_TYPE } from '@/lib/listing'
 import { forgetPhoto } from '@/lib/photo-store'
 
@@ -15,7 +15,11 @@ const TYPES: ListingType[] = ['SELL', 'RENT', 'SERVICE']
 type Ctx = { params: Promise<{ id: string }> }
 
 type OwnedListing = Awaited<ReturnType<typeof findListing>>
-type LoadResult = { error: NextResponse } | { error?: undefined; listing: NonNullable<OwnedListing> }
+type LoadResult =
+  | { error: NextResponse }
+  // The account comes back too: an edit has to be checked against what its
+  // owner can actually be reached on, not only against the listing.
+  | { error?: undefined; listing: NonNullable<OwnedListing>; account: Account }
 
 function findListing(id: string) {
   return prisma.listing.findUnique({
@@ -32,7 +36,7 @@ async function loadOwned(request: NextRequest, id: string): Promise<LoadResult> 
   const listing = await findListing(id)
   if (!listing) return { error: notFound(t('api.listingNotFound')) }
   if (listing.accountId !== account.id) return { error: forbidden(t('api.notYourListing')) }
-  return { listing }
+  return { listing, account }
 }
 
 export const PATCH = withApiHandler(async (request: NextRequest, ctx: Ctx) => {
@@ -41,7 +45,7 @@ export const PATCH = withApiHandler(async (request: NextRequest, ctx: Ctx) => {
   const t = requestT(request)
   const owned = await loadOwned(request, id)
   if (owned.error) return owned.error
-  const { listing } = owned
+  const { listing, account } = owned
 
   const body: {
     title?: string
@@ -92,7 +96,19 @@ export const PATCH = withApiHandler(async (request: NextRequest, ctx: Ctx) => {
 
   if (body.contactChannels !== undefined) {
     if (!Array.isArray(body.contactChannels)) return badRequest(t('api.badChannels'))
-    const channels = body.contactChannels.filter((c): c is string => typeof c === 'string')
+    // Same floor as posting, and the same snapshot rule: an edit cannot put a
+    // channel on a listing that the account has nothing behind. Without this,
+    // the edit screen was a way around the posting requirement.
+    if (!account.phone && !account.messengerHandle) {
+      return badRequest(t('api.contactRequired'))
+    }
+    const available = new Set<string>()
+    if (account.phone) { available.add('PHONE'); available.add('SMS') }
+    if (account.messengerHandle) available.add('MESSENGER')
+    if (account.viberNumber) available.add('VIBER')
+    const channels = body.contactChannels
+      .filter((c): c is string => typeof c === 'string')
+      .filter((c) => available.has(c))
     data.contactChannels = channels as unknown as Prisma.InputJsonValue
   }
 
