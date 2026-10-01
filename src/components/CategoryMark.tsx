@@ -130,6 +130,13 @@ const MARKS: Record<string, Mark> = {
       <circle cx="10" cy="25" r="3" /><circle cx="21" cy="25" r="3" />
     </svg>
   ),
+  // The catch-all: a taped carton. Whatever is inside, nobody can tell from
+  // the outside — which is the whole point of the category.
+  other: ({ size }) => (
+    <svg width={size} height={size} viewBox="0 0 32 32" {...stroke} aria-hidden="true">
+      <path d="M5 11h22v16H5z" /><path d="M5 11l3-5h16l3 5" /><path d="M16 11v16" />
+    </svg>
+  ),
 }
 
 /** Parent-category fallbacks, so a new leaf still gets something sensible. */
@@ -142,6 +149,7 @@ const PARENT_FALLBACK: Record<string, string> = {
   'farm-animals': 'livestock',
   'food-produce': 'rice-grains',
   clothing: 'clothes',
+  other: 'other',
 }
 
 /** Four tints, picked from the category slug so a grid does not look striped. */

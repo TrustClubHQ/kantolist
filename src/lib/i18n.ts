@@ -66,12 +66,16 @@ export type T = (key: string, vars?: Vars) => string
  * category added later shows up in English rather than as a missing key.
  */
 export function categoryName(t: T, slug: string, stored: string): string {
-  // Every group's escape-hatch leaf is named the same thing, so it gets one
-  // key rather than eight identical ones. The group it sits under is always
-  // in view — the picker's optgroup, the filter rail's heading — so the name
-  // does not have to repeat it.
+  // A slug with its own entry wins, so the catch-all group's leaf can say
+  // something more useful than its group already does.
+  const own = t(`category.${slug}`)
+  if (own !== `category.${slug}`) return own
+  // Otherwise every group's escape-hatch leaf is named the same thing, and
+  // gets one key rather than nine identical ones. The group it sits under is
+  // always in view — the picker's optgroup, the filter rail's heading — so
+  // the name does not have to repeat it.
   if (slug.startsWith('other-')) return t('category.other')
-  return orStored(t, `category.${slug}`, stored)
+  return stored
 }
 
 /** The same, for an attribute's label on a category schema. */
@@ -637,6 +641,7 @@ const en: Record<string, string> = {
   // Keyed by slug, so a renamed category in the database does not silently
   // lose its translation; a slug with no entry falls back to the stored name.
   'category.other': 'Other',
+  'category.other-other': 'Anything else',
   'category.vehicles': 'Vehicles',
   'category.bicycle': 'Bicycle',
   'category.electronics': 'Electronics',
@@ -1265,6 +1270,7 @@ const tl: Record<string, string> = {
   // Category names. "Ukay-ukay", "sari-sari", "lechon" need no translating in
   // either direction; the ones that do are the plain nouns.
   'category.other': 'Iba pa',
+  'category.other-other': 'Kahit ano pa',
   'category.vehicles': 'Sasakyan',
   'category.bicycle': 'Bisikleta',
   'category.electronics': 'Electronics',

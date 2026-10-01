@@ -260,6 +260,15 @@ const NAMED_CATEGORIES: SeedCategory[] = [
       },
     ],
   },
+  /**
+   * The catch-all group, last on the home page.
+   *
+   * Its children list is empty on purpose: the map below gives every group an
+   * "Other" leaf, and for this one that leaf is the entire point. A seller
+   * whose thing belongs under no heading at all needs a heading to file it
+   * under, not only an escape hatch inside a heading that is already wrong.
+   */
+  { slug: 'other', name: 'Other', icon: 'other', children: [] },
 ]
 
 /**
