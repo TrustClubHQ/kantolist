@@ -1,6 +1,6 @@
 'use client'
 
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import type { AttributeDef } from '@/lib/attributes'
@@ -125,12 +125,73 @@ export function PostForm({
   // difference between "working" and "stuck".
   const [progress, setProgress] = useState<{ done: number; total: number } | null>(null)
   const [pendingPhotos, setPendingPhotos] = useState<File[]>([])
+  const [restored, setRestored] = useState(false)
   const [publishedWithoutPhotos, setPublishedWithoutPhotos] = useState<{
     href: string
     message: string
   } | null>(null)
 
   const currentType = TYPES.find((entry) => entry.key === type)!
+  /**
+   * A half-written listing survives a closed tab.
+   *
+   * This form is long, it is filled in on a phone, and section 6 links out to
+   * the profile — so leaving it in the middle is normal, not an accident.
+   * Photos are not kept: a File cannot go into localStorage, and silently
+   * dropping them would be worse than asking for them again.
+   */
+  const draftKey = 'kantolist:draft'
+  const draft = useRef<Record<string, unknown> | null>(null)
+
+  useEffect(() => {
+    if (existing) return
+    try {
+      const raw = window.localStorage.getItem(draftKey)
+      if (!raw) return
+      const saved = JSON.parse(raw) as Record<string, string | boolean | Record<string, string>>
+      if (typeof saved.title === 'string' && saved.title) setTitle(saved.title)
+      if (typeof saved.description === 'string') setDescription(saved.description)
+      if (typeof saved.type === 'string') setType(saved.type as TypeKey)
+      if (typeof saved.categoryId === 'string') setCategoryId(saved.categoryId)
+      if (typeof saved.price === 'string') setPrice(saved.price)
+      if (typeof saved.priceUnit === 'string') setPriceUnit(saved.priceUnit)
+      if (typeof saved.negotiable === 'boolean') setNegotiable(saved.negotiable)
+      if (typeof saved.barangay === 'string') setBarangay(saved.barangay)
+      if (typeof saved.videoUrl === 'string') setVideoUrl(saved.videoUrl)
+      if (saved.attributes && typeof saved.attributes === 'object') {
+        setAttributes(saved.attributes as Record<string, string>)
+      }
+      // Only say so when there was something worth keeping.
+      if (saved.title || saved.description) setRestored(true)
+    } catch {
+      // A corrupt or unreadable draft is not worth a message; the form is
+      // already usable and empty.
+    }
+  }, [existing])
+
+  useEffect(() => {
+    if (existing) return
+    draft.current = {
+      type, categoryId, title, description, price, priceUnit, negotiable, barangay, videoUrl, attributes,
+    }
+    const id = window.setTimeout(() => {
+      try {
+        window.localStorage.setItem(draftKey, JSON.stringify(draft.current))
+      } catch {
+        // Private mode, or a full quota. The form still works.
+      }
+    }, 400)
+    return () => window.clearTimeout(id)
+  }, [existing, type, categoryId, title, description, price, priceUnit, negotiable, barangay, videoUrl, attributes])
+
+  function discardDraft() {
+    try {
+      window.localStorage.removeItem(draftKey)
+    } catch {
+      // Nothing to do: the next publish clears it anyway.
+    }
+  }
+
   const leaf = useMemo(
     () => categories.flatMap((c) => c.children).find((c) => c.id === categoryId),
     [categories, categoryId],
@@ -209,6 +270,8 @@ export function PostForm({
         }
       }
 
+      if (!existing) discardDraft()
+
       // PATCH answers with the code and slug, since a retitle moves the URL.
       const href = data.href ?? (data.code && data.slug ? listingPath(data.code, data.slug) : null)
       if (!href) {
@@ -228,6 +291,21 @@ export function PostForm({
   return (
     <form onSubmit={submit} className="mx-auto w-full max-w-2xl px-4 pb-32 pt-4">
       <div className="flex flex-col gap-4">
+        {restored ? (
+          <div className="flex flex-wrap items-center justify-between gap-2 border-[3px] border-ink bg-yellow px-3.5 py-2.5">
+            <p className="label m-0 text-[16px] text-ink">{t('post.draftKept')}</p>
+            <button
+              type="button"
+              onClick={() => {
+                discardDraft()
+                window.location.reload()
+              }}
+              className="label min-h-[40px] border-[2.5px] border-ink bg-ground px-3 text-[15px]"
+            >
+              {t('post.draftDiscard')}
+            </button>
+          </div>
+        ) : null}
         <Plate>
           <PlateHeader>{t(existing ? 'post.section.what' : 'post.step.what')}</PlateHeader>
           <div className="flex flex-col gap-3 p-3.5">

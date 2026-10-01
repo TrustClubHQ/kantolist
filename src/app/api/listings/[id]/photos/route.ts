@@ -70,6 +70,41 @@ export const POST = withApiHandler(async (request: NextRequest, ctx: Ctx) => {
   return NextResponse.json(image, { status: 201 })
 })
 
+/**
+ * Which photo is the cover.
+ *
+ * The first upload used to be the hero forever, and the only way to change it
+ * was to delete everything and start again — on a connection where each photo
+ * costs real money to send. Moving one to the front renumbers the rest rather
+ * than leaving a gap, so the order stays meaningful.
+ */
+export const PATCH = withApiHandler(async (request: NextRequest, ctx: Ctx) => {
+  if (!isAllowedMutatingRequest(request)) return forbidden()
+  const { id } = await ctx.params
+  const t = requestT(request)
+  const owned = await loadOwned(request, id)
+  if (owned.error) return owned.error
+
+  const body: { imageId?: string } = await request.json().catch(() => ({}))
+  if (!body.imageId) return badRequest(t('api.whichPhoto'))
+
+  const images = await prisma.listingImage.findMany({
+    where: { listingId: owned.listing.id },
+    orderBy: { sortOrder: 'asc' },
+    select: { id: true },
+  })
+  const chosen = images.find((image) => image.id === body.imageId)
+  if (!chosen) return notFound(t('api.photoNotFound'))
+
+  const order = [chosen.id, ...images.filter((image) => image.id !== chosen.id).map((i) => i.id)]
+  await prisma.$transaction(
+    order.map((imageId, index) =>
+      prisma.listingImage.update({ where: { id: imageId }, data: { sortOrder: index } }),
+    ),
+  )
+  return NextResponse.json({ order })
+})
+
 export const DELETE = withApiHandler(async (request: NextRequest, ctx: Ctx) => {
   if (!isAllowedMutatingRequest(request)) return forbidden()
   const { id } = await ctx.params

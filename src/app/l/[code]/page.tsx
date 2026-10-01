@@ -11,6 +11,7 @@ import { TrustPointsPair, TrustClubLink } from '@/components/TrustPoints'
 import { ContactSheet } from '@/components/ContactSheet'
 import { ReportLink } from '@/components/ReportLink'
 import { ShareButton } from '@/components/ShareButton'
+import { SaveButton } from '@/components/SaveButton'
 import { CategoryMark } from '@/components/CategoryMark'
 import { PhotoGallery } from '@/components/PhotoGallery'
 import { codeFromParam, formatPrice, listingPath, videoHostName, listingTypeLabel } from '@/lib/listing'
@@ -75,6 +76,12 @@ export default async function ListingPage({ params }: Params) {
       ])
     : [null, null]
   const seller = await getSellerContact(listing.account.id)
+  const saved = account
+    ? (await prisma.savedListing.findUnique({
+        where: { accountId_listingId: { accountId: account.id, listingId: listing.id } },
+        select: { listingId: true },
+      })) !== null
+    : false
 
   // A view from the owner would inflate their own count, so it does not record.
   if (!isOwner) {
@@ -100,20 +107,27 @@ export default async function ListingPage({ params }: Params) {
     <div className="flex min-h-screen flex-col">
       <SiteHeader />
 
-      {listing.images.length > 0 ? (
-        <PhotoGallery images={listing.images} title={listing.title} />
-      ) : (
-        /* A category glyph on grey does not earn a photo's height. */
-        <div className="relative flex h-[124px] items-center justify-center border-b-4 border-ink bg-dim">
-          <CategoryMark
-            categorySlug={listing.category.slug}
-            parentSlug={listing.category.parent?.slug ?? null}
-            size={72}
-          />
+      {/* One column on a phone, which is the whole point of the design. From
+          lg up the photo moves beside the text instead of pushing the price
+          and the seller a screen down and leaving the right half of a desktop
+          window empty. */}
+      <div className="mx-auto flex w-full max-w-6xl flex-col lg:flex-row lg:items-start lg:gap-6 lg:px-4 lg:py-5">
+        <div className="lg:sticky lg:top-4 lg:w-[520px] lg:shrink-0 lg:border-4 lg:border-ink">
+          {listing.images.length > 0 ? (
+            <PhotoGallery images={listing.images} title={listing.title} />
+          ) : (
+            /* A category glyph on grey does not earn a photo's height. */
+            <div className="relative flex h-[124px] items-center justify-center border-b-4 border-ink bg-dim lg:h-[260px] lg:border-b-0">
+              <CategoryMark
+                categorySlug={listing.category.slug}
+                parentSlug={listing.category.parent?.slug ?? null}
+                size={72}
+              />
+            </div>
+          )}
         </div>
-      )}
 
-      <main className="mx-auto w-full max-w-3xl px-3 pb-28 pt-4 sm:px-4">
+      <main className="mx-auto w-full max-w-3xl min-w-0 flex-1 px-3 pb-28 pt-4 sm:px-4 lg:px-0 lg:pt-0">
         <div className="flex flex-col gap-2.5">
           <div className="flex flex-wrap items-center gap-2">
             <Badge tone={listing.status === 'RESERVED' ? 'ink' : 'yellow'}>
@@ -257,7 +271,15 @@ export default async function ListingPage({ params }: Params) {
           </section>
         ) : null}
 
-        <div className="mt-4 flex justify-center">
+        <div className="mt-4 flex flex-wrap justify-center gap-2">
+          {isOwner ? null : (
+            <SaveButton
+              listingId={listing.id}
+              initiallySaved={saved}
+              signedIn={!!account}
+              signInHref={`/signin?redirect=${encodeURIComponent(listingPath(listing.code, listing.slug))}`}
+            />
+          )}
           <ShareButton title={listing.title} />
         </div>
 
@@ -271,6 +293,7 @@ export default async function ListingPage({ params }: Params) {
           />
         </div>
       </main>
+      </div>
 
       {!closed ? (
         <ContactSheet

@@ -86,7 +86,7 @@ export function PhotoGallery({ images, title }: { images: GalleryImage[]; title:
   }, [])
 
   return (
-    <div className="border-b-4 border-ink bg-dim">
+    <div className="border-b-4 border-ink bg-dim lg:border-b-0">
       <div className="relative mx-auto w-full max-w-3xl">
         <div
           ref={strip}

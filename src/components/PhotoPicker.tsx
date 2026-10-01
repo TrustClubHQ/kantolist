@@ -183,6 +183,29 @@ export function PhotoPicker({
     }
   }
 
+  async function makeCover(photo: ListingPhoto) {
+    if (!listingId) return
+    setError(null)
+    const reordered = [photo, ...photos.filter((p) => p.id !== photo.id)]
+    const previous = photos
+    setPhotos(reordered)
+    const res = await fetch(`/api/listings/${listingId}/photos`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ imageId: photo.id }),
+    }).catch(() => null)
+    if (!res || !res.ok) {
+      setPhotos(previous)
+      setError(t('post.photos.coverFailed'))
+    }
+  }
+
+  function makePendingCover(index: number) {
+    const next = [pending[index], ...pending.filter((_, i) => i !== index)]
+    setPending(next)
+    onPendingChange?.(next.map((p) => p.file))
+  }
+
   async function remove(photo: ListingPhoto) {
     if (!listingId) return
     setError(null)
@@ -206,8 +229,11 @@ export function PhotoPicker({
   return (
     <div className="flex flex-col gap-2.5">
       <div className="flex flex-wrap gap-2">
-        {photos.map((photo) => (
-          <figure key={photo.id} className="relative m-0 h-[84px] w-[84px] border-[2.5px] border-ink">
+        {photos.map((photo, i) => (
+          <figure
+            key={photo.id}
+            className={`relative m-0 h-[84px] w-[84px] border-[2.5px] ${i === 0 ? 'border-red' : 'border-ink'}`}
+          >
             <Image src={photo.url} alt="" fill sizes="84px" className="object-cover" unoptimized />
             <button
               type="button"
@@ -217,10 +243,30 @@ export function PhotoPicker({
             >
               ✕
             </button>
+            {i === 0 ? (
+              <span className="label absolute bottom-0 left-0 right-0 bg-red px-1 text-center text-[12px] text-ground">
+                {t('post.photos.cover')}
+              </span>
+            ) : (
+              <button
+                type="button"
+                onClick={() => makeCover(photo)}
+                title={t('post.photos.makeCover')}
+                aria-label={t('post.photos.makeCover')}
+                className="label absolute bottom-0 left-0 right-0 bg-ink px-1 text-center text-[12px] text-ground"
+              >
+                {t('post.photos.cover')}
+              </button>
+            )}
           </figure>
         ))}
         {pending.map((p, i) => (
-          <figure key={p.preview} className="relative m-0 h-[84px] w-[84px] border-[2.5px] border-dim-edge">
+          <figure
+            key={p.preview}
+            className={`relative m-0 h-[84px] w-[84px] border-[2.5px] ${
+              photos.length === 0 && i === 0 ? 'border-red' : 'border-dim-edge'
+            }`}
+          >
             {/* Not yet uploaded — a local preview, so plain img rather than next/image. */}
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src={p.preview} alt="" className="h-full w-full object-cover opacity-80" />
@@ -232,6 +278,21 @@ export function PhotoPicker({
             >
               ✕
             </button>
+            {photos.length === 0 && i === 0 ? (
+              <span className="label absolute bottom-0 left-0 right-0 bg-red px-1 text-center text-[12px] text-ground">
+                {t('post.photos.cover')}
+              </span>
+            ) : (
+              <button
+                type="button"
+                onClick={() => makePendingCover(i)}
+                title={t('post.photos.makeCover')}
+                aria-label={t('post.photos.makeCover')}
+                className="label absolute bottom-0 left-0 right-0 bg-ink px-1 text-center text-[12px] text-ground"
+              >
+                {t('post.photos.cover')}
+              </button>
+            )}
           </figure>
         ))}
       </div>

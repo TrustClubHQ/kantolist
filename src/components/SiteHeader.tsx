@@ -51,6 +51,15 @@ export async function SiteHeader({ location }: { location?: string }) {
                 <span className="sm:hidden">{t('header.mine.short')}</span>
                 <span className="hidden sm:inline">{t('header.mine')}</span>
               </Link>
+              {/* Saved is one more word in a header that is already full at
+                  390px, so on a phone it lives in the account chip's screen
+                  rather than here. */}
+              <Link
+                href="/me/saved"
+                className="label hidden min-h-[44px] items-center px-1 text-[16px] text-ground hover:text-yellow sm:flex"
+              >
+                {t('header.saved')}
+              </Link>
               {account.isStaff ? (
                 <Link
                   href="/admin/reports"
