@@ -39,7 +39,7 @@ export interface SeedCategory {
   children: { slug: string; name: string; attributes: AttributeDef[] }[]
 }
 
-export const CATEGORIES: SeedCategory[] = [
+const NAMED_CATEGORIES: SeedCategory[] = [
   {
     slug: 'vehicles', name: 'Vehicles', icon: 'bicycle',
     children: [
@@ -261,3 +261,20 @@ export const CATEGORIES: SeedCategory[] = [
     ],
   },
 ]
+
+/**
+ * Every group ends with an "Other" leaf.
+ *
+ * The posting form can only offer the specific children — a group heading is
+ * an optgroup label, which is not selectable — so without this a seller whose
+ * thing matches no named child has nothing legal to pick. It carries no
+ * attributes on purpose: the leaf exists because the thing does not fit a
+ * shape, so it must not then demand shape-specific answers.
+ *
+ * Mirrored by the 20261001120000_other_subcategories migration, which is how
+ * these reach a database the seed never touches (production).
+ */
+export const CATEGORIES: SeedCategory[] = NAMED_CATEGORIES.map((parent) => ({
+  ...parent,
+  children: [...parent.children, { slug: `other-${parent.slug}`, name: 'Other', attributes: [] }],
+}))

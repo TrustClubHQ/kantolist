@@ -66,6 +66,11 @@ export type T = (key: string, vars?: Vars) => string
  * category added later shows up in English rather than as a missing key.
  */
 export function categoryName(t: T, slug: string, stored: string): string {
+  // Every group's escape-hatch leaf is named the same thing, so it gets one
+  // key rather than eight identical ones. The group it sits under is always
+  // in view — the picker's optgroup, the filter rail's heading — so the name
+  // does not have to repeat it.
+  if (slug.startsWith('other-')) return t('category.other')
   return orStored(t, `category.${slug}`, stored)
 }
 
@@ -446,6 +451,13 @@ const en: Record<string, string> = {
   'post.cancel': 'Cancel',
   'post.draftKept': 'Your unfinished listing was still here, so we put it back.',
   'post.draftDiscard': 'Start fresh',
+  'post.invalid.summary': 'Check the highlighted boxes below — {count} still needs filling in.',
+  'post.invalid.summaryOne': 'One box below still needs filling in.',
+  'post.invalid.category': 'Pick a subcategory. If nothing fits, choose "Other" under the closest group.',
+  'post.invalid.title': 'Give the listing a title so buyers know what it is.',
+  'post.invalid.price': 'Put a price, or switch the unit to "Ask for a quote".',
+  'post.invalid.municipality': 'Pick the town.',
+  'post.invalid.attribute': 'Answer "{field}".',
   'post.error.publish': 'Could not publish that listing',
   'post.error.save': 'Could not save those changes',
   'post.error.publishOffline': 'Could not publish. Check your connection and try again.',
@@ -624,6 +636,7 @@ const en: Record<string, string> = {
   // — Category names ——————————————————————————————————————————————
   // Keyed by slug, so a renamed category in the database does not silently
   // lose its translation; a slug with no entry falls back to the stored name.
+  'category.other': 'Other',
   'category.vehicles': 'Vehicles',
   'category.bicycle': 'Bicycle',
   'category.electronics': 'Electronics',
@@ -1077,6 +1090,13 @@ const tl: Record<string, string> = {
   'post.cancel': 'Kanselahin',
   'post.draftKept': 'Nandito pa ang hindi mo natapos na listing, kaya ibinalik namin.',
   'post.draftDiscard': 'Magsimula ulit',
+  'post.invalid.summary': 'Tingnan ang mga naka-highlight sa baba — {count} pa ang kulang.',
+  'post.invalid.summaryOne': 'May isa pang kulang sa baba.',
+  'post.invalid.category': 'Pumili ng subcategory. Kung wala talagang bagay, piliin ang "Iba pa" sa pinakamalapit na grupo.',
+  'post.invalid.title': 'Lagyan ng pamagat para alam ng buyer kung ano ito.',
+  'post.invalid.price': 'Maglagay ng presyo, o palitan ang unit ng "Tanungin ang presyo".',
+  'post.invalid.municipality': 'Piliin ang bayan.',
+  'post.invalid.attribute': 'Sagutan ang "{field}".',
   'post.error.publish': 'Hindi na-publish ang listing na iyon',
   'post.error.save': 'Hindi na-save ang mga pagbabago',
   'post.error.publishOffline': 'Hindi na-publish. I-check ang connection mo at subukan ulit.',
@@ -1244,6 +1264,7 @@ const tl: Record<string, string> = {
 
   // Category names. "Ukay-ukay", "sari-sari", "lechon" need no translating in
   // either direction; the ones that do are the plain nouns.
+  'category.other': 'Iba pa',
   'category.vehicles': 'Sasakyan',
   'category.bicycle': 'Bisikleta',
   'category.electronics': 'Electronics',

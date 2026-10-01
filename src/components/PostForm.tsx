@@ -197,6 +197,62 @@ export function PostForm({
     [categories, categoryId],
   )
 
+  /**
+   * Validation we do ourselves, rather than leaving to `required`.
+   *
+   * The native bubble was the only thing saying why publishing did nothing,
+   * and it is the wrong tool here: it is always in the browser's language
+   * rather than the one the reader picked, it vanishes on its own, iOS Safari
+   * draws nothing at all, and it cannot say the useful part — that a seller
+   * whose thing fits no subcategory should pick "Other". So the form carries
+   * `noValidate` and the messages live in the page, next to the box.
+   */
+  const formRef = useRef<HTMLFormElement>(null)
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({})
+  const [attempted, setAttempted] = useState(false)
+
+  const problems = useMemo(() => {
+    const found: Record<string, string> = {}
+    if (!categoryId) found.category = t('post.invalid.category')
+    if (!title.trim()) found.title = t('post.invalid.title')
+    if (priceUnit !== 'QUOTE' && !price.trim()) found.price = t('post.invalid.price')
+    if (!municipalityId) found.municipality = t('post.invalid.municipality')
+    for (const def of leaf?.attributes ?? []) {
+      if (!def.required) continue
+      if (!(attributes[def.key] ?? '').trim()) {
+        found[`attr:${def.key}`] = t('post.invalid.attribute', {
+          field: attributeLabel(t, def.key, def.label),
+        })
+      }
+    }
+    return found
+  }, [t, categoryId, title, price, priceUnit, municipalityId, leaf, attributes])
+
+  // Once publishing has been attempted, the messages track what is still
+  // missing — a box that gets filled in stops complaining without a re-submit.
+  useEffect(() => {
+    if (attempted) setFieldErrors(problems)
+  }, [attempted, problems])
+
+  /**
+   * Jump to the first box that still needs an answer.
+   *
+   * In an effect rather than inline in the submit handler: the handler runs
+   * before React has rendered `data-invalid`, so querying the DOM there finds
+   * nothing and the page sits where it was — which is the "the button does
+   * nothing" complaint all over again, just with our own markup.
+   */
+  const [jumpTick, setJumpTick] = useState(0)
+  useEffect(() => {
+    if (jumpTick === 0) return
+    const first = formRef.current?.querySelector<HTMLElement>('[data-invalid="true"]')
+    if (!first) return
+    // Centred, not top-aligned: the first box would otherwise land under the
+    // site header.
+    first.scrollIntoView({ block: 'center', behavior: 'smooth' })
+    first.querySelector<HTMLElement>('input, select, textarea')?.focus({ preventScroll: true })
+  }, [jumpTick])
+
   function chooseType(next: TypeKey) {
     setType(next)
     // The old unit is usually invalid for the new type, so reset to its first.
@@ -210,6 +266,15 @@ export function PostForm({
 
   async function submit(e: React.FormEvent) {
     e.preventDefault()
+    setAttempted(true)
+    const found = problems
+    setFieldErrors(found)
+    const count = Object.keys(found).length
+    if (count > 0) {
+      setError(count === 1 ? t('post.invalid.summaryOne') : t('post.invalid.summary', { count }))
+      setJumpTick((n) => n + 1)
+      return
+    }
     setError(null)
     setBusy(true)
     try {
@@ -289,7 +354,7 @@ export function PostForm({
   }
 
   return (
-    <form onSubmit={submit} className="mx-auto w-full max-w-2xl px-4 pb-32 pt-4">
+    <form ref={formRef} noValidate onSubmit={submit} className="mx-auto w-full max-w-2xl px-4 pb-32 pt-4">
       <div className="flex flex-col gap-4">
         {restored ? (
           <div className="flex flex-wrap items-center justify-between gap-2 border-[3px] border-ink bg-yellow px-3.5 py-2.5">
@@ -323,9 +388,14 @@ export function PostForm({
                 </button>
               ))}
             </div>
-            <label className="flex flex-col gap-1.5">
+            <label className="flex flex-col gap-1.5" data-invalid={!!fieldErrors.category}>
               <span className="label text-[15px] text-muted">{t('post.field.category')}</span>
-              <select value={categoryId} onChange={(e) => setCategoryId(e.target.value)} required>
+              <select
+                value={categoryId}
+                onChange={(e) => setCategoryId(e.target.value)}
+                aria-invalid={!!fieldErrors.category}
+                className={fieldErrors.category ? '!border-red' : undefined}
+              >
                 <option value="">{t('post.field.categoryPlaceholder')}</option>
                 {categories.map((parent) => (
                   <optgroup key={parent.id} label={categoryName(t, parent.slug, parent.name)}>
@@ -337,6 +407,7 @@ export function PostForm({
                   </optgroup>
                 ))}
               </select>
+              <FieldError message={fieldErrors.category} />
             </label>
           </div>
         </Plate>
@@ -344,15 +415,17 @@ export function PostForm({
         <Plate>
           <PlateHeader>{t(existing ? 'post.section.details' : 'post.step.details')}</PlateHeader>
           <div className="flex flex-col gap-3.5 p-3.5">
-            <label className="flex flex-col gap-1.5">
+            <label className="flex flex-col gap-1.5" data-invalid={!!fieldErrors.title}>
               <span className="label text-[15px] text-muted">{t('post.field.title')}</span>
               <input
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
                 maxLength={70}
-                required
+                aria-invalid={!!fieldErrors.title}
+                className={fieldErrors.title ? '!border-red' : undefined}
                 placeholder={categoryExample(t, leaf?.slug)}
               />
+              <FieldError message={fieldErrors.title} />
               <span className="text-xs font-semibold text-muted">
                 {t('post.field.charsLeft', { count: 70 - title.length })}
               </span>
@@ -361,7 +434,13 @@ export function PostForm({
             {leaf ? (
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                 {leaf.attributes.map((def) => (
-                  <AttributeInput key={def.key} def={def} value={attributes[def.key] ?? ''} onChange={setAttr} />
+                  <AttributeInput
+                    key={def.key}
+                    def={def}
+                    value={attributes[def.key] ?? ''}
+                    onChange={setAttr}
+                    error={fieldErrors[`attr:${def.key}`]}
+                  />
                 ))}
               </div>
             ) : (
@@ -409,15 +488,19 @@ export function PostForm({
         <Plate>
           <PlateHeader>{t(existing ? 'post.section.price' : 'post.step.price')}</PlateHeader>
           <div className="flex flex-col gap-3 p-3.5">
-            <div className="flex gap-2.5">
-              <div className="flex flex-1 items-center gap-2 border-[2.5px] border-ink bg-ground px-3">
+            <div className="flex gap-2.5" data-invalid={!!fieldErrors.price}>
+              <div
+                className={`flex flex-1 items-center gap-2 border-[2.5px] bg-ground px-3 ${
+                  fieldErrors.price ? 'border-red' : 'border-ink'
+                }`}
+              >
                 <span className="font-display text-[21px] text-muted">₱</span>
                 <input
                   inputMode="numeric"
                   value={price}
                   onChange={(e) => setPrice(e.target.value.replace(/\D/g, ''))}
                   disabled={priceUnit === 'QUOTE'}
-                  required={priceUnit !== 'QUOTE'}
+                  aria-invalid={!!fieldErrors.price}
                   aria-label={t('post.field.price')}
                   placeholder={priceUnit === 'QUOTE' ? t('post.field.noPrice') : '0'}
                   className="!border-0 !bg-transparent !px-0 font-display text-[24px] text-red"
@@ -436,6 +519,7 @@ export function PostForm({
                 ))}
               </select>
             </div>
+            <FieldError message={fieldErrors.price} />
             <label className="flex min-h-[44px] items-center gap-2.5">
               <input
                 type="checkbox"
@@ -459,19 +543,23 @@ export function PostForm({
                 {municipalities[0].name}, {municipalities[0].province}
               </p>
             ) : (
-              <select
-                value={municipalityId}
-                onChange={(e) => setMunicipalityId(e.target.value)}
-                required
-                aria-label={t('post.field.municipality')}
-              >
-                <option value="">{t('post.field.municipalityPlaceholder')}</option>
-                {municipalities.map((m) => (
-                  <option key={m.id} value={m.id}>
-                    {m.name}, {m.province}
-                  </option>
-                ))}
-              </select>
+              <div className="flex flex-col gap-1.5" data-invalid={!!fieldErrors.municipality}>
+                <select
+                  value={municipalityId}
+                  onChange={(e) => setMunicipalityId(e.target.value)}
+                  aria-invalid={!!fieldErrors.municipality}
+                  aria-label={t('post.field.municipality')}
+                  className={fieldErrors.municipality ? '!border-red' : undefined}
+                >
+                  <option value="">{t('post.field.municipalityPlaceholder')}</option>
+                  {municipalities.map((m) => (
+                    <option key={m.id} value={m.id}>
+                      {m.name}, {m.province}
+                    </option>
+                  ))}
+                </select>
+                <FieldError message={fieldErrors.municipality} />
+              </div>
             )}
             <input
               value={barangay}
@@ -567,23 +655,47 @@ export function PostForm({
 }
 
 
+/**
+ * The message under a box that still needs an answer.
+ *
+ * `role="alert"` so a screen reader hears it when it appears, since the only
+ * other announcement of a failed publish is the summary at the far end of a
+ * long form.
+ */
+function FieldError({ message }: { message?: string }) {
+  if (!message) return null
+  return (
+    <span role="alert" className="m-0 text-[13px] font-semibold leading-snug text-red">
+      {message}
+    </span>
+  )
+}
+
 function AttributeInput({
   def,
   value,
   onChange,
+  error,
 }: {
   def: AttributeDef
   value: string
   onChange: (key: string, value: string) => void
+  error?: string
 }) {
   const t = useT()
   const label = attributeLabel(t, def.key, def.label)
+  const ring = error ? '!border-red' : undefined
 
   if (def.type === 'enum') {
     return (
-      <label className="flex flex-col gap-1.5">
+      <label className="flex flex-col gap-1.5" data-invalid={!!error}>
         <span className="label text-[15px] text-muted">{label}</span>
-        <select value={value} onChange={(e) => onChange(def.key, e.target.value)} required={def.required}>
+        <select
+          value={value}
+          onChange={(e) => onChange(def.key, e.target.value)}
+          aria-invalid={!!error}
+          className={ring}
+        >
           <option value="">{t('post.field.choose')}</option>
           {(def.options ?? []).map((o) => (
             <option key={o} value={o}>
@@ -591,6 +703,7 @@ function AttributeInput({
             </option>
           ))}
         </select>
+        <FieldError message={error} />
       </label>
     )
   }
@@ -611,7 +724,7 @@ function AttributeInput({
 
   if (def.type === 'int') {
     return (
-      <label className="flex flex-col gap-1.5">
+      <label className="flex flex-col gap-1.5" data-invalid={!!error}>
         <span className="label text-[15px] text-muted">
           {label}
           {def.unit ? ` (${def.unit})` : ''}
@@ -621,17 +734,26 @@ function AttributeInput({
           value={value}
           min={def.min}
           max={def.max}
-          required={def.required}
+          aria-invalid={!!error}
+          className={ring}
           onChange={(e) => onChange(def.key, e.target.value.replace(/\D/g, ''))}
         />
+        <FieldError message={error} />
       </label>
     )
   }
 
   return (
-    <label className="flex flex-col gap-1.5">
+    <label className="flex flex-col gap-1.5" data-invalid={!!error}>
       <span className="label text-[15px] text-muted">{label}</span>
-      <input value={value} maxLength={120} required={def.required} onChange={(e) => onChange(def.key, e.target.value)} />
+      <input
+        value={value}
+        maxLength={120}
+        aria-invalid={!!error}
+        className={ring}
+        onChange={(e) => onChange(def.key, e.target.value)}
+      />
+      <FieldError message={error} />
     </label>
   )
 }
