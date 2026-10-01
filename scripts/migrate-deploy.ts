@@ -23,8 +23,15 @@
  */
 import { spawnSync } from 'node:child_process'
 
-/** ~4 minutes in total, which covers both a concurrent build and a reaped session. */
-const BACKOFF_SECONDS = [10, 20, 30, 45, 60, 75]
+/**
+ * ~9 minutes in total.
+ *
+ * It was ~4, which covers a concurrent build running ordinary migrations and
+ * does not cover one running a data migration: a delete across the listings
+ * table held the lock long enough that the next build gave up while the first
+ * was still working, and failed for no reason of its own.
+ */
+const BACKOFF_SECONDS = [10, 20, 30, 45, 60, 75, 90, 120, 120]
 
 function isLockContention(output: string): boolean {
   return /advisory lock/i.test(output) || /\bP1002\b/.test(output)
@@ -57,7 +64,7 @@ for (let i = 0; ; i++) {
 
   if (i >= BACKOFF_SECONDS.length) {
     process.stderr.write(
-      '[migrate] the advisory lock stayed held for about four minutes. ' +
+      '[migrate] the advisory lock stayed held for about nine minutes. ' +
         'Another deploy is probably still migrating — re-run this build.\n',
     )
     process.exit(1)
