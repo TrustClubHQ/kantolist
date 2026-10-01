@@ -37,7 +37,10 @@ async function load(codeParam: string) {
       account: {
         select: {
           id: true, trustclubId: true, displayName: true, createdAt: true,
-          _count: { select: { listings: true } },
+          // Only what the seller's page will actually show: counting their
+          // closed and removed listings too sent someone to a page with fewer
+          // listings on it than the link had promised.
+          _count: { select: { listings: { where: { status: { in: ['ACTIVE', 'RESERVED'] } } } } },
         },
       },
       category: { select: { name: true, slug: true, attributeSchema: true, parent: { select: { name: true, slug: true } } } },
@@ -196,7 +199,9 @@ export default async function ListingPage({ params }: Params) {
                     </Link>
                   ) : (
                     <span className="label text-[15px] font-semibold text-muted">
-                      {t('listing.listingCount', { count: listing.account._count.listings })}
+                      {listing.account._count.listings === 1
+                        ? t('listing.listingCountOne')
+                        : t('listing.listingCount', { count: listing.account._count.listings })}
                     </span>
                   )}
                 </div>
