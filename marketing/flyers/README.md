@@ -22,7 +22,7 @@ Preview in a browser with `sale-bonus-a4.html#tl` (or `?lang=tl`).
 
 | Flyer | What |
 | --- | --- |
-| `sale-bonus-a4` | ₱30 to seller + ₱30 to buyer per new buyer, max ₱1,000/week, until 31 Oct 2026 |
+| `sale-bonus-a4` | ₱30 to seller + ₱30 to buyer per new buyer, max ₱600/week, until 31 Oct 2026 |
 
 Fonts are bundled in `fonts/` (Anton, Barlow, Barlow Condensed incl. the ₱
 glyph) so a render does not depend on Google Fonts. `qr-kantolist.svg` points
