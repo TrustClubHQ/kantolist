@@ -36,9 +36,26 @@ export function withApiHandler<A extends unknown[]>(
   }
 }
 
-export const badRequest = (error: string, details?: unknown) =>
-  NextResponse.json({ error, ...(details === undefined ? {} : { details }) }, { status: 400 })
+/**
+ * A rejected request, logged as well as returned.
+ *
+ * It used to only be returned. The reason reaches the member, who reads it and
+ * moves on or gives up, and nothing reaches us — so a morning of "posting does
+ * not work" showed up in the platform logs as forty-seven identical
+ * `POST /api/listings 400` lines with no hint which of a dozen validation
+ * rules was firing, and the only way to find out was to guess. The message is
+ * ours, not user content, so logging it leaks nothing.
+ */
+export const badRequest = (error: string, details?: unknown) => {
+  logger.warn(`[api] 400 ${error}`, details === undefined ? undefined : { details })
+  return NextResponse.json({ error, ...(details === undefined ? {} : { details }) }, { status: 400 })
+}
 export const unauthorized = (error = 'Sign in to continue') =>
   NextResponse.json({ error }, { status: 401 })
-export const forbidden = (error = 'Not allowed') => NextResponse.json({ error }, { status: 403 })
+export const forbidden = (error = 'Not allowed') => {
+  // Same reasoning as badRequest: a refusal nobody can see is a refusal nobody
+  // can fix. The posting floor and the per-day caps both answer this way.
+  logger.warn(`[api] 403 ${error}`)
+  return NextResponse.json({ error }, { status: 403 })
+}
 export const notFound = (error = 'Not found') => NextResponse.json({ error }, { status: 404 })
