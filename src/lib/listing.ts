@@ -51,6 +51,29 @@ const VIDEO_HOST_FAMILIES: { domain: string; name: string }[] = [
   { domain: 'tiktok.com', name: 'TikTok' },
 ]
 
+/** The sites we accept, named, for telling a seller what the box will take. */
+export const VIDEO_SITE_NAMES = ['YouTube', 'Facebook', 'TikTok'] as const
+
+/**
+ * The site someone actually pasted, for saying so back to them.
+ *
+ * "Paste a YouTube, Facebook or TikTok link" is no help to a seller looking
+ * straight at an Instagram link they just pasted — it does not tell them what
+ * is wrong with what they did, only what they could have done. Naming the site
+ * closes that gap. Falls back to the bare hostname, and to null when the text
+ * is not a link at all.
+ */
+export function pastedSiteName(raw: string): string | null {
+  const value = raw.trim()
+  if (!value) return null
+  try {
+    const host = new URL(/^https?:\/\//i.test(value) ? value : `https://${value}`).hostname
+    return host.toLowerCase().replace(/^www\./, '').replace(/\.$/, '') || null
+  } catch {
+    return null
+  }
+}
+
 /** The site's name for a hostname, or null if we do not link out to it. */
 export function videoHostFor(hostname: string): string | null {
   // A trailing dot is a legal, fully-qualified form of the same host.

@@ -420,9 +420,12 @@ const en: Record<string, string> = {
   'post.field.descriptionPlaceholder':
     "Describe the condition, what's included, pick-up or delivery…",
   'post.field.video': 'Video link (optional)',
-  'post.field.videoPlaceholder': 'Paste a YouTube, Facebook or TikTok link',
+  'post.field.videoPlaceholder': 'https://...  (leave empty if you have no video)',
+  // The accepted sites live here rather than only in the placeholder, which
+  // vanishes at the first keystroke — which is how someone pasted an Instagram
+  // link with nothing left on screen to tell them it would not be taken.
   'post.field.videoHelp':
-    'Videos stay on the app you posted them to — buyers open the link from the listing.',
+    'YouTube, Facebook or TikTok only — Instagram does not work. Leave it empty if you have no video. The video stays on the app you posted it to; buyers open the link from your listing.',
   'post.field.price': 'Price',
   'post.field.priceUnit': 'Price unit',
   'post.field.noPrice': 'No price',
@@ -480,7 +483,8 @@ const en: Record<string, string> = {
   'post.invalid.price': 'Put a price, or switch the unit to "Ask for a quote".',
   'post.invalid.municipality': 'Pick the town.',
   'post.invalid.contact': 'Add a number or a Messenger handle to your profile first — a listing nobody can answer cannot be published.',
-  'post.invalid.video': 'That link is not a YouTube, Facebook or TikTok video. Clear the box if you do not have one — it is optional.',
+  'post.invalid.video': 'That is not a video link. Paste a YouTube, Facebook or TikTok link, or clear the box — the video is optional.',
+  'post.invalid.videoSite': '{site} links do not work here. Paste a YouTube, Facebook or TikTok link instead, or clear the box — the video is optional.',
   'post.invalid.attribute': 'Answer "{field}".',
   'post.error.publish': 'Could not publish that listing',
   'post.error.save': 'Could not save those changes',
@@ -1081,9 +1085,9 @@ const tl: Record<string, string> = {
   'post.field.descriptionPlaceholder':
     'Ilarawan ang kondisyon, kasama sa benta, pick-up o delivery…',
   'post.field.video': 'Video link (optional)',
-  'post.field.videoPlaceholder': 'I-paste ang YouTube, Facebook o TikTok link',
+  'post.field.videoPlaceholder': 'https://...  (iwanang blangko kung wala)',
   'post.field.videoHelp':
-    'Nananatili ang video sa app na pinagpostan mo — bubuksan ng buyer ang link mula sa listing.',
+    'YouTube, Facebook o TikTok lang — hindi puwede ang Instagram. Iwanang blangko kung wala kang video. Nananatili ang video sa app na pinagpostan mo; bubuksan ng buyer ang link mula sa listing mo.',
   'post.field.price': 'Presyo',
   'post.field.priceUnit': 'Yunit ng presyo',
   'post.field.noPrice': 'Walang presyo',
@@ -1141,7 +1145,8 @@ const tl: Record<string, string> = {
   'post.invalid.price': 'Maglagay ng presyo, o palitan ang unit ng "Tanungin ang presyo".',
   'post.invalid.municipality': 'Piliin ang bayan.',
   'post.invalid.contact': 'Maglagay muna ng numero o Messenger handle sa profile mo — hindi puwedeng i-publish ang listing na walang makakasagot.',
-  'post.invalid.video': 'Hindi ito YouTube, Facebook o TikTok video link. Burahin mo na lang kung wala ka — optional naman ito.',
+  'post.invalid.video': 'Hindi ito video link. Mag-paste ng YouTube, Facebook o TikTok link, o burahin mo na lang — optional ang video.',
+  'post.invalid.videoSite': 'Hindi gumagana ang {site} links dito. Mag-paste ng YouTube, Facebook o TikTok link, o burahin mo na lang — optional ang video.',
   'post.invalid.attribute': 'Sagutan ang "{field}".',
   'post.error.publish': 'Hindi na-publish ang listing na iyon',
   'post.error.save': 'Hindi na-save ang mga pagbabago',

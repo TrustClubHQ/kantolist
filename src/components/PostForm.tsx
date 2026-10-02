@@ -7,7 +7,7 @@ import type { AttributeDef } from '@/lib/attributes'
 import { Plate, PlateHeader, Spinner } from '@/components/ui'
 import { useT } from '@/components/LanguageProvider'
 import { attributeLabel, categoryExample, categoryName } from '@/lib/i18n'
-import { listingPath, parseVideoUrl } from '@/lib/listing'
+import { listingPath, parseVideoUrl, pastedSiteName } from '@/lib/listing'
 import { PhotoPicker, uploadPendingPhotos, type ListingPhoto } from '@/components/PhotoPicker'
 
 /**
@@ -333,7 +333,13 @@ export function PostForm({
     // arrives as one line at the far end of a long form and says nothing about
     // which box caused it. A seller pasting a link that is not accepted needs
     // the message next to the link.
-    if ('error' in parseVideoUrl(videoUrl)) found.video = t('post.invalid.video')
+    if ('error' in parseVideoUrl(videoUrl)) {
+      // Name the site they pasted. "Use YouTube, Facebook or TikTok" alone
+      // tells someone looking at an Instagram link what they could have done,
+      // not what is wrong with what they did.
+      const site = pastedSiteName(videoUrl)
+      found.video = site ? t('post.invalid.videoSite', { site }) : t('post.invalid.video')
+    }
     for (const def of leaf?.attributes ?? []) {
       if (!def.required) continue
       if (!(attributes[def.key] ?? '').trim()) {
