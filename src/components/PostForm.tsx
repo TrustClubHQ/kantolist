@@ -7,7 +7,7 @@ import type { AttributeDef } from '@/lib/attributes'
 import { Plate, PlateHeader, Spinner } from '@/components/ui'
 import { useT } from '@/components/LanguageProvider'
 import { attributeLabel, categoryExample, categoryName } from '@/lib/i18n'
-import { listingPath, parseVideoUrl, pastedSiteName } from '@/lib/listing'
+import { listingPath, parseVideoUrl, pastedSiteName, videoHostName } from '@/lib/listing'
 import { PhotoPicker, uploadPendingPhotos, type ListingPhoto } from '@/components/PhotoPicker'
 
 /**
@@ -184,6 +184,43 @@ export function PostForm({
       window.removeEventListener('focus', refresh)
     }
   }, [])
+
+  /**
+   * The video box answers while it is being filled in, not at publish time.
+   *
+   * Waiting for the first press of Publish meant a seller pasted a link,
+   * carried on filling in the rest of the form, and only found out at the end
+   * — by which point the message was about a box several screens up. Checked
+   * here as soon as they stop typing instead, and it says the site's name back
+   * when the link is one we take, so a good paste is visibly good rather than
+   * merely not complained about.
+   *
+   * Half a second of quiet first: a URL typed by hand is invalid for most of
+   * the time it is being typed, and flashing red at every keystroke would be
+   * the form arguing with someone who is not finished yet. A paste arrives in
+   * one go, so it still feels immediate.
+   */
+  const [videoNotice, setVideoNotice] = useState<{ ok: boolean; text: string } | null>(null)
+  useEffect(() => {
+    if (!videoUrl.trim()) {
+      setVideoNotice(null)
+      return
+    }
+    const timer = setTimeout(() => {
+      const parsed = parseVideoUrl(videoUrl)
+      if ('error' in parsed) {
+        const site = pastedSiteName(videoUrl)
+        setVideoNotice({
+          ok: false,
+          text: site ? t('post.invalid.videoSite', { site }) : t('post.invalid.video'),
+        })
+        return
+      }
+      const host = parsed.url ? videoHostName(parsed.url) : null
+      setVideoNotice(host ? { ok: true, text: t('post.field.videoOk', { site: host }) } : null)
+    }, 500)
+    return () => clearTimeout(timer)
+  }, [videoUrl, t])
 
   async function saveContact() {
     const phone = phoneDraft.trim()
@@ -599,12 +636,27 @@ export function PostForm({
                 value={videoUrl}
                 onChange={(e) => setVideoUrl(e.target.value)}
                 placeholder={t('post.field.videoPlaceholder')}
-                aria-invalid={!!fieldErrors.video}
+                aria-invalid={videoNotice?.ok === false || !!fieldErrors.video}
                 className={`min-h-[48px] border-[2.5px] bg-ground px-3 text-[16px] ${
-                  fieldErrors.video ? 'border-red' : 'border-ink'
+                  videoNotice?.ok === false || fieldErrors.video
+                    ? 'border-red'
+                    : videoNotice?.ok
+                      ? 'border-green'
+                      : 'border-ink'
                 }`}
               />
-              <FieldError message={fieldErrors.video} />
+              {videoNotice ? (
+                <span
+                  role={videoNotice.ok ? undefined : 'alert'}
+                  className={`m-0 text-[13px] font-semibold leading-snug ${
+                    videoNotice.ok ? 'text-green' : 'text-red'
+                  }`}
+                >
+                  {videoNotice.text}
+                </span>
+              ) : (
+                <FieldError message={fieldErrors.video} />
+              )}
               <span className="m-0 text-[13px] font-semibold leading-snug text-muted-2">
                 {t('post.field.videoHelp')}
               </span>

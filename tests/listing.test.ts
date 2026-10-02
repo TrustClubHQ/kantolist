@@ -1,6 +1,6 @@
 import { translatorFor } from '../src/lib/i18n'
 import {
-  slugify, formatPrice, listingPath, codeFromParam, parseVideoUrl, videoHostName,
+  slugify, formatPrice, listingPath, codeFromParam, parseVideoUrl, videoHostName, pastedSiteName,
   PRICE_UNITS_FOR_TYPE,
 } from '@/lib/listing'
 import { generateCode } from '@/lib/code'
@@ -160,5 +160,20 @@ describe('video links people paste', () => {
     expect(parseVideoUrl('')).toEqual({ url: null })
     expect(parseVideoUrl('   ')).toEqual({ url: null })
     expect(parseVideoUrl(null)).toEqual({ url: null })
+  })
+})
+
+describe('pastedSiteName', () => {
+  it('names a real site so the message can say which one', () => {
+    expect(pastedSiteName('https://www.instagram.com/reel/Cabc123/')).toBe('instagram.com')
+    expect(pastedSiteName('vt.tiktok.com/ZSdFyqPqT/')).toBe('vt.tiktok.com')
+  })
+
+  it('names nothing for prose, which new URL would otherwise mangle into a host', () => {
+    // "not a link at all" parses as the hostname "not%20a%20link%20at%20all",
+    // and quoting that back at someone reads like a malfunction.
+    expect(pastedSiteName('not a link at all')).toBeNull()
+    expect(pastedSiteName('hello')).toBeNull()
+    expect(pastedSiteName('')).toBeNull()
   })
 })

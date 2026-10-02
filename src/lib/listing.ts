@@ -68,7 +68,12 @@ export function pastedSiteName(raw: string): string | null {
   if (!value) return null
   try {
     const host = new URL(/^https?:\/\//i.test(value) ? value : `https://${value}`).hostname
-    return host.toLowerCase().replace(/^www\./, '').replace(/\.$/, '') || null
+    const name = host.toLowerCase().replace(/^www\./, '').replace(/\.$/, '')
+    // `new URL` is happy to make a hostname out of prose — "not a link at all"
+    // becomes "not%20a%20link%20at%20all" — and quoting that back at someone
+    // reads like a malfunction. Only a thing shaped like a domain gets named;
+    // anything else falls back to the message that just says it is not a link.
+    return /^[a-z0-9-]+(\.[a-z0-9-]+)*\.[a-z]{2,}$/.test(name) ? name : null
   } catch {
     return null
   }

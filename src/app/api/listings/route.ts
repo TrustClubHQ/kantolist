@@ -60,6 +60,10 @@ export const GET = withApiHandler(async (request: NextRequest) => {
       negotiable: listing.negotiable,
       image: listing.images[0]?.url ?? null,
       municipality: listing.municipality.name,
+      // Both needed by the card's no-photo mark, which the live grid renders
+      // client-side from exactly this payload.
+      categorySlug: listing.category.slug,
+      parentSlug: listing.category.parent?.slug ?? null,
       postedAt: listing.postedAt,
       seller: { trustclubId: listing.account.trustclubId, displayName: listing.account.displayName },
       // Self-trust is Infinity internally, which JSON.stringify writes as null —

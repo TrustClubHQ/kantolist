@@ -48,7 +48,7 @@ export interface RankedListing {
 
 export type ListingWithRelations = Listing & {
   account: { id: string; trustclubId: string; displayName: string | null }
-  category: { id: string; slug: string; name: string }
+  category: { id: string; slug: string; name: string; parent: { slug: string } | null }
   municipality: { id: string; name: string; province: string }
   images: { url: string; width: number | null; height: number | null }[]
 }
@@ -57,7 +57,9 @@ const LISTED_STATUSES: ListingStatus[] = ['ACTIVE', 'RESERVED']
 
 const LISTING_INCLUDE = {
   account: { select: { id: true, trustclubId: true, displayName: true } },
-  category: { select: { id: true, slug: true, name: true } },
+  // parent comes along so a listing with no photo can fall back to its
+  // group's mark rather than the generic one (see CategoryMark).
+  category: { select: { id: true, slug: true, name: true, parent: { select: { slug: true } } } },
   municipality: { select: { id: true, name: true, province: true } },
   images: { select: { url: true, width: true, height: true }, orderBy: { sortOrder: 'asc' }, take: 1 },
 } satisfies Prisma.ListingInclude

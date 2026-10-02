@@ -2,10 +2,9 @@ import Link from 'next/link'
 import { prisma } from '@/lib/prisma'
 import { getCurrentAccount } from '@/lib/auth'
 import { SiteHeader } from '@/components/SiteHeader'
-import { AutoRefresh } from '@/components/AutoRefresh'
 import { SiteFooter } from '@/components/SiteFooter'
 import { SaleBonus } from '@/components/SaleBonus'
-import { ListingCard } from '@/components/ListingCard'
+import { LiveListings } from '@/components/LiveListings'
 import { SearchBar } from '@/components/SearchBar'
 import { Plate } from '@/components/ui'
 import { searchListings } from '@/lib/search'
@@ -15,6 +14,9 @@ import { categoryName } from '@/lib/i18n'
 import { listingPath } from '@/lib/listing'
 
 export const dynamic = 'force-dynamic'
+
+/** How many of page one the front page shows. */
+const FEATURED = 6
 
 export default async function HomePage() {
   const [account, t] = await Promise.all([getCurrentAccount(), getT()])
@@ -43,11 +45,10 @@ export default async function HomePage() {
     ? await prisma.municipality.findUnique({ where: { id: account.municipalityId } })
     : null
 
-  const featured = result.items.slice(0, 6)
+  const featured = result.items.slice(0, FEATURED)
 
   return (
     <div className="flex min-h-screen flex-col">
-      <AutoRefresh />
       <SiteHeader location={home ? `${home.name}, ${home.province}` : undefined} />
       <SaleBonus />
 
@@ -119,29 +120,39 @@ export default async function HomePage() {
             </p>
           </Plate>
         ) : (
-          <div className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-3 lg:grid-cols-4">
-            {featured.map(({ listing, trustPoints }) => (
-              <ListingCard
-                key={listing.id}
-                listing={{
-                  href: listingPath(listing.code, listing.slug),
-                  title: listing.title,
-                  type: listing.type,
-                  status: listing.status,
-                  price: listing.price === null ? null : Number(listing.price),
-                  priceUnit: listing.priceUnit,
-                  negotiable: listing.negotiable,
-                  image: listing.images[0]?.url ?? null,
-                  municipality: listing.municipality.name,
-                  categorySlug: listing.category.slug,
-                  postedAt: listing.postedAt,
-                  trustPoints: Number.isFinite(trustPoints ?? NaN) ? trustPoints : null,
-                  isOwn: listing.account.trustclubId === account?.trustclubId,
-                  signedIn: !!account,
-                }}
-              />
-            ))}
-          </div>
+          <LiveListings
+            className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-3 lg:grid-cols-4"
+            query=""
+            limit={FEATURED}
+            signedIn={!!account}
+            initial={featured.map(({ listing, trustPoints }) => ({
+              code: listing.code,
+              href: listingPath(listing.code, listing.slug),
+              title: listing.title,
+              type: listing.type,
+              status: listing.status,
+              price: listing.price === null ? null : Number(listing.price),
+              priceUnit: listing.priceUnit,
+              negotiable: listing.negotiable,
+              image: listing.images[0]?.url ?? null,
+              municipality: listing.municipality.name,
+              categorySlug: listing.category.slug,
+              parentSlug: listing.category.parent?.slug ?? null,
+              postedAt: listing.postedAt.toISOString(),
+              trustPoints: Number.isFinite(trustPoints ?? NaN) ? trustPoints : null,
+              isOwn: listing.account.trustclubId === account?.trustclubId,
+            }))}
+            empty={
+              <Plate className="p-6">
+                <p className="label m-0 text-[20px]">{t('home.empty')}</p>
+                <p className="mt-2 text-sm text-muted-2">
+                  {t('home.emptyHelp.before')}
+                  <Link href="/post">{t('home.emptyHelp.link')}</Link>
+                  {t('home.emptyHelp.after')}
+                </p>
+              </Plate>
+            }
+          />
         )}
       </section>
 

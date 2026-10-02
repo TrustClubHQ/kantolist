@@ -4,9 +4,8 @@ import { prisma } from '@/lib/prisma'
 import { getCategories, getMunicipalities } from '@/lib/reference'
 import { getCurrentAccount } from '@/lib/auth'
 import { SiteHeader } from '@/components/SiteHeader'
-import { AutoRefresh } from '@/components/AutoRefresh'
 import { SiteFooter } from '@/components/SiteFooter'
-import { ListingCard } from '@/components/ListingCard'
+import { LiveListings } from '@/components/LiveListings'
 import { SearchBar } from '@/components/SearchBar'
 import { FilterControls } from '@/components/FilterPanel'
 import { EmptyState, Plate } from '@/components/ui'
@@ -84,7 +83,6 @@ export default async function BrowsePage({ searchParams }: { searchParams: Promi
 
   return (
     <div className="flex min-h-screen flex-col">
-      <AutoRefresh />
       <SiteHeader />
 
       <div className="border-b-4 border-ink bg-red px-4 py-3">
@@ -168,29 +166,31 @@ export default async function BrowsePage({ searchParams }: { searchParams: Promi
           ) : result.items.length === 0 ? (
             <EmptyState title={t('browse.empty')}>{t('browse.emptyHelp')}</EmptyState>
           ) : (
-            <div className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-3">
-              {result.items.map(({ listing, trustPoints }) => (
-                <ListingCard
-                  key={listing.id}
-                  listing={{
-                    href: listingPath(listing.code, listing.slug),
-                    title: listing.title,
-                    type: listing.type,
-                    status: listing.status,
-                    price: listing.price === null ? null : Number(listing.price),
-                    priceUnit: listing.priceUnit,
-                    negotiable: listing.negotiable,
-                    image: listing.images[0]?.url ?? null,
-                    municipality: listing.municipality.name,
-                    categorySlug: listing.category.slug,
-                    postedAt: listing.postedAt,
-                    trustPoints: Number.isFinite(trustPoints ?? NaN) ? trustPoints : null,
-                    isOwn: listing.account.trustclubId === account?.trustclubId,
-                    signedIn: !!account,
-                  }}
-                />
-              ))}
-            </div>
+            <LiveListings
+              className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-3"
+              // The same search this page was rendered for, so the poll returns
+              // the same filters, sort and page rather than the default list.
+              query={params.toString()}
+              signedIn={!!account}
+              initial={result.items.map(({ listing, trustPoints }) => ({
+                code: listing.code,
+                href: listingPath(listing.code, listing.slug),
+                title: listing.title,
+                type: listing.type,
+                status: listing.status,
+                price: listing.price === null ? null : Number(listing.price),
+                priceUnit: listing.priceUnit,
+                negotiable: listing.negotiable,
+                image: listing.images[0]?.url ?? null,
+                municipality: listing.municipality.name,
+                categorySlug: listing.category.slug,
+                parentSlug: listing.category.parent?.slug ?? null,
+                postedAt: listing.postedAt.toISOString(),
+                trustPoints: Number.isFinite(trustPoints ?? NaN) ? trustPoints : null,
+                isOwn: listing.account.trustclubId === account?.trustclubId,
+              }))}
+              empty={<EmptyState title={t('browse.empty')}>{t('browse.emptyHelp')}</EmptyState>}
+            />
           )}
 
           {totalPages > 1 ? (
