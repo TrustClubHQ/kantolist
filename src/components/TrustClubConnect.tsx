@@ -3,7 +3,8 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import Image from 'next/image'
 import { QRCodeSVG, QRCodeCanvas } from 'qrcode.react'
-import { useIsMobile } from '@/hooks/useIsMobile'
+import { useBrowserKind } from '@/hooks/useBrowserKind'
+import { androidIntentUrl, TRUSTCLUB_PLAY_URL } from '@/lib/trustclub-link'
 import { Plate } from '@/components/ui'
 import { isSafeRedirect } from '@/lib/http'
 import { useT } from '@/components/LanguageProvider'
@@ -75,13 +76,14 @@ export function TrustClubConnect({
   }, [t])
   const [phase, setPhase] = useState<Phase>('starting')
   const [verificationUri, setVerificationUri] = useState('')
+  const [userCode, setUserCode] = useState('')
   const [error, setError] = useState('')
   const [downloadError, setDownloadError] = useState('')
   // Bumping this restarts the flow without unmounting, which is what "Try
   // again" needs — a reload would lose the redirect we were sent with.
   const [restartKey, setRestartKey] = useState(0)
   const qrCanvasRef = useRef<HTMLCanvasElement>(null)
-  const isMobile = useIsMobile()
+  const { isMobile, isAndroid, isInApp } = useBrowserKind()
 
   // Captured once so a parent re-render with a new redirect cannot tear the
   // flow down mid-authorisation.
@@ -149,6 +151,7 @@ export function TrustClubConnect({
           return
         }
         setVerificationUri(data.verification_uri_complete)
+        setUserCode(data.user_code ?? '')
         setPhase('waiting')
         // Poll only after start resolves: the first poll needs the device
         // cookie that the start response sets, or it comes back `no_session`.
@@ -260,12 +263,22 @@ export function TrustClubConnect({
 
   // Mobile: TrustClub is on this same device, so tapping through is the path.
   // The QR stays as a fallback for showing someone else's phone.
+  //
+  // On Android the link goes out as an intent: so the OS is asked for the
+  // TrustClub app by name rather than left to notice the App Link itself,
+  // with the https page as browser_fallback_url for a phone without the app.
+  // Not inside a Facebook or Messenger webview though: those block intent:
+  // outright, and an intent: that goes nowhere is worse than an https link
+  // that at least loads something — there the banner above is the real fix.
+  const tapHref = (isAndroid && !isInApp ? androidIntentUrl(verificationUri) : null) ?? verificationUri
+
   return (
     <div className="flex flex-col gap-3">
+      {isInApp ? <InAppBrowserNotice /> : null}
       <Plate className="flex flex-col items-center p-5">
         {verificationUri ? (
           <a
-            href={verificationUri}
+            href={tapHref}
             className="font-display hard flex min-h-[56px] w-full items-center justify-center gap-3 border-[3px] border-ink bg-red text-[20px] uppercase text-ground hover:text-ground"
           >
             <Image
@@ -303,6 +316,30 @@ export function TrustClubConnect({
           {t('signin.scanOther')}
         </p>
 
+        {/* The way through when the tap does not reach the app.
+            This code used to be hidden on the grounds that the link carries it
+            so nobody has to type anything — true right up until the link does
+            not open the app, and then it is the only route left. TrustClub's
+            own fallback page tells a member to "scan the code shown by the
+            partner site", which on one phone is nothing at all; this is that
+            code. */}
+        {userCode ? (
+          <div className="mt-4 w-full border-t-2 border-dim-edge pt-3 text-center">
+            <p className="m-0 text-[13px] font-semibold leading-snug text-muted-2">
+              {t('signin.codeFallback')}
+            </p>
+            <p className="font-display m-0 mt-1 text-[26px] tracking-[0.12em] text-ink">{userCode}</p>
+            <a
+              href={TRUSTCLUB_PLAY_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="label mt-2 inline-block text-[15px] underline"
+            >
+              {t('signin.getApp')}
+            </a>
+          </div>
+        ) : null}
+
         <button
           type="button"
           onClick={downloadQr}
@@ -321,6 +358,50 @@ export function TrustClubConnect({
         ) : null}
       </Plate>
       {devLoginEnabled ? <DevLogin /> : null}
+    </div>
+  )
+}
+
+/**
+ * Shown when the page is inside a Facebook, Messenger or Instagram webview.
+ *
+ * Those do not hand an https link to the system, so Android never resolves it
+ * as an App Link and "Connect with TrustClub" opens TrustClub's web page
+ * instead of the app — a page which, on one phone, tells the member to scan a
+ * code that is not there. They block the intent: scheme too, so there is no
+ * link that escapes: the only way out is opening this page in a real browser,
+ * and the member has to be told that before they get stuck rather than after.
+ *
+ * Most KantoList traffic arrives through a Messenger link, so this is the
+ * common path, not an edge case.
+ */
+function InAppBrowserNotice() {
+  const t = useT()
+  const [copied, setCopied] = useState(false)
+
+  async function copy() {
+    try {
+      await navigator.clipboard.writeText(window.location.href)
+      setCopied(true)
+    } catch {
+      // Clipboard refused — the menu route in the text still works.
+      setCopied(false)
+    }
+  }
+
+  return (
+    <div className="border-[3px] border-ink bg-yellow px-3.5 py-3">
+      <p className="label m-0 text-[17px] text-ink">{t('signin.inApp.title')}</p>
+      <p className="m-0 mt-1 text-[13px] font-semibold leading-snug text-ink">
+        {t('signin.inApp.body')}
+      </p>
+      <button
+        type="button"
+        onClick={copy}
+        className="label hard-sm mt-2.5 inline-flex min-h-[44px] items-center justify-center border-[3px] border-ink bg-ground px-3.5 text-[16px] text-ink"
+      >
+        {copied ? t('signin.inApp.copied') : t('signin.inApp.copy')}
+      </button>
     </div>
   )
 }
