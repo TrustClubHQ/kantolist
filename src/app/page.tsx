@@ -2,6 +2,7 @@ import Link from 'next/link'
 import { prisma } from '@/lib/prisma'
 import { getCurrentAccount } from '@/lib/auth'
 import { SiteHeader } from '@/components/SiteHeader'
+import { AutoRefresh } from '@/components/AutoRefresh'
 import { SiteFooter } from '@/components/SiteFooter'
 import { SaleBonus } from '@/components/SaleBonus'
 import { ListingCard } from '@/components/ListingCard'
@@ -46,6 +47,7 @@ export default async function HomePage() {
 
   return (
     <div className="flex min-h-screen flex-col">
+      <AutoRefresh />
       <SiteHeader location={home ? `${home.name}, ${home.province}` : undefined} />
       <SaleBonus />
 

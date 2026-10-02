@@ -117,3 +117,48 @@ describe('listing paths', () => {
     expect(codeFromParam('7KQ4M2')).toBe('7KQ4M2')
   })
 })
+
+/**
+ * The share links people actually paste.
+ *
+ * vt.tiktok.com is what TikTok's own share sheet produces across much of Asia,
+ * and the original exact-hostname allowlist rejected it — so a seller pasted a
+ * real TikTok link and was told to paste a TikTok link. These are regression
+ * cases, not hypotheticals.
+ */
+describe('video links people paste', () => {
+  const accepted = [
+    'https://vt.tiktok.com/ZSdFyqPqT/',
+    'https://vm.tiktok.com/ZSdFyqPqT/',
+    'https://www.tiktok.com/@seller/video/7300000000000000000',
+    'https://youtu.be/dQw4w9WgXcQ',
+    'https://m.youtube.com/watch?v=dQw4w9WgXcQ',
+    'https://youtube.com/shorts/abc123',
+    'youtube.com/watch?v=dQw4w9WgXcQ',
+    'https://www.facebook.com/share/v/abc123/',
+    'https://ph.facebook.com/watch/?v=123',
+    'https://fb.watch/abc123/',
+    'https://fb.me/abc',
+  ]
+  it.each(accepted)('accepts %s', (link) => {
+    expect(parseVideoUrl(link)).not.toHaveProperty('error')
+  })
+
+  // The leading dot in the suffix test is what stops a lookalike domain from
+  // passing as the real thing.
+  const refused = [
+    'https://evil-tiktok.com/x',
+    'https://tiktok.com.phish.example/x',
+    'https://notyoutube.com/x',
+    'https://example.com/x',
+  ]
+  it.each(refused)('refuses %s', (link) => {
+    expect(parseVideoUrl(link)).toHaveProperty('error')
+  })
+
+  it('still treats an empty box as no video rather than an error', () => {
+    expect(parseVideoUrl('')).toEqual({ url: null })
+    expect(parseVideoUrl('   ')).toEqual({ url: null })
+    expect(parseVideoUrl(null)).toEqual({ url: null })
+  })
+})

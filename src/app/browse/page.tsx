@@ -4,6 +4,7 @@ import { prisma } from '@/lib/prisma'
 import { getCategories, getMunicipalities } from '@/lib/reference'
 import { getCurrentAccount } from '@/lib/auth'
 import { SiteHeader } from '@/components/SiteHeader'
+import { AutoRefresh } from '@/components/AutoRefresh'
 import { SiteFooter } from '@/components/SiteFooter'
 import { ListingCard } from '@/components/ListingCard'
 import { SearchBar } from '@/components/SearchBar'
@@ -83,6 +84,7 @@ export default async function BrowsePage({ searchParams }: { searchParams: Promi
 
   return (
     <div className="flex min-h-screen flex-col">
+      <AutoRefresh />
       <SiteHeader />
 
       <div className="border-b-4 border-ink bg-red px-4 py-3">

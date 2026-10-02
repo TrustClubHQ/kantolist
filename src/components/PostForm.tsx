@@ -7,7 +7,7 @@ import type { AttributeDef } from '@/lib/attributes'
 import { Plate, PlateHeader, Spinner } from '@/components/ui'
 import { useT } from '@/components/LanguageProvider'
 import { attributeLabel, categoryExample, categoryName } from '@/lib/i18n'
-import { listingPath } from '@/lib/listing'
+import { listingPath, parseVideoUrl } from '@/lib/listing'
 import { PhotoPicker, uploadPendingPhotos, type ListingPhoto } from '@/components/PhotoPicker'
 
 /**
@@ -329,6 +329,11 @@ export function PostForm({
     if (priceUnit !== 'QUOTE' && !price.trim()) found.price = t('post.invalid.price')
     if (!municipalityId) found.municipality = t('post.invalid.municipality')
     if (!canBeReached) found.contact = t('post.invalid.contact')
+    // Checked here as well as on the server, because the server's refusal
+    // arrives as one line at the far end of a long form and says nothing about
+    // which box caused it. A seller pasting a link that is not accepted needs
+    // the message next to the link.
+    if ('error' in parseVideoUrl(videoUrl)) found.video = t('post.invalid.video')
     for (const def of leaf?.attributes ?? []) {
       if (!def.required) continue
       if (!(attributes[def.key] ?? '').trim()) {
@@ -338,7 +343,7 @@ export function PostForm({
       }
     }
     return found
-  }, [t, categoryId, title, price, priceUnit, municipalityId, leaf, attributes, canBeReached])
+  }, [t, categoryId, title, price, priceUnit, municipalityId, leaf, attributes, canBeReached, videoUrl])
 
   // Once publishing has been attempted, the messages track what is still
   // missing — a box that gets filled in stops complaining without a re-submit.
@@ -580,7 +585,7 @@ export function PostForm({
               enabled={photosEnabled}
               onPendingChange={setPendingPhotos}
             />
-            <label className="flex flex-col gap-1">
+            <label className="flex flex-col gap-1" data-invalid={!!fieldErrors.video}>
               <span className="label text-[16px]">{t('post.field.video')}</span>
               <input
                 type="url"
@@ -588,8 +593,12 @@ export function PostForm({
                 value={videoUrl}
                 onChange={(e) => setVideoUrl(e.target.value)}
                 placeholder={t('post.field.videoPlaceholder')}
-                className="min-h-[48px] border-[2.5px] border-ink bg-ground px-3 text-[16px]"
+                aria-invalid={!!fieldErrors.video}
+                className={`min-h-[48px] border-[2.5px] bg-ground px-3 text-[16px] ${
+                  fieldErrors.video ? 'border-red' : 'border-ink'
+                }`}
               />
+              <FieldError message={fieldErrors.video} />
               <span className="m-0 text-[13px] font-semibold leading-snug text-muted-2">
                 {t('post.field.videoHelp')}
               </span>

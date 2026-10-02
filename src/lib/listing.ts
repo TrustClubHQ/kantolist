@@ -26,25 +26,45 @@ export function slugify(title: string): string {
  * actually use. An unknown host is refused rather than stored and rendered as
  * a link to anywhere.
  */
-export const VIDEO_HOSTS: Record<string, string> = {
-  'youtube.com': 'YouTube',
-  'www.youtube.com': 'YouTube',
-  'm.youtube.com': 'YouTube',
-  'youtu.be': 'YouTube',
-  'facebook.com': 'Facebook',
-  'www.facebook.com': 'Facebook',
-  'm.facebook.com': 'Facebook',
-  'web.facebook.com': 'Facebook',
-  'fb.watch': 'Facebook',
-  'tiktok.com': 'TikTok',
-  'www.tiktok.com': 'TikTok',
-  'vm.tiktok.com': 'TikTok',
+/**
+ * The video sites a listing may link out to, matched by domain family rather
+ * than by an exact list of hostnames.
+ *
+ * It used to be an exact list, and it rejected `vt.tiktok.com` — which is the
+ * link TikTok's own share sheet hands out across much of Asia. A seller pasted
+ * a genuine TikTok link and was told "Paste a YouTube, Facebook or TikTok
+ * link", so they pasted it again. `ph.facebook.com`, `fb.me` and Facebook's
+ * `l.facebook.com` redirect wrapper failed the same way. Enumerating every
+ * subdomain these three companies use is a losing game; matching the domain
+ * is not.
+ *
+ * The leading dot in the suffix test is what keeps it honest: `evil-tiktok.com`
+ * and `tiktok.com.example.net` are not subdomains of `tiktok.com` and do not
+ * match.
+ */
+const VIDEO_HOST_FAMILIES: { domain: string; name: string }[] = [
+  { domain: 'youtube.com', name: 'YouTube' },
+  { domain: 'youtu.be', name: 'YouTube' },
+  { domain: 'facebook.com', name: 'Facebook' },
+  { domain: 'fb.watch', name: 'Facebook' },
+  { domain: 'fb.me', name: 'Facebook' },
+  { domain: 'tiktok.com', name: 'TikTok' },
+]
+
+/** The site's name for a hostname, or null if we do not link out to it. */
+export function videoHostFor(hostname: string): string | null {
+  // A trailing dot is a legal, fully-qualified form of the same host.
+  const host = hostname.toLowerCase().replace(/\.$/, '')
+  for (const { domain, name } of VIDEO_HOST_FAMILIES) {
+    if (host === domain || host.endsWith(`.${domain}`)) return name
+  }
+  return null
 }
 
 /** The platform's name, for a button that says where it is about to go. */
 export function videoHostName(url: string): string | null {
   try {
-    return VIDEO_HOSTS[new URL(url).hostname.toLowerCase()] ?? null
+    return videoHostFor(new URL(url).hostname)
   } catch {
     return null
   }
@@ -70,7 +90,7 @@ export function parseVideoUrl(raw: string | null | undefined): { url: string | n
   if (parsed.protocol !== 'https:' && parsed.protocol !== 'http:') {
     return { error: 'That does not look like a link' }
   }
-  if (!VIDEO_HOSTS[parsed.hostname.toLowerCase()]) {
+  if (!videoHostFor(parsed.hostname)) {
     return { error: 'Paste a YouTube, Facebook or TikTok link' }
   }
   parsed.protocol = 'https:'
