@@ -76,7 +76,6 @@ export function TrustClubConnect({
   }, [t])
   const [phase, setPhase] = useState<Phase>('starting')
   const [verificationUri, setVerificationUri] = useState('')
-  const [userCode, setUserCode] = useState('')
   const [error, setError] = useState('')
   const [downloadError, setDownloadError] = useState('')
   // Bumping this restarts the flow without unmounting, which is what "Try
@@ -151,7 +150,6 @@ export function TrustClubConnect({
           return
         }
         setVerificationUri(data.verification_uri_complete)
-        setUserCode(data.user_code ?? '')
         setPhase('waiting')
         // Poll only after start resolves: the first poll needs the device
         // cookie that the start response sets, or it comes back `no_session`.
@@ -316,28 +314,24 @@ export function TrustClubConnect({
           {t('signin.scanOther')}
         </p>
 
-        {/* The way through when the tap does not reach the app.
-            This code used to be hidden on the grounds that the link carries it
-            so nobody has to type anything — true right up until the link does
-            not open the app, and then it is the only route left. TrustClub's
-            own fallback page tells a member to "scan the code shown by the
-            partner site", which on one phone is nothing at all; this is that
-            code. */}
-        {userCode ? (
-          <div className="mt-4 w-full border-t-2 border-dim-edge pt-3 text-center">
-            <p className="m-0 text-[13px] font-semibold leading-snug text-muted-2">
-              {t('signin.codeFallback')}
-            </p>
-            <p className="font-display m-0 mt-1 text-[26px] tracking-[0.12em] text-ink">{userCode}</p>
-            <a
-              href={TRUSTCLUB_PLAY_URL}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="label mt-2 inline-block text-[15px] underline"
-            >
-              {t('signin.getApp')}
-            </a>
-          </div>
+        {/* For the member who has no app yet. The QR above is the working
+            fallback when the tap does not reach the app — saving it and
+            uploading it in TrustClub goes through.
+
+            What is deliberately NOT here is the user_code. It was, briefly, on
+            the reasoning that a code is the last route left when a link will
+            not open: wrong, because the TrustClub app has nowhere to type one.
+            Printing a code whose only use is a screen that does not exist
+            sends someone hunting through an app for it. */}
+        {verificationUri ? (
+          <a
+            href={TRUSTCLUB_PLAY_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="label mt-4 inline-block text-[15px] underline"
+          >
+            {t('signin.getApp')}
+          </a>
         ) : null}
 
         <button

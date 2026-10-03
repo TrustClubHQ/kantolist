@@ -154,7 +154,6 @@ const en: Record<string, string> = {
   'signin.or': 'or',
   'signin.scanOther': 'Scan this from another phone, or save it to open later.',
   'signin.saveQr': 'Save QR code',
-  'signin.codeFallback': 'If TrustClub did not open, open the app yourself and enter this code:',
   'signin.getApp': 'Get the TrustClub app',
   'signin.inApp.title': 'Open this in your browser first',
   'signin.inApp.body':
@@ -830,7 +829,6 @@ const tl: Record<string, string> = {
   'signin.or': 'o',
   'signin.scanOther': 'I-scan ito mula sa ibang cellphone, o i-save para buksan mamaya.',
   'signin.saveQr': 'I-save ang QR code',
-  'signin.codeFallback': 'Kung hindi bumukas ang TrustClub, buksan mo mismo ang app at ilagay ang code na ito:',
   'signin.getApp': 'Kunin ang TrustClub app',
   'signin.inApp.title': 'Buksan muna ito sa browser mo',
   'signin.inApp.body':
