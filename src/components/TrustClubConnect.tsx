@@ -314,26 +314,6 @@ export function TrustClubConnect({
           {t('signin.scanOther')}
         </p>
 
-        {/* For the member who has no app yet. The QR above is the working
-            fallback when the tap does not reach the app — saving it and
-            uploading it in TrustClub goes through.
-
-            What is deliberately NOT here is the user_code. It was, briefly, on
-            the reasoning that a code is the last route left when a link will
-            not open: wrong, because the TrustClub app has nowhere to type one.
-            Printing a code whose only use is a screen that does not exist
-            sends someone hunting through an app for it. */}
-        {verificationUri ? (
-          <a
-            href={TRUSTCLUB_PLAY_URL}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="label mt-4 inline-block text-[15px] underline"
-          >
-            {t('signin.getApp')}
-          </a>
-        ) : null}
-
         <button
           type="button"
           onClick={downloadQr}
@@ -346,6 +326,25 @@ export function TrustClubConnect({
           </svg>
           {t('signin.saveQr')}
         </button>
+
+        {/* Last, because it is for the member who has no app yet rather than a
+            step in the flow above.
+
+            What is deliberately NOT anywhere here is the user_code. It was,
+            briefly, on the reasoning that a code is the last route through when
+            a link will not open: wrong, because the TrustClub app has nowhere
+            to type one. Printing a code whose only use is a screen that does
+            not exist sends someone hunting through an app for it. */}
+        {verificationUri ? (
+          <a
+            href={TRUSTCLUB_PLAY_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="label mt-3 inline-block text-[15px] underline"
+          >
+            {t('signin.getApp')}
+          </a>
+        ) : null}
 
         {downloadError ? (
           <p className="label m-0 mt-3 text-[15px] text-red">{downloadError}</p>

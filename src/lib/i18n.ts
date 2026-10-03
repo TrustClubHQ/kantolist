@@ -152,7 +152,10 @@ const en: Record<string, string> = {
   'signin.keepOpen': 'Keep this page open — it continues on its own once you approve.',
   'signin.connect': 'Connect with TrustClub',
   'signin.or': 'or',
-  'signin.scanOther': 'Scan this from another phone, or save it to open later.',
+  // The route that actually works on one phone: the TrustClub app takes an
+  // uploaded QR image. "Save it to open later" described nothing anyone could
+  // then do.
+  'signin.scanOther': 'Save the QR code, then upload it in the TrustClub app to log in.',
   'signin.saveQr': 'Save QR code',
   'signin.getApp': 'Get the TrustClub app',
   'signin.inApp.title': 'Open this in your browser first',
@@ -827,7 +830,7 @@ const tl: Record<string, string> = {
   'signin.keepOpen': 'Huwag isara ang page — tutuloy ito mag-isa pagkatapos mong aprubahan.',
   'signin.connect': 'Mag-connect sa TrustClub',
   'signin.or': 'o',
-  'signin.scanOther': 'I-scan ito mula sa ibang cellphone, o i-save para buksan mamaya.',
+  'signin.scanOther': 'I-save ang QR code, tapos i-upload ito sa TrustClub app para maka-log in.',
   'signin.saveQr': 'I-save ang QR code',
   'signin.getApp': 'Kunin ang TrustClub app',
   'signin.inApp.title': 'Buksan muna ito sa browser mo',
