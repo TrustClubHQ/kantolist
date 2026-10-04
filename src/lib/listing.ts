@@ -5,9 +5,6 @@ import type { T } from './i18n'
 export const BUMP_COOLDOWN_DAYS = 7
 
 /** Members with no incoming trust are capped here; everyone else gets the higher cap. */
-export const MAX_ACTIVE_LISTINGS_UNTRUSTED = 3
-export const MAX_ACTIVE_LISTINGS = 40
-export const MAX_NEW_LISTINGS_PER_DAY = 10
 
 export function slugify(title: string): string {
   return title

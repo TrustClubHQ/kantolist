@@ -8,12 +8,13 @@ import { isAllowedMutatingRequest } from '@/lib/http'
 import { searchListings, type SortKey } from '@/lib/search'
 import { parseSchema, validateAttributes } from '@/lib/attributes'
 import {
-  slugify, listingPath, parseVideoUrl,
-  PRICE_UNITS_FOR_TYPE, MAX_ACTIVE_LISTINGS, MAX_ACTIVE_LISTINGS_UNTRUSTED, MAX_NEW_LISTINGS_PER_DAY,
+  slugify, listingPath, parseVideoUrl, PRICE_UNITS_FOR_TYPE,
 } from '@/lib/listing'
 import { generateCode } from '@/lib/code'
 
-const SORTS: SortKey[] = ['trust', 'newest', 'price_asc', 'price_desc', 'nearest']
+// 'nearest' is not here: it was accepted and then sorted by postedAt like
+// 'newest', so it promised an ordering it never produced.
+const SORTS: SortKey[] = ['trust', 'newest', 'price_asc', 'price_desc']
 const TYPES: ListingType[] = ['SELL', 'RENT', 'SERVICE']
 const MAX_TITLE = 70
 const MAX_DESCRIPTION = 4000
@@ -148,29 +149,13 @@ export const POST = withApiHandler(async (request: NextRequest) => {
 
   const description = (body.description ?? '').trim().slice(0, MAX_DESCRIPTION)
 
-  // Anti-abuse: a member nobody vouches for gets a smaller allowance, and
-  // everyone has a daily cap. Both are checked here rather than in the UI, so
-  // a direct API call is bound by the same limits.
-  const [activeCount, todayCount] = await Promise.all([
-    prisma.listing.count({ where: { accountId: account.id, status: { in: ['ACTIVE', 'RESERVED'] } } }),
-    prisma.listing.count({
-      where: { accountId: account.id, createdAt: { gt: new Date(Date.now() - 86400_000) } },
-    }),
-  ])
-  if (todayCount >= MAX_NEW_LISTINGS_PER_DAY) {
-    return forbidden(t('api.tooManyToday'))
-  }
-  if (activeCount >= MAX_ACTIVE_LISTINGS) {
-    return forbidden(t('api.tooManyActive'))
-  }
-  if (activeCount >= MAX_ACTIVE_LISTINGS_UNTRUSTED && !account.phoneVerifiedAt) {
-    // The spec wants this gated on "nobody vouches for this member", but trust
-    // is DIRECTED: there is no way to ask TrustClub how much incoming trust an
-    // id has, only how much a specific viewer extends to it. Until an aggregate
-    // endpoint exists (spec §12 Q1), a verified phone is the cheapest real
-    // signal we control, so it is what unlocks the larger allowance.
-    return forbidden(t('api.verifyToPostMore', { count: MAX_ACTIVE_LISTINGS_UNTRUSTED }))
-  }
+  // No posting caps. There were three — a per-day limit, a ceiling on active
+  // listings, and a tighter one for anyone whose phone was not verified — and
+  // the last of them was unreachable in the worst way: nothing in this product
+  // can verify a phone number, so every member hit "verify your phone number
+  // to post more" at their third listing and stayed there. Moderation is
+  // TrustClub's job: someone who floods the board loses trust points, and
+  // trust is what decides whose listings anyone sees.
 
   // A listing nobody can answer is worse than no listing. A TrustClub profile
   // is an identity rather than an inbox and a Facebook page is a detour, so

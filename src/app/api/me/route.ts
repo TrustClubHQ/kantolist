@@ -42,8 +42,13 @@ export const PATCH = withApiHandler(async (request: NextRequest) => {
 
   if (body.displayName !== undefined) {
     const name = body.displayName.trim().slice(0, 80)
-    if (!name) return badRequest(t('api.enterName'))
-    data.displayName = name
+    // An empty name clears it rather than refusing the whole save. TrustClub
+    // does not always give us one, the profile form posts every field at once,
+    // and the old rule meant such a member could not save anything at all —
+    // including the phone number or Messenger handle they now need before they
+    // can post. A listing falls back to the trustclubId for a display name, so
+    // nothing downstream needs this to be set.
+    data.displayName = name || null
   }
 
   if (body.phone !== undefined) {

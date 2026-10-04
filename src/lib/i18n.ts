@@ -728,10 +728,6 @@ const en: Record<string, string> = {
   'api.badChannels': 'Invalid contact channels',
   'api.contactRequired':
     'Add a phone number or a Messenger handle to your profile before posting — buyers reach you directly, so a listing needs one.',
-  'api.tooManyToday': 'You have posted a lot today. Try again tomorrow.',
-  'api.tooManyActive': 'You have reached the maximum number of active listings',
-  'api.verifyToPostMore':
-    'New members can have {count} active listings. Verify your phone number to post more.',
   'api.listingNotFound': 'Listing not found',
   'api.notYourListing': 'This is not your listing',
   'api.pickReason': 'Pick a reason',
@@ -745,7 +741,6 @@ const en: Record<string, string> = {
   'api.tooManyPhotos': 'A listing can have up to {max} photos',
   'api.whichPhoto': 'Which photo?',
   'api.photoNotFound': 'Photo not found',
-  'api.enterName': 'Enter a name buyers will recognise',
   'api.enterPhPhone': 'Enter a Philippine mobile number, e.g. 0917 555 1234',
   'api.enterViberPhone': 'Enter a Philippine mobile number for Viber',
   'api.badFacebookLink': 'That does not look like a Facebook link',
@@ -1374,10 +1369,6 @@ const tl: Record<string, string> = {
   'api.badChannels': 'Hindi wastong contact channel',
   'api.contactRequired':
     'Maglagay muna ng numero o Messenger handle sa profile mo bago mag-post — direkta kang kokontakin ng buyer, kaya kailangan ito ng listing.',
-  'api.tooManyToday': 'Marami ka nang na-post ngayong araw. Bukas ka na ulit subok.',
-  'api.tooManyActive': 'Umabot ka na sa pinakamaraming active na listing',
-  'api.verifyToPostMore':
-    'Hanggang {count} active na listing lang ang bagong member. I-verify ang numero mo para makapag-post pa.',
   'api.listingNotFound': 'Hindi mahanap ang listing',
   'api.notYourListing': 'Hindi mo ito listing',
   'api.pickReason': 'Pumili ng dahilan',
@@ -1391,7 +1382,6 @@ const tl: Record<string, string> = {
   'api.tooManyPhotos': 'Hanggang {max} litrato lang ang pwede sa isang listing',
   'api.whichPhoto': 'Aling litrato?',
   'api.photoNotFound': 'Hindi mahanap ang litrato',
-  'api.enterName': 'Maglagay ng pangalan na makikilala ng buyer',
   'api.enterPhPhone': 'Maglagay ng Philippine mobile number, hal. 0917 555 1234',
   'api.enterViberPhone': 'Maglagay ng Philippine mobile number para sa Viber',
   'api.badFacebookLink': 'Mukhang hindi ito Facebook link',

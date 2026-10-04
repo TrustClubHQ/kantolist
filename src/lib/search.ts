@@ -26,7 +26,7 @@ import { categorySlugsMatching } from '@/lib/i18n'
 export const PAGE_SIZE = 24
 const CANDIDATE_WINDOW = TRUST_LOOKUP_BUDGET * 3
 
-export type SortKey = 'trust' | 'newest' | 'price_asc' | 'price_desc' | 'nearest'
+export type SortKey = 'trust' | 'newest' | 'price_asc' | 'price_desc'
 
 export interface SearchParams {
   q?: string
@@ -153,7 +153,6 @@ function sqlOrder(sort: SortKey): Prisma.ListingOrderByWithRelationInput[] {
     case 'price_desc':
       return [{ price: 'desc' }, { postedAt: 'desc' }]
     case 'newest':
-    case 'nearest':
     case 'trust':
     default:
       return [{ postedAt: 'desc' }]

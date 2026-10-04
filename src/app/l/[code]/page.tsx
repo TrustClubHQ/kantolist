@@ -289,13 +289,7 @@ export default async function ListingPage({ params }: Params) {
         </div>
 
         <div className="mt-3 flex justify-center">
-          <ReportLink
-            listingId={listing.id}
-            listingTitle={listing.title}
-            trustclubId={listing.account.trustclubId}
-            signedIn={!!account}
-            signInHref={`/signin?redirect=${encodeURIComponent(listingPath(listing.code, listing.slug))}`}
-          />
+          <ReportLink trustclubId={listing.account.trustclubId} />
         </div>
       </main>
       </div>
