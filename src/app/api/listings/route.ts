@@ -8,7 +8,7 @@ import { isAllowedMutatingRequest } from '@/lib/http'
 import { searchListings, type SortKey } from '@/lib/search'
 import { parseSchema, validateAttributes } from '@/lib/attributes'
 import {
-  slugify, listingPath, parseVideoUrl, PRICE_UNITS_FOR_TYPE,
+  slugify, listingPath, parseVideoUrl, PRICE_UNITS_FOR_TYPE, MAX_NEW_LISTINGS_PER_DAY,
 } from '@/lib/listing'
 import { generateCode } from '@/lib/code'
 
@@ -149,13 +149,22 @@ export const POST = withApiHandler(async (request: NextRequest) => {
 
   const description = (body.description ?? '').trim().slice(0, MAX_DESCRIPTION)
 
-  // No posting caps. There were three — a per-day limit, a ceiling on active
-  // listings, and a tighter one for anyone whose phone was not verified — and
-  // the last of them was unreachable in the worst way: nothing in this product
-  // can verify a phone number, so every member hit "verify your phone number
-  // to post more" at their third listing and stayed there. Moderation is
-  // TrustClub's job: someone who floods the board loses trust points, and
-  // trust is what decides whose listings anyone sees.
+  // One cap, on the rate rather than the total. The ceilings on active
+  // listings are gone — one of them was gated on a verified phone number,
+  // which nothing here can produce, so members stopped at three and were told
+  // to verify a number forever. How many things someone has for sale is their
+  // business. How fast they can fill the board in one go is ours, because
+  // trust ranking changes the order listings appear in, not whether they
+  // exist, and a signed-out visitor sees newest regardless.
+  //
+  // Checked here rather than in the form, so a direct API call is bound by it
+  // too.
+  const todayCount = await prisma.listing.count({
+    where: { accountId: account.id, createdAt: { gt: new Date(Date.now() - 86400_000) } },
+  })
+  if (todayCount >= MAX_NEW_LISTINGS_PER_DAY) {
+    return forbidden(t('api.tooManyToday', { count: MAX_NEW_LISTINGS_PER_DAY }))
+  }
 
   // A listing nobody can answer is worse than no listing. A TrustClub profile
   // is an identity rather than an inbox and a Facebook page is a detour, so

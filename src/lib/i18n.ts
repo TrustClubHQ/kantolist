@@ -726,6 +726,8 @@ const en: Record<string, string> = {
   'api.enterPrice': 'Enter a price',
   'api.priceTooHigh': 'That price looks wrong',
   'api.badChannels': 'Invalid contact channels',
+  'api.tooManyToday':
+    'That is {count} listings in a day — the most we allow in one go. The rest can wait until tomorrow.',
   'api.contactRequired':
     'Add a phone number or a Messenger handle to your profile before posting — buyers reach you directly, so a listing needs one.',
   'api.listingNotFound': 'Listing not found',
@@ -1367,6 +1369,8 @@ const tl: Record<string, string> = {
   'api.enterPrice': 'Maglagay ng presyo',
   'api.priceTooHigh': 'Mukhang mali ang presyong iyon',
   'api.badChannels': 'Hindi wastong contact channel',
+  'api.tooManyToday':
+    '{count} na listing sa isang araw — iyon na ang pinakamarami sa isang upuan. Bukas mo na ituloy ang iba.',
   'api.contactRequired':
     'Maglagay muna ng numero o Messenger handle sa profile mo bago mag-post — direkta kang kokontakin ng buyer, kaya kailangan ito ng listing.',
   'api.listingNotFound': 'Hindi mahanap ang listing',

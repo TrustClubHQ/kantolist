@@ -2,6 +2,20 @@ import type { ListingType, PriceUnit } from '@prisma/client'
 import type { T } from './i18n'
 
 /** A bump resets postedAt, at most this often. */
+/**
+ * The only posting cap left.
+ *
+ * The caps on *active* listings are gone: one of them was gated on a verified
+ * phone number, which nothing in this product can produce, so members stopped
+ * at three listings and were told to verify a number forever. How many things
+ * someone has for sale is their business — how fast they can fill the board in
+ * one go is ours, and this is the part that stops a run.
+ *
+ * Counted over a rolling 24 hours rather than a calendar day, so it cannot be
+ * reset by waiting for midnight.
+ */
+export const MAX_NEW_LISTINGS_PER_DAY = 10
+
 export const BUMP_COOLDOWN_DAYS = 7
 
 /** Members with no incoming trust are capped here; everyone else gets the higher cap. */
