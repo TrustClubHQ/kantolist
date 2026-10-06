@@ -179,7 +179,11 @@ export const POST = withApiHandler(async (request: NextRequest) => {
   // Snapshot the channels the poster actually has, so an old listing never
   // advertises a channel they removed from their profile later.
   const available: string[] = []
-  if (account.phone) available.push('PHONE', 'SMS')
+  if (account.phone) {
+    // Only the ones they answer — see Account.phoneReach.
+    if (account.phoneReach !== 'SMS_ONLY') available.push('PHONE')
+    if (account.phoneReach !== 'CALL_ONLY') available.push('SMS')
+  }
   if (account.viberNumber) available.push('VIBER')
   const requested = Array.isArray(body.contactChannels) ? body.contactChannels : available
   const channels = available.filter((c) => requested.includes(c))

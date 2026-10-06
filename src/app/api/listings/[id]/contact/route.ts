@@ -5,6 +5,7 @@ import { requestT } from '@/lib/i18n-server'
 import { getAccountFromRequest } from '@/lib/auth'
 import { withApiHandler, badRequest, notFound, forbidden, unauthorized } from '@/lib/api'
 import { isAllowedMutatingRequest } from '@/lib/http'
+import { isFirefoxAndroidUserAgent } from '@/lib/user-agent'
 
 type Ctx = { params: Promise<{ id: string }> }
 
@@ -23,14 +24,22 @@ interface Seller {
   viberNumber: string | null
 }
 
-function targetFor(channel: ContactChannel, seller: Seller, title: string, code: string): string | null {
+function targetFor(
+  channel: ContactChannel,
+  seller: Seller,
+  title: string,
+  code: string,
+  prefillSms: boolean,
+): string | null {
   switch (channel) {
     case 'PHONE':
       return seller.phone ? `tel:${seller.phone}` : null
     case 'SMS':
-      return seller.phone
-        ? `sms:${seller.phone}?body=${encodeURIComponent(`Hi, I saw your "${title}" on KantoList (#${code}).`)}`
-        : null
+      if (!seller.phone) return null
+      // Firefox on Android does nothing at all with the body on the end, so
+      // it gets the bare link (see isFirefoxAndroidUserAgent).
+      if (!prefillSms) return `sms:${seller.phone}`
+      return `sms:${seller.phone}?body=${encodeURIComponent(`Hi, I saw your "${title}" on KantoList (#${code}).`)}`
     case 'VIBER':
       return seller.viberNumber ? `viber://chat?number=${encodeURIComponent(seller.viberNumber)}` : null
     default:
@@ -69,9 +78,10 @@ export const GET = withApiHandler(async (request: NextRequest, ctx: Ctx) => {
   if (!listing || listing.status === 'REMOVED') return notFound(t('api.listingNotFound'))
 
   const viewer = await getAccountFromRequest(request)
+  const prefillSms = !isFirefoxAndroidUserAgent(request.headers.get('user-agent') ?? '')
   const targets: Partial<Record<ContactChannel, string>> = {}
   for (const channel of viewer ? CHANNELS : []) {
-    const target = targetFor(channel, listing.account, listing.title, listing.code)
+    const target = targetFor(channel, listing.account, listing.title, listing.code, prefillSms)
     if (target) targets[channel] = target
   }
 

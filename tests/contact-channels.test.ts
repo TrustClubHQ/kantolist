@@ -18,6 +18,7 @@ function seller(over: Partial<SellerContact> = {}): SellerContact {
   return {
     hasPhone: false,
     maskedPhone: null,
+    phoneReach: 'BOTH',
     hasFacebook: false,
     hasViber: false,
     ...over,
@@ -53,6 +54,20 @@ describe('usableChannels', () => {
   it('drops a channel the seller has since cleared from their profile', () => {
     expect(usableChannels(seller({ hasViber: true }))).toEqual(['VIBER'])
     expect(usableChannels(seller())).toEqual([])
+  })
+
+  it('offers only what the seller answers', () => {
+    expect(usableChannels(seller({ hasPhone: true, phoneReach: 'CALL_ONLY' }))).toEqual(['PHONE'])
+    expect(usableChannels(seller({ hasPhone: true, phoneReach: 'SMS_ONLY' }))).toEqual(['SMS'])
+  })
+
+  it('leaves Viber alone whichever phone channel is chosen', () => {
+    const smsOnly = seller({ hasPhone: true, phoneReach: 'SMS_ONLY', hasViber: true })
+    expect(usableChannels(smsOnly)).toEqual(['SMS', 'VIBER'])
+  })
+
+  it('ignores the preference for a seller with no number', () => {
+    expect(usableChannels(seller({ phoneReach: 'CALL_ONLY' }))).toEqual([])
   })
 
   it('orders them call, text, Viber', () => {

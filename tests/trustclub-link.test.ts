@@ -1,5 +1,10 @@
 import { androidIntentUrl, TRUSTCLUB_ANDROID_PACKAGE } from '../src/lib/trustclub-link'
-import { isAndroidUserAgent, isInAppBrowserUserAgent, isMobileUserAgent } from '../src/lib/user-agent'
+import {
+  isAndroidUserAgent,
+  isFirefoxAndroidUserAgent,
+  isInAppBrowserUserAgent,
+  isMobileUserAgent,
+} from '../src/lib/user-agent'
 
 const REAL = 'https://api.trustclub.app/v1/connect/?user_code=44TZ-5KBZ'
 
@@ -49,6 +54,10 @@ describe('user agents', () => {
     'Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148 [FBAN/FBIOS;FBAV/440.0.0.0;]'
   const DESKTOP =
     'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36'
+  const FIREFOX_ANDROID = 'Mozilla/5.0 (Android 14; Mobile; rv:131.0) Gecko/131.0 Firefox/131.0'
+  const FIREFOX_IOS =
+    'Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) FxiOS/131.0 Mobile/15E148 Safari/605.1.15'
+  const FIREFOX_DESKTOP = 'Mozilla/5.0 (X11; Linux x86_64; rv:131.0) Gecko/20100101 Firefox/131.0'
 
   it('spots Android only where it is Android', () => {
     expect(isAndroidUserAgent(CHROME_ANDROID)).toBe(true)
@@ -65,5 +74,14 @@ describe('user agents', () => {
 
   it('still counts an embedded browser as mobile, which is what picks the tap-through layout', () => {
     expect(isMobileUserAgent(MESSENGER_ANDROID)).toBe(true)
+  })
+
+  it('spots the one browser that drops an sms body on the floor', () => {
+    // Gecko on Android only. FxiOS is WebKit with a Mozilla badge, and the
+    // desktop build has no SMS app to hand off to in the first place.
+    expect(isFirefoxAndroidUserAgent(FIREFOX_ANDROID)).toBe(true)
+    expect(isFirefoxAndroidUserAgent(FIREFOX_IOS)).toBe(false)
+    expect(isFirefoxAndroidUserAgent(FIREFOX_DESKTOP)).toBe(false)
+    expect(isFirefoxAndroidUserAgent(CHROME_ANDROID)).toBe(false)
   })
 })

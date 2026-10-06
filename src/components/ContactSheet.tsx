@@ -45,6 +45,7 @@ export function ContactSheet({
   const [open, setOpen] = useState(false)
   const [targets, setTargets] = useState<Record<string, string> | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const [copied, setCopied] = useState(false)
 
   /**
    * Resolve the links when the sheet opens, so each row can be a real anchor.
@@ -103,6 +104,15 @@ export function ContactSheet({
   // Signed out, Call and Text are the same locked row twice — the same masked
   // number, the same link, nothing to tell them apart. One row says it once.
   const available = CHANNEL_ORDER.filter((c) => channels.includes(c))
+
+  /**
+   * The seller's number, taken back out of whichever link carries it.
+   *
+   * tel: and sms: both hold it, so one of them is enough, and this costs no
+   * extra request — it is the same payload the rows are built from.
+   */
+  const phoneTarget = targets?.PHONE ?? targets?.SMS ?? null
+  const fullPhone = phoneTarget ? (phoneTarget.split('?')[0].split(':')[1] ?? null) : null
   const ordered = signedIn
     ? available
     : available.filter((c) => c !== 'SMS' || !available.includes('PHONE'))
@@ -234,6 +244,29 @@ export function ContactSheet({
                   </a>
                 )
               })}
+
+              {/* The number in plain sight, for when the phone refuses the
+                  hand-off. Firefox on Android does that with text links, and
+                  a row that does nothing leaves a buyer with no way to reach
+                  the seller at all. Read from the resolved link rather than
+                  the page, so it still never reaches anonymous HTML. */}
+              {fullPhone ? (
+                <button
+                  type="button"
+                  onClick={() => {
+                    navigator.clipboard?.writeText(fullPhone).then(
+                      () => setCopied(true),
+                      () => setCopied(false),
+                    )
+                  }}
+                  className="label m-0 flex min-h-[46px] items-center justify-center gap-2 border-[2.5px] border-dim-edge bg-ground px-3 text-[16px] text-muted"
+                >
+                  <span className="select-all">{fullPhone}</span>
+                  <span className="text-[13px] text-muted-2">
+                    {copied ? t('contact.copied') : t('contact.copy')}
+                  </span>
+                </button>
+              ) : null}
 
               {error ? (
                 <p className="label m-0 border-2 border-ink bg-yellow px-3 py-2 text-center text-[16px] text-ink">

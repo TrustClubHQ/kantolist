@@ -41,3 +41,20 @@ export function isInAppBrowserUserAgent(ua: string): boolean {
   const lower = ua.toLowerCase()
   return IN_APP_MARKERS.some((m) => lower.includes(m))
 }
+
+/**
+ * Firefox on Android, which mishandles `sms:` URIs.
+ *
+ * Gecko rewrites the URI on the way to the SMS app — it has prepended slashes
+ * to the number for years (Bugzilla 1334850) — and a `?body=` on the end makes
+ * the tap do nothing at all, while `tel:` from the same sheet works. So the
+ * text link goes out without its prefilled message there: a composer that
+ * opens beats a nicety that does not.
+ *
+ * Firefox on iOS is WebKit with a Mozilla badge (FxiOS) and is not affected,
+ * so this deliberately needs both markers.
+ */
+export function isFirefoxAndroidUserAgent(ua: string): boolean {
+  const lower = ua.toLowerCase()
+  return lower.includes('firefox') && lower.includes('android')
+}

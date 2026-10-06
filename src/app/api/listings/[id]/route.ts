@@ -103,7 +103,10 @@ export const PATCH = withApiHandler(async (request: NextRequest, ctx: Ctx) => {
       return badRequest(t('api.contactRequired'))
     }
     const available = new Set<string>()
-    if (account.phone) { available.add('PHONE'); available.add('SMS') }
+    if (account.phone) {
+      if (account.phoneReach !== 'SMS_ONLY') available.add('PHONE')
+      if (account.phoneReach !== 'CALL_ONLY') available.add('SMS')
+    }
     if (account.viberNumber) available.add('VIBER')
     const channels = body.contactChannels
       .filter((c): c is string => typeof c === 'string')

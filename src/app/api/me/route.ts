@@ -15,6 +15,7 @@ export const GET = withApiHandler(async (request: NextRequest) => {
       displayName: account.displayName,
       phone: account.phone,
       phoneVerified: !!account.phoneVerifiedAt,
+      phoneReach: account.phoneReach,
       facebookUrl: account.facebookUrl,
       viberNumber: account.viberNumber,
       municipalityId: account.municipalityId,
@@ -31,6 +32,7 @@ export const PATCH = withApiHandler(async (request: NextRequest) => {
   const body: {
     displayName?: string
     phone?: string | null
+    phoneReach?: string | null
     facebookUrl?: string | null
     viberNumber?: string | null
     municipalityId?: string | null
@@ -59,6 +61,14 @@ export const PATCH = withApiHandler(async (request: NextRequest) => {
       if (normalized !== account.phone) data.phoneVerifiedAt = null
       data.phone = normalized
     }
+  }
+
+  if (body.phoneReach !== undefined) {
+    const reach = body.phoneReach ?? 'BOTH'
+    if (reach !== 'BOTH' && reach !== 'CALL_ONLY' && reach !== 'SMS_ONLY') {
+      return badRequest(t('api.badPhoneReach'))
+    }
+    data.phoneReach = reach
   }
 
   if (body.facebookUrl !== undefined) {
@@ -106,6 +116,7 @@ export const PATCH = withApiHandler(async (request: NextRequest) => {
     account: {
       phone: updated.phone,
       phoneVerified: !!updated.phoneVerifiedAt,
+      phoneReach: updated.phoneReach,
       viberNumber: updated.viberNumber,
     },
   })

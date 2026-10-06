@@ -1,3 +1,4 @@
+import type { PhoneReach } from '@prisma/client'
 import { prisma } from '@/lib/prisma'
 import { maskPhone } from '@/lib/format'
 
@@ -16,6 +17,8 @@ import { maskPhone } from '@/lib/format'
 export interface SellerContact {
   hasPhone: boolean
   maskedPhone: string | null
+  /** Which of call and text the seller actually answers. */
+  phoneReach: PhoneReach
   hasFacebook: boolean
   hasViber: boolean
 }
@@ -51,7 +54,13 @@ export interface SellerContact {
  */
 export function usableChannels(contact: SellerContact): string[] {
   const channels: string[] = []
-  if (contact.hasPhone) channels.push('PHONE', 'SMS')
+  // A number does not mean both: a seller behind a counter may take only
+  // texts, a driver only calls. Offering the one they never answer reads as
+  // being ignored, so they choose (see Account.phoneReach).
+  if (contact.hasPhone) {
+    if (contact.phoneReach !== 'SMS_ONLY') channels.push('PHONE')
+    if (contact.phoneReach !== 'CALL_ONLY') channels.push('SMS')
+  }
   if (contact.hasViber) channels.push('VIBER')
   return channels
 }
@@ -59,14 +68,15 @@ export function usableChannels(contact: SellerContact): string[] {
 export async function getSellerContact(accountId: string): Promise<SellerContact> {
   const account = await prisma.account.findUnique({
     where: { id: accountId },
-    select: { phone: true, facebookUrl: true, viberNumber: true },
+    select: { phone: true, phoneReach: true, facebookUrl: true, viberNumber: true },
   })
   if (!account) {
-    return { hasPhone: false, maskedPhone: null, hasFacebook: false, hasViber: false }
+    return { hasPhone: false, maskedPhone: null, phoneReach: 'BOTH', hasFacebook: false, hasViber: false }
   }
   return {
     hasPhone: !!account.phone,
     maskedPhone: account.phone ? maskPhone(account.phone) : null,
+    phoneReach: account.phoneReach,
     hasFacebook: !!account.facebookUrl,
     hasViber: !!account.viberNumber,
   }

@@ -20,6 +20,7 @@ model Account {
   displayName    String? @map("display_name")
   phone          String? @map("phone")
   phoneVerifiedAt DateTime? @map("phone_verified_at")
+  phoneReach     PhoneReach @default(BOTH) @map("phone_reach")
   messengerHandle String? @map("messenger_handle")
   facebookUrl    String? @map("facebook_url")
   viberNumber    String? @map("viber_number")
@@ -288,6 +289,18 @@ enum ListingStatus {
   CLOSED
   EXPIRED
   REMOVED
+}
+
+/// Which of the two phone channels a seller wants offered.
+///
+/// A number implies both a call and a text, which is wrong for plenty of
+/// sellers: a sari-sari owner behind a counter cannot take calls, and a
+/// tricycle driver cannot read texts while driving. Offering the one they do
+/// not answer looks like being ignored.
+enum PhoneReach {
+  BOTH
+  CALL_ONLY
+  SMS_ONLY
 }
 
 enum ContactChannel {

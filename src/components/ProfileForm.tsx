@@ -10,6 +10,7 @@ interface AccountForm {
   displayName: string
   phone: string
   phoneVerified: boolean
+  phoneReach: 'BOTH' | 'CALL_ONLY' | 'SMS_ONLY'
   facebookUrl: string
   viberNumber: string
   municipalityId: string
@@ -42,6 +43,7 @@ export function ProfileForm({
         body: JSON.stringify({
           displayName: form.displayName,
           phone: form.phone || null,
+          phoneReach: form.phoneReach,
           facebookUrl: form.facebookUrl || null,
           viberNumber: form.viberNumber || null,
           municipalityId: form.municipalityId || null,
@@ -120,6 +122,32 @@ export function ProfileForm({
               />
               <span className="text-xs font-semibold text-muted">{t('profile.phoneHelp')}</span>
             </label>
+            {/* A number used to mean both a call and a text. Sellers who
+                answer only one were being offered for the other, which reads
+                to a buyer as being ignored. */}
+            <fieldset className="m-0 flex flex-col gap-1.5 border-0 p-0">
+              <legend className="label p-0 text-[15px] text-muted">{t('profile.reach')}</legend>
+              <div className="flex flex-wrap gap-2">
+                {(['BOTH', 'CALL_ONLY', 'SMS_ONLY'] as const).map((option) => (
+                  <label
+                    key={option}
+                    className={`label flex min-h-[46px] cursor-pointer items-center gap-2 border-[2.5px] px-3 text-[15px] ${
+                      form.phoneReach === option ? 'border-ink bg-yellow text-ink' : 'border-dim-edge bg-ground'
+                    }`}
+                  >
+                    <input
+                      type="radio"
+                      name="phoneReach"
+                      className="h-4 w-4"
+                      checked={form.phoneReach === option}
+                      onChange={() => set('phoneReach', option)}
+                    />
+                    {t(`profile.reach.${option}`)}
+                  </label>
+                ))}
+              </div>
+              <span className="text-xs font-semibold text-muted">{t('profile.reachHelp')}</span>
+            </fieldset>
             <label className="flex flex-col gap-1.5">
               <span className="label text-[15px] text-muted">{t('profile.viber')}</span>
               <input
