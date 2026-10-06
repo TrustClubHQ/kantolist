@@ -18,6 +18,14 @@ describe('normalizeMessengerHandle', () => {
     ['https://www.messenger.com/t/juan.delacruz', 'juan.delacruz'],
     ['https://fb.me/juan.delacruz', 'juan.delacruz'],
     ['juan.delacruz?mibextid=ZbWKwL', 'juan.delacruz'],
+    ['https://www.facebook.com/messages/t/juan.delacruz', 'juan.delacruz'],
+    // Nobody here has a username; these are the links they can actually get.
+    ['https://www.facebook.com/profile.php?id=61550000000000', '61550000000000'],
+    ['facebook.com/profile.php?id=61550000000000&mibextid=ZbWKwL', '61550000000000'],
+    ['https://m.facebook.com/profile.php?id=61550000000000', '61550000000000'],
+    ['https://www.facebook.com/people/Juan-Dela-Cruz/61550000000000/', '61550000000000'],
+    ['https://m.me/61550000000000', '61550000000000'],
+    ['61550000000000', '61550000000000'],
   ])('takes %s', (input, expected) => {
     expect(normalizeMessengerHandle(input)).toBe(expected)
   })
@@ -26,9 +34,12 @@ describe('normalizeMessengerHandle', () => {
     expect(normalizeMessengerHandle('Juan Dela Cruz')).toBeNull()
   })
 
-  it('refuses a numeric profile link, which carries an id and not a username', () => {
-    // m.me needs the username; profile.php?id=… cannot be turned into one here.
-    expect(normalizeMessengerHandle('https://www.facebook.com/profile.php?id=61550000000000')).toBeNull()
+  it('refuses a group invite, which is not a person', () => {
+    expect(normalizeMessengerHandle('https://m.me/j/AbCdEfGhIjK/')).toBeNull()
+  })
+
+  it('refuses a profile.php with no id to resolve', () => {
+    expect(normalizeMessengerHandle('https://www.facebook.com/profile.php')).toBeNull()
   })
 
   it('refuses the obviously-not-a-handle', () => {

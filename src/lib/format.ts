@@ -58,7 +58,7 @@ export function normalizePhPhone(input: string): string | null {
 }
 
 /**
- * A Facebook username, from whatever someone pasted into the Messenger box.
+ * A Messenger target, from whatever someone pasted into the Messenger box.
  *
  * The box accepted anything and `m.me/<that>` was built from it verbatim, so a
  * pasted profile link became `m.me/https://www.facebook.com/juan.delacruz` and
@@ -66,41 +66,58 @@ export function normalizePhPhone(input: string): string | null {
  * of them — it never validates — so nothing looked wrong until a buyer tapped
  * the row and Messenger had no such person to open.
  *
- * Accepts what people actually paste: a bare username, @username, an m.me or
- * messenger.com/t link, or a facebook.com profile URL. Returns null for
- * anything that is not a username, including `profile.php?id=…` links, which
- * carry a numeric id rather than the username m.me needs.
+ * Takes a username, @username, an m.me / messenger.com/t link, or any
+ * facebook.com profile URL — including the numeric shapes
+ * (`profile.php?id=…`, `/people/Name/<id>`), because m.me forwards to
+ * `messenger.com/t/<target>`, which resolves a profile id as readily as a
+ * username. Most people here have no vanity username at all, so refusing the
+ * numeric link meant refusing them.
  *
- * Facebook usernames are letters, digits and full stops, five or more.
+ * Returns null only for what cannot be resolved: a display name, an email, a
+ * group-invite link.
  */
 export function normalizeMessengerHandle(input: string): string | null {
   let value = input.trim()
   if (!value) return null
 
-  // Pull the handle out of any of the link shapes people paste.
-  const asUrl = /^(https?:\/\/)?(www\.|web\.|m\.)?(m\.me|messenger\.com|facebook\.com|fb\.com|fb\.me)\//i
+  // Pull the target out of any of the link shapes people paste.
+  const asUrl = /^(https?:\/\/)?(www\.|web\.|m\.|mbasic\.)?(m\.me|messenger\.com|facebook\.com|fb\.com|fb\.me|fb\.watch)\//i
   if (asUrl.test(value)) {
     value = value.replace(/^(https?:\/\/)?/i, 'https://')
-    let path: string
+    let url: URL
     try {
-      path = new URL(value).pathname
+      url = new URL(value)
     } catch {
       return null
     }
-    // messenger.com/t/<handle> puts the handle one segment deeper.
-    const parts = path.split('/').filter(Boolean)
+    const parts = url.pathname.split('/').filter(Boolean)
+    // facebook.com/messages/t/<target> and messenger.com/t/<target> both put
+    // it one or two segments deeper.
+    if (parts[0]?.toLowerCase() === 'messages') parts.shift()
     if (parts[0]?.toLowerCase() === 't') parts.shift()
-    value = parts[0] ?? ''
+    const first = parts[0]?.toLowerCase() ?? ''
+    // m.me/j/<code> invites a group chat, not a person.
+    if (first === 'j') return null
+    if (first === 'profile.php') {
+      // No username: the id in the query string is the only handle they have.
+      value = url.searchParams.get('id') ?? ''
+    } else if (first === 'people') {
+      // facebook.com/people/Juan-Dela-Cruz/61550000000000 — the id is last.
+      value = parts[parts.length - 1] ?? ''
+    } else {
+      value = parts[0] ?? ''
+    }
   }
 
   value = value.replace(/^@/, '').replace(/\/+$/, '')
-  // A query string survives the bare-handle path ("juan.delacruz?mibextid=…").
+  // A query string survives the bare-target path ("juan.delacruz?mibextid=…").
   value = value.split(/[?#]/)[0]
+
+  // A profile id, pasted bare or dug out of a link above.
+  if (/^\d{5,25}$/.test(value)) return value
+  // Facebook usernames are letters, digits and full stops, five or more.
   if (!/^[a-zA-Z0-9.]{5,60}$/.test(value)) return null
-  // `facebook.com/profile.php?id=…` survives the pattern as "profile.php" —
-  // dots and letters, long enough — and would have become `m.me/profile.php`.
-  // That link means the person has no username, which is the one case m.me
-  // cannot be given.
+  // A bare "profile.php" with no id to go with it resolves to nobody.
   if (/\.php$/i.test(value)) return null
   return value
 }

@@ -1,9 +1,10 @@
 'use client'
 
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { Plate, PlateHeader } from '@/components/ui'
 import { TrustClubLink } from '@/components/TrustPoints'
 import { useT } from '@/components/LanguageProvider'
+import { normalizeMessengerHandle } from '@/lib/format'
 
 interface AccountForm {
   trustclubId: string
@@ -27,6 +28,14 @@ export function ProfileForm({
   const [form, setForm] = useState(account)
   const [busy, setBusy] = useState(false)
   const [message, setMessage] = useState<{ kind: 'ok' | 'error'; text: string } | null>(null)
+  // Checked here so a display name is caught in the field, not on save.
+  const messengerNotice = useMemo(() => {
+    if (!form.messengerHandle.trim()) return null
+    const handle = normalizeMessengerHandle(form.messengerHandle)
+    return handle
+      ? { ok: true, text: t('profile.messengerOk', { handle }) }
+      : { ok: false, text: t('profile.messengerBad') }
+  }, [form.messengerHandle, t])
 
   function set<K extends keyof AccountForm>(key: K, value: AccountForm[K]) {
     setForm((f) => ({ ...f, [key]: value }))
@@ -128,7 +137,25 @@ export function ProfileForm({
                 value={form.messengerHandle}
                 onChange={(e) => set('messengerHandle', e.target.value)}
                 placeholder={t('profile.messengerPlaceholder')}
+                aria-invalid={messengerNotice?.ok === false}
+                className={
+                  messengerNotice?.ok === false
+                    ? 'border-red'
+                    : messengerNotice?.ok
+                      ? 'border-green'
+                      : undefined
+                }
               />
+              {messengerNotice ? (
+                <span
+                  role={messengerNotice.ok ? undefined : 'alert'}
+                  className={`m-0 text-[13px] font-semibold leading-snug ${
+                    messengerNotice.ok ? 'text-green' : 'text-red'
+                  }`}
+                >
+                  {messengerNotice.text}
+                </span>
+              ) : null}
               <span className="text-xs font-semibold text-muted">{t('profile.messengerHelp')}</span>
             </label>
             <label className="flex flex-col gap-1.5">

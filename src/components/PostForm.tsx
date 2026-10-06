@@ -8,6 +8,7 @@ import { Plate, PlateHeader, Spinner } from '@/components/ui'
 import { useT } from '@/components/LanguageProvider'
 import { attributeLabel, categoryExample, categoryName } from '@/lib/i18n'
 import { listingPath, parseVideoUrl, pastedSiteName, videoHostName } from '@/lib/listing'
+import { normalizeMessengerHandle } from '@/lib/format'
 import { PhotoPicker, uploadPendingPhotos, type ListingPhoto } from '@/components/PhotoPicker'
 
 /**
@@ -141,6 +142,17 @@ export function PostForm({
 
   const [phoneDraft, setPhoneDraft] = useState(contact.phone ?? '')
   const [messengerDraft, setMessengerDraft] = useState(contact.messenger ?? '')
+  /**
+   * Same reason as the video box: a display name looks fine in the field and
+   * only fails on save, after the person has moved on. Say it here instead.
+   */
+  const messengerNotice = useMemo(() => {
+    if (!messengerDraft.trim()) return null
+    const handle = normalizeMessengerHandle(messengerDraft)
+    return handle
+      ? { ok: true, text: t('profile.messengerOk', { handle }) }
+      : { ok: false, text: t('profile.messengerBad') }
+  }, [messengerDraft, t])
   const [contactOpen, setContactOpen] = useState(false)
   const [savingContact, setSavingContact] = useState(false)
   const [contactError, setContactError] = useState<string | null>(null)
@@ -818,7 +830,25 @@ export function PostForm({
                     value={messengerDraft}
                     onChange={(e) => setMessengerDraft(e.target.value)}
                     placeholder={t('profile.messengerPlaceholder')}
+                    aria-invalid={messengerNotice?.ok === false}
+                    className={`min-h-[48px] border-[2.5px] bg-ground px-3 text-[16px] ${
+                      messengerNotice?.ok === false
+                        ? 'border-red'
+                        : messengerNotice?.ok
+                          ? 'border-green'
+                          : 'border-ink'
+                    }`}
                   />
+                  {messengerNotice ? (
+                    <span
+                      role={messengerNotice.ok ? undefined : 'alert'}
+                      className={`m-0 text-[13px] font-semibold leading-snug ${
+                        messengerNotice.ok ? 'text-green' : 'text-red'
+                      }`}
+                    >
+                      {messengerNotice.text}
+                    </span>
+                  ) : null}
                   <span className="text-xs font-semibold text-muted">{t('profile.messengerHelp')}</span>
                 </label>
                 <p className="m-0 text-[13px] font-semibold leading-snug text-muted-2">
