@@ -166,12 +166,13 @@ export const POST = withApiHandler(async (request: NextRequest) => {
     return forbidden(t('api.tooManyToday', { count: MAX_NEW_LISTINGS_PER_DAY }))
   }
 
-  // A listing nobody can answer is worse than no listing. A TrustClub profile
-  // is an identity rather than an inbox and a Facebook page is a detour, so
-  // neither counts: a phone number or a Messenger handle is the floor. Viber
-  // is a real channel and still shown, but it cannot be the only one — a
-  // buyer without the app would have nothing to tap.
-  if (!account.phone && !account.messengerHandle) {
+  // A listing nobody can answer is worse than no listing, and a phone number
+  // is the floor. A TrustClub profile is an identity rather than an inbox, a
+  // Facebook page is a detour, and Messenger asked people for a username they
+  // had to go and find in another app. Viber is a real channel and still
+  // shown, but it cannot be the only one — a buyer without the app would have
+  // nothing to tap.
+  if (!account.phone) {
     return forbidden(t('api.contactRequired'))
   }
 
@@ -179,7 +180,6 @@ export const POST = withApiHandler(async (request: NextRequest) => {
   // advertises a channel they removed from their profile later.
   const available: string[] = []
   if (account.phone) available.push('PHONE', 'SMS')
-  if (account.messengerHandle) available.push('MESSENGER')
   if (account.viberNumber) available.push('VIBER')
   const requested = Array.isArray(body.contactChannels) ? body.contactChannels : available
   const channels = available.filter((c) => requested.includes(c))

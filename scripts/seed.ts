@@ -138,10 +138,10 @@ interface DemoListing {
 }
 
 const DEMO_ACCOUNTS = [
-  { trustclubId: 'ruben.dlc', displayName: "Mang Ruben's Rentals", phone: '+639175551234', messengerHandle: 'ruben.dlc', municipality: 'San Ildefonso' },
-  { trustclubId: 'juan.santos', displayName: 'Juan Santos', phone: '+639175552345', messengerHandle: 'juan.santos', municipality: 'San Ildefonso' },
+  { trustclubId: 'ruben.dlc', displayName: "Mang Ruben's Rentals", phone: '+639175551234', municipality: 'San Ildefonso' },
+  { trustclubId: 'juan.santos', displayName: 'Juan Santos', phone: '+639175552345', municipality: 'San Ildefonso' },
   { trustclubId: 'lito.reyes', displayName: 'Lito Reyes', phone: '+639175553456', municipality: 'San Ildefonso' },
-  { trustclubId: 'marites.g', displayName: 'Marites Garcia', phone: '+639175554567', messengerHandle: 'marites.g', municipality: 'San Ildefonso' },
+  { trustclubId: 'marites.g', displayName: 'Marites Garcia', phone: '+639175554567', municipality: 'San Ildefonso' },
   { trustclubId: 'boyet.motors', displayName: 'Boyet Motorworks', phone: '+639175555678', municipality: 'San Ildefonso' },
   { trustclubId: 'ana.cruz', displayName: 'Ana Cruz', phone: '+639175556789', municipality: 'San Ildefonso' },
   { trustclubId: 'kl-staff', displayName: 'KantoList Staff', phone: null, municipality: 'San Ildefonso', isStaff: true },
@@ -187,7 +187,6 @@ async function main(): Promise<void> {
         displayName: a.displayName,
         phone: a.phone ?? null,
         phoneVerifiedAt: a.phone ? new Date() : null,
-        messengerHandle: a.messengerHandle ?? null,
         municipalityId: municipalities.get(a.municipality) ?? null,
         isStaff: a.isStaff ?? false,
       },
@@ -200,7 +199,6 @@ async function main(): Promise<void> {
     const channels: string[] = ['TRUSTCLUB']
     const owner = DEMO_ACCOUNTS.find((a) => a.trustclubId === l.owner)
     if (owner?.phone) channels.unshift('PHONE', 'SMS')
-    if (owner?.messengerHandle) channels.push('MESSENGER')
 
     await prisma.listing.create({
       data: {

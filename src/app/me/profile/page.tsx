@@ -46,7 +46,6 @@ export default async function ProfilePage() {
           displayName: account.displayName ?? '',
           phone: account.phone ?? '',
           phoneVerified: !!account.phoneVerifiedAt,
-          messengerHandle: account.messengerHandle ?? '',
           facebookUrl: account.facebookUrl ?? '',
           viberNumber: account.viberNumber ?? '',
           municipalityId: account.municipalityId ?? '',

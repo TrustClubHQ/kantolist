@@ -14,10 +14,7 @@ import { useT } from '@/components/LanguageProvider'
  * scraper cannot harvest numbers by walking every listing.
  */
 
-const CHANNEL_ORDER = ['PHONE', 'SMS', 'MESSENGER', 'VIBER']
-
-/** Channels whose link carries the seller's number. Mirrors the API's rule. */
-const NEEDS_SIGN_IN = ['PHONE', 'SMS', 'VIBER']
+const CHANNEL_ORDER = ['PHONE', 'SMS', 'VIBER']
 
 export function ContactSheet({
   listingId,
@@ -54,10 +51,8 @@ export function ContactSheet({
    *
    * It used to ask the server on tap and then assign window.location when the
    * answer arrived — a navigation outside the gesture that started it, which
-   * browsers will not hand to another app. Firefox on Android offered to open
-   * Messenger and then came back to the page; iOS declined the universal link,
-   * followed m.me as an ordinary URL, and landed the member on Messenger's
-   * App Store page.
+   * browsers will not hand to another app: the phone would offer to open the
+   * other app and then simply come back to the page.
    */
   useEffect(() => {
     if (!open || targets !== null) return
@@ -85,7 +80,7 @@ export function ContactSheet({
    *
    * sendBeacon hands the request to the browser to deliver on its own, which
    * survives the page being replaced by another app — a plain fetch here would
-   * often be cancelled mid-flight as Messenger takes over.
+   * often be cancelled mid-flight as the dialler or Viber takes over.
    */
   function recordTap(channel: string) {
     const body = JSON.stringify({ channel })
@@ -134,9 +129,8 @@ export function ContactSheet({
   }
 
   /**
-   * Posting now requires a number or a Messenger handle, but a seller can
-   * still clear their profile afterwards, and listings from before the rule
-   * exist. Rather than a call-to-action that opens an empty sheet, say the
+   * Posting now requires a number, but a seller can still clear their profile
+   * afterwards, and listings from before the rule exist. Rather than a call-to-action that opens an empty sheet, say the
    * plain thing: there is no way to reach this person right now.
    */
   if (ordered.length === 0) {
@@ -192,10 +186,9 @@ export function ContactSheet({
               </p>
 
               {ordered.map((channel) => {
-                // Viber joins phone and SMS here: its link carries the
-                // seller's number, so it is signed-in only on the server too.
-                const needsAuth = NEEDS_SIGN_IN.includes(channel) && !signedIn
-                if (needsAuth) {
+                // Every channel is the seller's number in a different
+                // wrapper, so each one is signed-in only on the server too.
+                if (!signedIn) {
                   return (
                     <Link
                       key={channel}

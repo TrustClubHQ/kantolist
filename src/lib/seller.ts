@@ -16,7 +16,6 @@ import { maskPhone } from '@/lib/format'
 export interface SellerContact {
   hasPhone: boolean
   maskedPhone: string | null
-  hasMessenger: boolean
   hasFacebook: boolean
   hasViber: boolean
 }
@@ -37,19 +36,22 @@ export interface SellerContact {
  *     not in the snapshot. A seller whose old listings predate their phone
  *     number had to edit and re-save every one of them to become reachable,
  *     with nothing on screen saying so. That is the trap that matters now that
- *     posting requires a number or a Messenger handle: listings posted before
- *     the rule would otherwise stay unanswerable for good.
+ *     posting requires a number: listings posted before the rule would
+ *     otherwise stay unanswerable for good.
  *
- * TrustClub and Facebook are absent on purpose. A TrustClub profile is an
- * identity, not an inbox, and a Facebook page is a detour that leaves a buyer
- * no way to say "I want this". Listings posted while those were on the menu
- * carry them in their snapshot; ignoring the snapshot is what retires them,
- * which is why removing them needed no migration.
+ * MESSENGER, TrustClub and Facebook are absent on purpose. A TrustClub profile
+ * is an identity, not an inbox, and a Facebook page is a detour that leaves a
+ * buyer no way to say "I want this". Messenger went the same way: it needs a
+ * username or profile id the seller has to go and find in another app, and the
+ * ones who could not find it either typed their display name — which m.me
+ * accepts and then opens on nobody — or gave up on posting. A phone number is
+ * something everyone here knows by heart. Listings posted while those channels
+ * were on the menu carry them in their snapshot; ignoring the snapshot is what
+ * retires them, which is why removing them needed no migration.
  */
 export function usableChannels(contact: SellerContact): string[] {
   const channels: string[] = []
   if (contact.hasPhone) channels.push('PHONE', 'SMS')
-  if (contact.hasMessenger) channels.push('MESSENGER')
   if (contact.hasViber) channels.push('VIBER')
   return channels
 }
@@ -57,15 +59,14 @@ export function usableChannels(contact: SellerContact): string[] {
 export async function getSellerContact(accountId: string): Promise<SellerContact> {
   const account = await prisma.account.findUnique({
     where: { id: accountId },
-    select: { phone: true, messengerHandle: true, facebookUrl: true, viberNumber: true },
+    select: { phone: true, facebookUrl: true, viberNumber: true },
   })
   if (!account) {
-    return { hasPhone: false, maskedPhone: null, hasMessenger: false, hasFacebook: false, hasViber: false }
+    return { hasPhone: false, maskedPhone: null, hasFacebook: false, hasViber: false }
   }
   return {
     hasPhone: !!account.phone,
     maskedPhone: account.phone ? maskPhone(account.phone) : null,
-    hasMessenger: !!account.messengerHandle,
     hasFacebook: !!account.facebookUrl,
     hasViber: !!account.viberNumber,
   }

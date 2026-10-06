@@ -74,7 +74,6 @@ export default async function EditListingPage({ params }: { params: Promise<{ co
         contact={{
           phone: account.phone,
           phoneVerified: !!account.phoneVerifiedAt,
-          messenger: account.messengerHandle,
           facebook: account.facebookUrl,
           viber: account.viberNumber,
         }}

@@ -380,7 +380,6 @@ const en: Record<string, string> = {
   'contact.logInToSee': '{phone} — log in to call or text',
   'contact.channel.PHONE': 'Call',
   'contact.channel.SMS': 'Send SMS',
-  'contact.channel.MESSENGER': 'Message on Messenger',
   'contact.channel.FACEBOOK': 'Facebook profile',
   'contact.channel.VIBER': 'Chat on Viber',
   'contact.channel.TRUSTCLUB': 'Check their TrustClub profile',
@@ -439,9 +438,8 @@ const en: Record<string, string> = {
   'post.field.choose': 'Choose…',
   'post.contact.edit': 'Edit ↗',
   'post.contact.call': 'Call & SMS {phone}',
-  'post.contact.messenger': 'Messenger m.me/{handle}',
   'post.contact.viber': 'Viber {number}',
-  'post.contact.required': 'You need a number or a Messenger link to post.',
+  'post.contact.required': 'You need a mobile number to post.',
   'post.contact.requiredHelp':
     'Buyers reach you directly — KantoList does not pass messages on. Fill one in below and carry on; nothing else you have typed is lost.',
   'post.contact.editHelp':
@@ -451,7 +449,7 @@ const en: Record<string, string> = {
   'post.contact.saved': 'Saved to your profile.',
   'post.contact.cancel': 'Cancel',
   'post.contact.change': 'Add or change',
-  'post.contact.oneNeeded': 'Fill in a mobile number or a Messenger link — either one is enough.',
+  'post.contact.oneNeeded': 'Fill in your mobile number — buyers reach you on it directly.',
   'post.contact.saveFailed': 'Could not save that. Check the number and try again.',
   'post.contact.saveOffline': 'Could not reach KantoList. Check your connection and try again.',
   'post.trustNote':
@@ -484,7 +482,7 @@ const en: Record<string, string> = {
   'post.invalid.title': 'Give the listing a title so buyers know what it is.',
   'post.invalid.price': 'Put a price, or switch the unit to "Ask for a quote".',
   'post.invalid.municipality': 'Pick the town.',
-  'post.invalid.contact': 'Add a number or a Messenger link to your profile first — a listing nobody can answer cannot be published.',
+  'post.invalid.contact': 'Add your mobile number to your profile first — a listing nobody can answer cannot be published.',
   'post.invalid.video': 'That is not a video link. Paste a YouTube, Facebook or TikTok link, or clear the box — the video is optional.',
   'post.invalid.videoSite': '{site} links do not work here. Paste a YouTube, Facebook or TikTok link instead, or clear the box — the video is optional.',
   'post.field.videoOk': '{site} video — looks good.',
@@ -544,13 +542,6 @@ const en: Record<string, string> = {
   'profile.phonePlaceholder': '0917 555 1234',
   'profile.phoneHelp':
     'Shown in full only to logged-in members. Changing it clears verification.',
-  'profile.messenger': 'Messenger link',
-  'profile.messengerPlaceholder': 'm.me/juan.delacruz  or  facebook.com/profile.php?id=…',
-  'profile.messengerHelp':
-    'Paste the link to your Messenger or Facebook profile — open your profile, tap Share, Copy link, and paste the whole thing here. Your display name on its own will not work. Or leave this blank and give your mobile number instead.',
-  'profile.messengerOk': 'Buyers will land on m.me/{handle}.',
-  'profile.messengerBad':
-    'We cannot open that. Paste the link to your Messenger or Facebook profile, or leave it blank and give your mobile number instead.',
   'profile.viber': 'Viber number',
   'profile.facebook': 'Facebook page or profile',
   'profile.facebookPlaceholder': 'https://facebook.com/yourpage',
@@ -731,13 +722,11 @@ const en: Record<string, string> = {
   'api.enterPrice': 'Enter a price',
   'api.priceTooHigh': 'That price looks wrong',
   'api.badChannels': 'Invalid contact channels',
-  'api.badMessengerHandle':
-    'We cannot open that as a Messenger link — a display name like "Juan Dela Cruz" will not work. Open your Messenger or Facebook profile, copy the link, and paste the whole thing here. Or leave it blank and give your mobile number instead.',
   'api.signInForNumber': 'Sign in to see the number',
   'api.tooManyToday':
     'That is {count} listings in a day — the most we allow in one go. The rest can wait until tomorrow.',
   'api.contactRequired':
-    'Add a phone number or a Messenger link to your profile before posting — buyers reach you directly, so a listing needs one.',
+    'Add a mobile number to your profile before posting — buyers reach you directly, so a listing needs one.',
   'api.listingNotFound': 'Listing not found',
   'api.notYourListing': 'This is not your listing',
   'api.pickReason': 'Pick a reason',
@@ -1051,7 +1040,6 @@ const tl: Record<string, string> = {
   'contact.logInToSee': '{phone} — mag-log in para tumawag o mag-text',
   'contact.channel.PHONE': 'Tawagan',
   'contact.channel.SMS': 'Mag-text',
-  'contact.channel.MESSENGER': 'I-message sa Messenger',
   'contact.channel.FACEBOOK': 'Facebook profile',
   'contact.channel.VIBER': 'Mag-chat sa Viber',
   'contact.channel.TRUSTCLUB': 'Tingnan ang TrustClub profile nila',
@@ -1106,9 +1094,8 @@ const tl: Record<string, string> = {
   'post.field.choose': 'Pumili…',
   'post.contact.edit': 'I-edit ↗',
   'post.contact.call': 'Tawag at SMS {phone}',
-  'post.contact.messenger': 'Messenger m.me/{handle}',
   'post.contact.viber': 'Viber {number}',
-  'post.contact.required': 'Kailangan mo ng numero o Messenger link para makapag-post.',
+  'post.contact.required': 'Kailangan mo ng numero ng cellphone para makapag-post.',
   'post.contact.requiredHelp':
     'Direkta kang kokontakin ng buyer — hindi nagpapasa ng mensahe ang KantoList. Ilagay mo na lang dito sa baba at ituloy mo; walang mawawala sa na-type mo.',
   'post.contact.editHelp':
@@ -1118,7 +1105,7 @@ const tl: Record<string, string> = {
   'post.contact.saved': 'Na-save sa profile mo.',
   'post.contact.cancel': 'Cancel',
   'post.contact.change': 'Dagdagan o palitan',
-  'post.contact.oneNeeded': 'Maglagay ng numero ng cellphone o Messenger link — kahit isa lang.',
+  'post.contact.oneNeeded': 'Ilagay ang numero ng cellphone mo — diyan ka direktang kokontakin ng buyer.',
   'post.contact.saveFailed': 'Hindi na-save. Tingnan ang numero at subukan ulit.',
   'post.contact.saveOffline': 'Hindi maabot ang KantoList. Tingnan ang koneksyon mo at subukan ulit.',
   'post.trustNote':
@@ -1151,7 +1138,7 @@ const tl: Record<string, string> = {
   'post.invalid.title': 'Lagyan ng pamagat para alam ng buyer kung ano ito.',
   'post.invalid.price': 'Maglagay ng presyo, o palitan ang unit ng "Tanungin ang presyo".',
   'post.invalid.municipality': 'Piliin ang bayan.',
-  'post.invalid.contact': 'Maglagay muna ng numero o Messenger link sa profile mo — hindi puwedeng i-publish ang listing na walang makakasagot.',
+  'post.invalid.contact': 'Maglagay muna ng numero ng cellphone sa profile mo — hindi puwedeng i-publish ang listing na walang makakasagot.',
   'post.invalid.video': 'Hindi ito video link. Mag-paste ng YouTube, Facebook o TikTok link, o burahin mo na lang — optional ang video.',
   'post.invalid.videoSite': 'Hindi gumagana ang {site} links dito. Mag-paste ng YouTube, Facebook o TikTok link, o burahin mo na lang — optional ang video.',
   'post.field.videoOk': '{site} video — ayos ito.',
@@ -1209,13 +1196,6 @@ const tl: Record<string, string> = {
   'profile.phonePlaceholder': '0917 555 1234',
   'profile.phoneHelp':
     'Buo lang itong nakikita ng naka-log in na member. Kapag pinalitan mo, mawawala ang verification.',
-  'profile.messenger': 'Messenger link',
-  'profile.messengerPlaceholder': 'm.me/juan.delacruz  o  facebook.com/profile.php?id=…',
-  'profile.messengerHelp':
-    'I-paste ang link ng Messenger o Facebook profile mo — buksan ang profile mo, i-tap ang Share, Copy link, tapos i-paste dito ang buo. Hindi puwede ang display name lang. O iwan itong blangko at numero na lang ng cellphone ang ilagay.',
-  'profile.messengerOk': 'Dadalhin ang buyer sa m.me/{handle}.',
-  'profile.messengerBad':
-    'Hindi namin mabuksan iyan. I-paste ang link ng Messenger o Facebook profile mo, o iwan itong blangko at numero na lang ng cellphone ang ilagay.',
   'profile.viber': 'Viber number',
   'profile.facebook': 'Facebook page o profile',
   'profile.facebookPlaceholder': 'https://facebook.com/yourpage',
@@ -1382,13 +1362,11 @@ const tl: Record<string, string> = {
   'api.enterPrice': 'Maglagay ng presyo',
   'api.priceTooHigh': 'Mukhang mali ang presyong iyon',
   'api.badChannels': 'Hindi wastong contact channel',
-  'api.badMessengerHandle':
-    'Hindi namin mabuksan iyan bilang Messenger link — hindi puwede ang display name na tipong "Juan Dela Cruz". Buksan ang Messenger o Facebook profile mo, kopyahin ang link, at i-paste dito ang buo. O numero na lang ng cellphone ang ilagay.',
   'api.signInForNumber': 'Mag-sign in para makita ang numero',
   'api.tooManyToday':
     '{count} na listing sa isang araw — iyon na ang pinakamarami sa isang upuan. Bukas mo na ituloy ang iba.',
   'api.contactRequired':
-    'Maglagay muna ng numero o Messenger link sa profile mo bago mag-post — direkta kang kokontakin ng buyer, kaya kailangan ito ng listing.',
+    'Maglagay muna ng numero ng cellphone sa profile mo bago mag-post — direkta kang kokontakin ng buyer, kaya kailangan ito ng listing.',
   'api.listingNotFound': 'Hindi mahanap ang listing',
   'api.notYourListing': 'Hindi mo ito listing',
   'api.pickReason': 'Pumili ng dahilan',

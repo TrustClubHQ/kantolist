@@ -4,7 +4,7 @@ import { requestT } from '@/lib/i18n-server'
 import { getAccountFromRequest } from '@/lib/auth'
 import { withApiHandler, badRequest, unauthorized, forbidden } from '@/lib/api'
 import { isAllowedMutatingRequest } from '@/lib/http'
-import { normalizePhPhone, normalizeMessengerHandle } from '@/lib/format'
+import { normalizePhPhone } from '@/lib/format'
 
 export const GET = withApiHandler(async (request: NextRequest) => {
   const account = await getAccountFromRequest(request)
@@ -15,7 +15,6 @@ export const GET = withApiHandler(async (request: NextRequest) => {
       displayName: account.displayName,
       phone: account.phone,
       phoneVerified: !!account.phoneVerifiedAt,
-      messengerHandle: account.messengerHandle,
       facebookUrl: account.facebookUrl,
       viberNumber: account.viberNumber,
       municipalityId: account.municipalityId,
@@ -32,7 +31,6 @@ export const PATCH = withApiHandler(async (request: NextRequest) => {
   const body: {
     displayName?: string
     phone?: string | null
-    messengerHandle?: string | null
     facebookUrl?: string | null
     viberNumber?: string | null
     municipalityId?: string | null
@@ -45,8 +43,7 @@ export const PATCH = withApiHandler(async (request: NextRequest) => {
     // An empty name clears it rather than refusing the whole save. TrustClub
     // does not always give us one, the profile form posts every field at once,
     // and the old rule meant such a member could not save anything at all —
-    // including the phone number or Messenger handle they now need before they
-    // can post. A listing falls back to the trustclubId for a display name, so
+    // including the phone number they now need before they can post. A listing falls back to the trustclubId for a display name, so
     // nothing downstream needs this to be set.
     data.displayName = name || null
   }
@@ -61,20 +58,6 @@ export const PATCH = withApiHandler(async (request: NextRequest) => {
       // Changing the number drops verification — the new one is unproven.
       if (normalized !== account.phone) data.phoneVerifiedAt = null
       data.phone = normalized
-    }
-  }
-
-  if (body.messengerHandle !== undefined) {
-    const raw = body.messengerHandle?.trim() ?? ''
-    if (!raw) {
-      data.messengerHandle = null
-    } else {
-      // Checked rather than stored as typed: m.me answers 302 for any handle,
-      // valid or not, so a wrong one is only discovered by the buyer who taps
-      // it and finds nobody there.
-      const handle = normalizeMessengerHandle(raw)
-      if (!handle) return badRequest(t('api.badMessengerHandle'))
-      data.messengerHandle = handle
     }
   }
 
@@ -115,7 +98,7 @@ export const PATCH = withApiHandler(async (request: NextRequest) => {
 
   const updated = await prisma.account.update({ where: { id: account.id }, data })
   // The stored values come back, because they are not always what was sent:
-  // a number is normalised to +63 form and a Messenger handle loses its @.
+  // a number is normalised to +63 form.
   // The posting form saves contact details inline and then has to show what
   // the seller will actually be reached on, not what they typed.
   return NextResponse.json({
@@ -123,7 +106,6 @@ export const PATCH = withApiHandler(async (request: NextRequest) => {
     account: {
       phone: updated.phone,
       phoneVerified: !!updated.phoneVerifiedAt,
-      messengerHandle: updated.messengerHandle,
       viberNumber: updated.viberNumber,
     },
   })

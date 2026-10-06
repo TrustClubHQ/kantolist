@@ -8,7 +8,6 @@ import { Plate, PlateHeader, Spinner } from '@/components/ui'
 import { useT } from '@/components/LanguageProvider'
 import { attributeLabel, categoryExample, categoryName } from '@/lib/i18n'
 import { listingPath, parseVideoUrl, pastedSiteName, videoHostName } from '@/lib/listing'
-import { normalizeMessengerHandle } from '@/lib/format'
 import { PhotoPicker, uploadPendingPhotos, type ListingPhoto } from '@/components/PhotoPicker'
 
 /**
@@ -63,7 +62,6 @@ export function PostForm({
   contact: {
     phone: string | null
     phoneVerified: boolean
-    messenger: string | null
     facebook: string | null
     viber: string | null
   }
@@ -114,45 +112,28 @@ export function PostForm({
    * short of reloading and losing the form. They are editable here now, and
    * this is what the save writes back to.
    */
-  const [reach, setReach] = useState({
-    phone: contact.phone,
-    messenger: contact.messenger,
-    viber: contact.viber,
-  })
+  const [reach, setReach] = useState({ phone: contact.phone, viber: contact.viber })
 
   const channels = useMemo(() => {
     const on: string[] = []
     if (reach.phone) on.push('PHONE', 'SMS')
-    if (reach.messenger) on.push('MESSENGER')
     if (reach.viber) on.push('VIBER')
     return on
   }, [reach])
 
   /**
-   * A listing nobody can answer is worse than no listing, so a number or a
-   * Messenger handle is the floor for posting at all. A TrustClub profile is
-   * an identity rather than an inbox and a Facebook page is a detour, so
-   * neither counts. Viber does not count on its own either: a buyer without
-   * the app would have nothing to tap.
+   * A listing nobody can answer is worse than no listing, so a number is the
+   * floor for posting at all. A TrustClub profile is an identity rather than
+   * an inbox and a Facebook page is a detour, so neither counts. Viber does
+   * not count on its own either: a buyer without the app would have nothing
+   * to tap.
    *
    * The API enforces the same rule — this only saves the round trip and says
    * where to fix it.
    */
-  const canBeReached = !!reach.phone || !!reach.messenger
+  const canBeReached = !!reach.phone
 
   const [phoneDraft, setPhoneDraft] = useState(contact.phone ?? '')
-  const [messengerDraft, setMessengerDraft] = useState(contact.messenger ?? '')
-  /**
-   * Same reason as the video box: a display name looks fine in the field and
-   * only fails on save, after the person has moved on. Say it here instead.
-   */
-  const messengerNotice = useMemo(() => {
-    if (!messengerDraft.trim()) return null
-    const handle = normalizeMessengerHandle(messengerDraft)
-    return handle
-      ? { ok: true, text: t('profile.messengerOk', { handle }) }
-      : { ok: false, text: t('profile.messengerBad') }
-  }, [messengerDraft, t])
   const [contactOpen, setContactOpen] = useState(false)
   const [savingContact, setSavingContact] = useState(false)
   const [contactError, setContactError] = useState<string | null>(null)
@@ -175,13 +156,11 @@ export function PostForm({
       if (document.visibilityState !== 'visible') return
       fetch('/api/me')
         .then((r) => (r.ok ? r.json() : null))
-        .then((data: { account?: { phone: string | null; messengerHandle: string | null; viberNumber: string | null } } | null) => {
+        .then((data: { account?: { phone: string | null; viberNumber: string | null } } | null) => {
           const a = data?.account
           if (!a) return
           setReach((r) =>
-            r.phone === a.phone && r.messenger === a.messengerHandle && r.viber === a.viberNumber
-              ? r
-              : { phone: a.phone, messenger: a.messengerHandle, viber: a.viberNumber },
+            r.phone === a.phone && r.viber === a.viberNumber ? r : { phone: a.phone, viber: a.viberNumber },
           )
         })
         .catch(() => {
@@ -236,8 +215,7 @@ export function PostForm({
 
   async function saveContact() {
     const phone = phoneDraft.trim()
-    const messenger = messengerDraft.trim()
-    if (!phone && !messenger) {
+    if (!phone) {
       setContactError(t('post.contact.oneNeeded'))
       return
     }
@@ -248,20 +226,18 @@ export function PostForm({
       const res = await fetch('/api/me', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ phone: phone || null, messengerHandle: messenger || null }),
+        body: JSON.stringify({ phone }),
       })
-      const data: { error?: string; account?: { phone: string | null; messengerHandle: string | null } } =
-        await res.json().catch(() => ({}))
+      const data: { error?: string; account?: { phone: string | null } } = await res.json().catch(() => ({}))
       if (!res.ok) {
         setContactError(data.error ?? t('post.contact.saveFailed'))
         return
       }
       // What the server stored, not what was typed: the number comes back
-      // normalised and the handle without its @.
+      // normalised to +63 form.
       const saved = data.account
-      setReach((r) => ({ ...r, phone: saved?.phone ?? phone, messenger: saved?.messengerHandle ?? messenger }))
+      setReach((r) => ({ ...r, phone: saved?.phone ?? phone }))
       setPhoneDraft(saved?.phone ?? phone)
-      setMessengerDraft(saved?.messengerHandle ?? messenger)
       setContactSaved(true)
       setContactOpen(false)
     } catch {
@@ -274,7 +250,6 @@ export function PostForm({
   const reachableSummary = useMemo(() => {
     const parts: string[] = []
     if (reach.phone) parts.push(t('post.contact.call', { phone: reach.phone }))
-    if (reach.messenger) parts.push(t('post.contact.messenger', { handle: reach.messenger }))
     if (reach.viber) parts.push(t('post.contact.viber', { number: reach.viber }))
     return parts
   }, [reach, t])
@@ -824,33 +799,6 @@ export function PostForm({
                     placeholder={t('profile.phonePlaceholder')}
                   />
                 </label>
-                <label className="flex flex-col gap-1.5">
-                  <span className="label text-[15px] text-muted">{t('profile.messenger')}</span>
-                  <input
-                    value={messengerDraft}
-                    onChange={(e) => setMessengerDraft(e.target.value)}
-                    placeholder={t('profile.messengerPlaceholder')}
-                    aria-invalid={messengerNotice?.ok === false}
-                    className={`min-h-[48px] border-[2.5px] bg-ground px-3 text-[16px] ${
-                      messengerNotice?.ok === false
-                        ? 'border-red'
-                        : messengerNotice?.ok
-                          ? 'border-green'
-                          : 'border-ink'
-                    }`}
-                  />
-                  {messengerNotice ? (
-                    <span
-                      role={messengerNotice.ok ? undefined : 'alert'}
-                      className={`m-0 text-[13px] font-semibold leading-snug ${
-                        messengerNotice.ok ? 'text-green' : 'text-red'
-                      }`}
-                    >
-                      {messengerNotice.text}
-                    </span>
-                  ) : null}
-                  <span className="text-xs font-semibold text-muted">{t('profile.messengerHelp')}</span>
-                </label>
                 <p className="m-0 text-[13px] font-semibold leading-snug text-muted-2">
                   {t('post.contact.editHelp')}
                 </p>
@@ -872,7 +820,6 @@ export function PostForm({
                         setContactOpen(false)
                         setContactError(null)
                         setPhoneDraft(reach.phone ?? '')
-                        setMessengerDraft(reach.messenger ?? '')
                       }}
                       className="label min-h-[46px] border-[2.5px] border-ink bg-ground px-3.5 text-[15px]"
                     >

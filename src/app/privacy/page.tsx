@@ -28,7 +28,7 @@ export default async function PrivacyPage() {
             record of which contact channel was tapped on a listing and when.
           </Section>
           <Section title="What we never hold">
-            The messages and calls themselves. When you tap Call or Messenger, the conversation
+            The messages and calls themselves. When you tap Call, Text or Viber, the conversation
             happens in your own phone or app — KantoList records only that a contact happened, so a
             seller can see interest and staff can spot abuse.
           </Section>

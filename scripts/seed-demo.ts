@@ -66,7 +66,7 @@ function makeRandom(seed: number): () => number {
   }
 }
 
-const CHANNELS = ['PHONE', 'SMS', 'MESSENGER', 'VIBER', 'TRUSTCLUB'] as const
+const CHANNELS = ['PHONE', 'SMS', 'VIBER', 'TRUSTCLUB'] as const
 
 async function main(): Promise<void> {
   const categoryCount = await prisma.category.count()
@@ -91,7 +91,6 @@ async function main(): Promise<void> {
         displayName: a.displayName,
         phone: a.phone ?? null,
         phoneVerifiedAt: a.phone ? new Date() : null,
-        messengerHandle: a.messenger ?? null,
         viberNumber: a.viber ?? null,
         facebookUrl: a.facebook ?? null,
         municipalityId: municipalities.get(a.municipality) ?? null,
@@ -126,7 +125,6 @@ async function main(): Promise<void> {
     const owner = DEMO_ACCOUNTS.find((a) => a.trustclubId === l.owner)!
     const channels: string[] = ['TRUSTCLUB']
     if (owner.phone) channels.unshift('PHONE', 'SMS')
-    if (owner.messenger) channels.push('MESSENGER')
     if (owner.viber) channels.push('VIBER')
     if (owner.facebook) channels.push('FACEBOOK')
 

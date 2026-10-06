@@ -6,6 +6,8 @@ import { usableChannels, type SellerContact } from '../src/lib/seller'
  *
  *   - a TrustClub profile is an identity, not an inbox
  *   - a Facebook page is a detour with no way to say "I want this"
+ *   - Messenger is gone: it needed a username people had to go and find in
+ *     another app, and a stored display name opened on nobody
  *   - what it reads is the seller's profile today, never the listing's
  *     posting-time snapshot
  *
@@ -16,7 +18,6 @@ function seller(over: Partial<SellerContact> = {}): SellerContact {
   return {
     hasPhone: false,
     maskedPhone: null,
-    hasMessenger: false,
     hasFacebook: false,
     hasViber: false,
     ...over,
@@ -36,11 +37,17 @@ describe('usableChannels', () => {
     expect(usableChannels(seller({ hasPhone: true }))).toEqual(['PHONE', 'SMS'])
   })
 
+  it('never offers Messenger, even for a seller who stored a handle', () => {
+    // The column is still there and still holds the handles people entered
+    // before the channel was retired; nothing reads it.
+    expect(usableChannels(seller({ hasViber: true }))).not.toContain('MESSENGER')
+  })
+
   it('picks up a channel added after the listing was posted', () => {
     // The listing's snapshot is not consulted at all, which is the point: a
     // seller who adds a number becomes reachable on every listing they have,
     // without editing any of them.
-    expect(usableChannels(seller({ hasMessenger: true }))).toEqual(['MESSENGER'])
+    expect(usableChannels(seller({ hasPhone: true, hasViber: true }))).toEqual(['PHONE', 'SMS', 'VIBER'])
   })
 
   it('drops a channel the seller has since cleared from their profile', () => {
@@ -48,8 +55,8 @@ describe('usableChannels', () => {
     expect(usableChannels(seller())).toEqual([])
   })
 
-  it('orders them call, text, Messenger, Viber', () => {
-    const all = seller({ hasPhone: true, hasMessenger: true, hasViber: true })
-    expect(usableChannels(all)).toEqual(['PHONE', 'SMS', 'MESSENGER', 'VIBER'])
+  it('orders them call, text, Viber', () => {
+    const all = seller({ hasPhone: true, hasViber: true })
+    expect(usableChannels(all)).toEqual(['PHONE', 'SMS', 'VIBER'])
   })
 })

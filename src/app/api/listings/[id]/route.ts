@@ -99,12 +99,11 @@ export const PATCH = withApiHandler(async (request: NextRequest, ctx: Ctx) => {
     // Same floor as posting, and the same snapshot rule: an edit cannot put a
     // channel on a listing that the account has nothing behind. Without this,
     // the edit screen was a way around the posting requirement.
-    if (!account.phone && !account.messengerHandle) {
+    if (!account.phone) {
       return badRequest(t('api.contactRequired'))
     }
     const available = new Set<string>()
     if (account.phone) { available.add('PHONE'); available.add('SMS') }
-    if (account.messengerHandle) available.add('MESSENGER')
     if (account.viberNumber) available.add('VIBER')
     const channels = body.contactChannels
       .filter((c): c is string => typeof c === 'string')
