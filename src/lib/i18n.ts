@@ -545,7 +545,7 @@ const en: Record<string, string> = {
   'profile.phoneHelp':
     'Shown in full only to logged-in members. Changing it clears verification.',
   'profile.messenger': 'Messenger handle',
-  'profile.messengerPlaceholder': 'your.facebook.name',
+  'profile.messengerPlaceholder': 'juan.delacruz  (the name after m.me/)',
   'profile.viber': 'Viber number',
   'profile.facebook': 'Facebook page or profile',
   'profile.facebookPlaceholder': 'https://facebook.com/yourpage',
@@ -726,6 +726,9 @@ const en: Record<string, string> = {
   'api.enterPrice': 'Enter a price',
   'api.priceTooHigh': 'That price looks wrong',
   'api.badChannels': 'Invalid contact channels',
+  'api.badMessengerHandle':
+    'That is not a Messenger username. Open Messenger, tap your profile, and copy the name after m.me/ — letters, numbers and dots only.',
+  'api.signInForNumber': 'Sign in to see the number',
   'api.tooManyToday':
     'That is {count} listings in a day — the most we allow in one go. The rest can wait until tomorrow.',
   'api.contactRequired':
@@ -1202,7 +1205,7 @@ const tl: Record<string, string> = {
   'profile.phoneHelp':
     'Buo lang itong nakikita ng naka-log in na member. Kapag pinalitan mo, mawawala ang verification.',
   'profile.messenger': 'Messenger handle',
-  'profile.messengerPlaceholder': 'your.facebook.name',
+  'profile.messengerPlaceholder': 'juan.delacruz  (ang pangalan pagkatapos ng m.me/)',
   'profile.viber': 'Viber number',
   'profile.facebook': 'Facebook page o profile',
   'profile.facebookPlaceholder': 'https://facebook.com/yourpage',
@@ -1369,6 +1372,9 @@ const tl: Record<string, string> = {
   'api.enterPrice': 'Maglagay ng presyo',
   'api.priceTooHigh': 'Mukhang mali ang presyong iyon',
   'api.badChannels': 'Hindi wastong contact channel',
+  'api.badMessengerHandle':
+    'Hindi ito Messenger username. Buksan ang Messenger, i-tap ang profile mo, at kopyahin ang pangalan pagkatapos ng m.me/ — letra, numero at tuldok lang.',
+  'api.signInForNumber': 'Mag-sign in para makita ang numero',
   'api.tooManyToday':
     '{count} na listing sa isang araw — iyon na ang pinakamarami sa isang upuan. Bukas mo na ituloy ang iba.',
   'api.contactRequired':

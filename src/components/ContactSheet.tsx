@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import Link from 'next/link'
 
 import { useT } from '@/components/LanguageProvider'
@@ -15,6 +15,9 @@ import { useT } from '@/components/LanguageProvider'
  */
 
 const CHANNEL_ORDER = ['PHONE', 'SMS', 'MESSENGER', 'VIBER']
+
+/** Channels whose link carries the seller's number. Mirrors the API's rule. */
+const NEEDS_SIGN_IN = ['PHONE', 'SMS', 'VIBER']
 
 export function ContactSheet({
   listingId,
@@ -43,8 +46,64 @@ export function ContactSheet({
 }) {
   const t = useT()
   const [open, setOpen] = useState(false)
-  const [busy, setBusy] = useState<string | null>(null)
+  const [targets, setTargets] = useState<Record<string, string> | null>(null)
   const [error, setError] = useState<string | null>(null)
+
+  /**
+   * Resolve the links when the sheet opens, so each row can be a real anchor.
+   *
+   * It used to ask the server on tap and then assign window.location when the
+   * answer arrived — a navigation outside the gesture that started it, which
+   * browsers will not hand to another app. Firefox on Android offered to open
+   * Messenger and then came back to the page; iOS declined the universal link,
+   * followed m.me as an ordinary URL, and landed the member on Messenger's
+   * App Store page.
+   */
+  useEffect(() => {
+    if (!open || targets !== null) return
+    let cancelled = false
+    fetch(`/api/listings/${listingId}/contact`)
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data: { targets?: Record<string, string> } | null) => {
+        if (cancelled) return
+        if (!data?.targets) {
+          setError(t('contact.failed'))
+          return
+        }
+        setTargets(data.targets)
+      })
+      .catch(() => {
+        if (!cancelled) setError(t('contact.offline'))
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [open, targets, listingId, t])
+
+  /**
+   * Record the tap without delaying it.
+   *
+   * sendBeacon hands the request to the browser to deliver on its own, which
+   * survives the page being replaced by another app — a plain fetch here would
+   * often be cancelled mid-flight as Messenger takes over.
+   */
+  function recordTap(channel: string) {
+    const body = JSON.stringify({ channel })
+    const url = `/api/listings/${listingId}/contact`
+    try {
+      if (navigator.sendBeacon?.(url, new Blob([body], { type: 'application/json' }))) return
+    } catch {
+      // Fall through to the fetch below.
+    }
+    fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body,
+      keepalive: true,
+    }).catch(() => {
+      // A missed count is not worth interrupting someone on their way out.
+    })
+  }
 
   // Signed out, Call and Text are the same locked row twice — the same masked
   // number, the same link, nothing to tell them apart. One row says it once.
@@ -54,27 +113,6 @@ export function ContactSheet({
     : available.filter((c) => c !== 'SMS' || !available.includes('PHONE'))
   const firstName = sellerName.split(' ')[0]
 
-  async function openChannel(channel: string) {
-    setBusy(channel)
-    setError(null)
-    try {
-      const res = await fetch(`/api/listings/${listingId}/contact`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ channel }),
-      })
-      const data: { target?: string; error?: string; signInRequired?: boolean } = await res.json()
-      if (!res.ok || !data.target) {
-        setError(data.error ?? t('contact.failed'))
-        return
-      }
-      window.location.href = data.target
-    } catch {
-      setError(t('contact.offline'))
-    } finally {
-      setBusy(null)
-    }
-  }
 
   if (isOwner) {
     return (
@@ -154,7 +192,9 @@ export function ContactSheet({
               </p>
 
               {ordered.map((channel) => {
-                const needsAuth = (channel === 'PHONE' || channel === 'SMS') && !signedIn
+                // Viber joins phone and SMS here: its link carries the
+                // seller's number, so it is signed-in only on the server too.
+                const needsAuth = NEEDS_SIGN_IN.includes(channel) && !signedIn
                 if (needsAuth) {
                   return (
                     <Link
@@ -170,20 +210,35 @@ export function ContactSheet({
                     </Link>
                   )
                 }
-                return (
-                  <button
-                    key={channel}
-                    type="button"
-                    disabled={busy !== null}
-                    onClick={() => openChannel(channel)}
-                    className={`hard flex min-h-[54px] items-center justify-center gap-2.5 border-[3px] border-ink disabled:opacity-60 ${
-                      channel === 'PHONE' ? 'bg-green text-ground' : 'bg-panel text-ink'
-                    }`}
-                  >
-                    <span className={channel === 'PHONE' ? 'font-display text-[20px] uppercase' : 'label text-[20px]'}>
-                      {busy === channel ? t('contact.opening') : t(`contact.channel.${channel}`)}
+                const target = targets?.[channel]
+                const label = (
+                  <span className={channel === 'PHONE' ? 'font-display text-[20px] uppercase' : 'label text-[20px]'}>
+                    {target ? t(`contact.channel.${channel}`) : t('contact.opening')}
+                  </span>
+                )
+                const shape = `hard flex min-h-[54px] items-center justify-center gap-2.5 border-[3px] border-ink ${
+                  channel === 'PHONE' ? 'bg-green text-ground' : 'bg-panel text-ink'
+                }`
+                // A real anchor, so the tap itself is the navigation. Anything
+                // that resolves the link first and navigates afterwards is
+                // outside the gesture, and neither iOS nor Firefox will hand
+                // such a navigation to another app.
+                if (!target) {
+                  return (
+                    <span key={channel} className={`${shape} opacity-60`} aria-busy>
+                      {label}
                     </span>
-                  </button>
+                  )
+                }
+                return (
+                  <a
+                    key={channel}
+                    href={target}
+                    onClick={() => recordTap(channel)}
+                    className={`${shape} hover:text-inherit`}
+                  >
+                    {label}
+                  </a>
                 )
               })}
 

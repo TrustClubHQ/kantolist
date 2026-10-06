@@ -4,7 +4,7 @@ import { requestT } from '@/lib/i18n-server'
 import { getAccountFromRequest } from '@/lib/auth'
 import { withApiHandler, badRequest, unauthorized, forbidden } from '@/lib/api'
 import { isAllowedMutatingRequest } from '@/lib/http'
-import { normalizePhPhone } from '@/lib/format'
+import { normalizePhPhone, normalizeMessengerHandle } from '@/lib/format'
 
 export const GET = withApiHandler(async (request: NextRequest) => {
   const account = await getAccountFromRequest(request)
@@ -65,7 +65,17 @@ export const PATCH = withApiHandler(async (request: NextRequest) => {
   }
 
   if (body.messengerHandle !== undefined) {
-    data.messengerHandle = body.messengerHandle?.trim().replace(/^@/, '').slice(0, 60) || null
+    const raw = body.messengerHandle?.trim() ?? ''
+    if (!raw) {
+      data.messengerHandle = null
+    } else {
+      // Checked rather than stored as typed: m.me answers 302 for any handle,
+      // valid or not, so a wrong one is only discovered by the buyer who taps
+      // it and finds nobody there.
+      const handle = normalizeMessengerHandle(raw)
+      if (!handle) return badRequest(t('api.badMessengerHandle'))
+      data.messengerHandle = handle
+    }
   }
 
   if (body.facebookUrl !== undefined) {

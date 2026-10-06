@@ -56,3 +56,51 @@ export function normalizePhPhone(input: string): string | null {
   if (!local.startsWith('9')) return null
   return `+63${local}`
 }
+
+/**
+ * A Facebook username, from whatever someone pasted into the Messenger box.
+ *
+ * The box accepted anything and `m.me/<that>` was built from it verbatim, so a
+ * pasted profile link became `m.me/https://www.facebook.com/juan.delacruz` and
+ * a typed display name became `m.me/Juan Dela Cruz`. m.me answers 302 for all
+ * of them — it never validates — so nothing looked wrong until a buyer tapped
+ * the row and Messenger had no such person to open.
+ *
+ * Accepts what people actually paste: a bare username, @username, an m.me or
+ * messenger.com/t link, or a facebook.com profile URL. Returns null for
+ * anything that is not a username, including `profile.php?id=…` links, which
+ * carry a numeric id rather than the username m.me needs.
+ *
+ * Facebook usernames are letters, digits and full stops, five or more.
+ */
+export function normalizeMessengerHandle(input: string): string | null {
+  let value = input.trim()
+  if (!value) return null
+
+  // Pull the handle out of any of the link shapes people paste.
+  const asUrl = /^(https?:\/\/)?(www\.|web\.|m\.)?(m\.me|messenger\.com|facebook\.com|fb\.com|fb\.me)\//i
+  if (asUrl.test(value)) {
+    value = value.replace(/^(https?:\/\/)?/i, 'https://')
+    let path: string
+    try {
+      path = new URL(value).pathname
+    } catch {
+      return null
+    }
+    // messenger.com/t/<handle> puts the handle one segment deeper.
+    const parts = path.split('/').filter(Boolean)
+    if (parts[0]?.toLowerCase() === 't') parts.shift()
+    value = parts[0] ?? ''
+  }
+
+  value = value.replace(/^@/, '').replace(/\/+$/, '')
+  // A query string survives the bare-handle path ("juan.delacruz?mibextid=…").
+  value = value.split(/[?#]/)[0]
+  if (!/^[a-zA-Z0-9.]{5,60}$/.test(value)) return null
+  // `facebook.com/profile.php?id=…` survives the pattern as "profile.php" —
+  // dots and letters, long enough — and would have become `m.me/profile.php`.
+  // That link means the person has no username, which is the one case m.me
+  // cannot be given.
+  if (/\.php$/i.test(value)) return null
+  return value
+}
