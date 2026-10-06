@@ -545,7 +545,9 @@ const en: Record<string, string> = {
   'profile.phoneHelp':
     'Shown in full only to logged-in members. Changing it clears verification.',
   'profile.messenger': 'Messenger handle',
-  'profile.messengerPlaceholder': 'juan.delacruz  (the name after m.me/)',
+  'profile.messengerPlaceholder': 'juan.delacruz  or  m.me/juan.delacruz',
+  'profile.messengerHelp':
+    'Your Messenger username, not your display name. In Messenger: tap your photo at the top, tap your name, then Username — copy the link and paste it here. No username yet? You can make one on that screen, or just leave this blank and give your mobile number instead.',
   'profile.viber': 'Viber number',
   'profile.facebook': 'Facebook page or profile',
   'profile.facebookPlaceholder': 'https://facebook.com/yourpage',
@@ -727,7 +729,7 @@ const en: Record<string, string> = {
   'api.priceTooHigh': 'That price looks wrong',
   'api.badChannels': 'Invalid contact channels',
   'api.badMessengerHandle':
-    'That is not a Messenger username. Open Messenger, tap your profile, and copy the name after m.me/ — letters, numbers and dots only.',
+    'That is not a Messenger username — a display name like "Juan Dela Cruz" will not work. In Messenger: tap your photo at the top, tap your name, then Username, and paste the link here. Or leave it blank and give your mobile number instead.',
   'api.signInForNumber': 'Sign in to see the number',
   'api.tooManyToday':
     'That is {count} listings in a day — the most we allow in one go. The rest can wait until tomorrow.',
@@ -1205,7 +1207,9 @@ const tl: Record<string, string> = {
   'profile.phoneHelp':
     'Buo lang itong nakikita ng naka-log in na member. Kapag pinalitan mo, mawawala ang verification.',
   'profile.messenger': 'Messenger handle',
-  'profile.messengerPlaceholder': 'juan.delacruz  (ang pangalan pagkatapos ng m.me/)',
+  'profile.messengerPlaceholder': 'juan.delacruz  o  m.me/juan.delacruz',
+  'profile.messengerHelp':
+    'Ang Messenger username mo, hindi ang display name. Sa Messenger: i-tap ang photo mo sa itaas, i-tap ang pangalan mo, tapos Username — kopyahin ang link at i-paste dito. Wala pang username? Puwede kang gumawa doon, o numero na lang ng cellphone ang ilagay.',
   'profile.viber': 'Viber number',
   'profile.facebook': 'Facebook page o profile',
   'profile.facebookPlaceholder': 'https://facebook.com/yourpage',
@@ -1373,7 +1377,7 @@ const tl: Record<string, string> = {
   'api.priceTooHigh': 'Mukhang mali ang presyong iyon',
   'api.badChannels': 'Hindi wastong contact channel',
   'api.badMessengerHandle':
-    'Hindi ito Messenger username. Buksan ang Messenger, i-tap ang profile mo, at kopyahin ang pangalan pagkatapos ng m.me/ — letra, numero at tuldok lang.',
+    'Hindi ito Messenger username — hindi puwede ang display name na tipong "Juan Dela Cruz". Sa Messenger: i-tap ang photo mo sa itaas, i-tap ang pangalan mo, tapos Username, at i-paste ang link dito. O numero na lang ng cellphone ang ilagay.',
   'api.signInForNumber': 'Mag-sign in para makita ang numero',
   'api.tooManyToday':
     '{count} na listing sa isang araw — iyon na ang pinakamarami sa isang upuan. Bukas mo na ituloy ang iba.',

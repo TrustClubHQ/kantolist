@@ -819,6 +819,7 @@ export function PostForm({
                     onChange={(e) => setMessengerDraft(e.target.value)}
                     placeholder={t('profile.messengerPlaceholder')}
                   />
+                  <span className="text-xs font-semibold text-muted">{t('profile.messengerHelp')}</span>
                 </label>
                 <p className="m-0 text-[13px] font-semibold leading-snug text-muted-2">
                   {t('post.contact.editHelp')}

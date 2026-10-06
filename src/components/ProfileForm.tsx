@@ -129,6 +129,7 @@ export function ProfileForm({
                 onChange={(e) => set('messengerHandle', e.target.value)}
                 placeholder={t('profile.messengerPlaceholder')}
               />
+              <span className="text-xs font-semibold text-muted">{t('profile.messengerHelp')}</span>
             </label>
             <label className="flex flex-col gap-1.5">
               <span className="label text-[15px] text-muted">{t('profile.viber')}</span>
